@@ -1,0 +1,156 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --radius: 0.5rem;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-brand-navy text-brand-white font-sans;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-brand-navy;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-brand-sapphire rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-brand-gold;
+  }
+}
+
+@layer components {
+  /* Gold shimmer effect for premium elements */
+  .gold-shimmer {
+    background: linear-gradient(90deg, #D4AF37 0%, #F3E5AB 50%, #D4AF37 100%);
+    background-size: 200% 100%;
+    animation: shimmer 2s linear infinite;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Glassmorphism card */
+  .glass-card {
+    @apply bg-brand-sapphire/80 backdrop-blur-sm border border-brand-gold/20 rounded-xl;
+  }
+
+  /* Premium button */
+  .btn-primary {
+    @apply bg-brand-gold text-brand-navy font-semibold px-6 py-3 rounded-lg
+           hover:bg-brand-champagne transition-all duration-200
+           focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 focus:ring-offset-brand-navy
+           disabled:opacity-50 disabled:cursor-not-allowed
+           min-h-[44px] min-w-[44px];
+  }
+
+  .btn-outline {
+    @apply border border-brand-gold text-brand-gold font-semibold px-6 py-3 rounded-lg
+           hover:bg-brand-gold hover:text-brand-navy transition-all duration-200
+           focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 focus:ring-offset-brand-navy
+           min-h-[44px] min-w-[44px];
+  }
+
+  .btn-ghost {
+    @apply text-brand-silver hover:text-brand-gold transition-colors duration-200
+           focus:outline-none focus:ring-2 focus:ring-brand-gold/50 rounded
+           min-h-[44px] px-3;
+  }
+
+  /* Form inputs */
+  .input-field {
+    @apply w-full bg-brand-navy/50 border border-brand-silver/30 rounded-lg px-4 py-3
+           text-brand-white placeholder:text-brand-silver/50
+           focus:outline-none focus:border-brand-gold focus:ring-1 focus:ring-brand-gold
+           transition-all duration-200 min-h-[44px];
+  }
+
+  /* Section headings */
+  .section-title {
+    @apply text-3xl md:text-4xl font-display font-bold text-brand-white;
+  }
+
+  .section-subtitle {
+    @apply text-lg text-brand-silver mt-2;
+  }
+
+  /* Member card */
+  .member-card {
+    @apply glass-card p-6 hover:border-brand-gold/40 transition-all duration-300
+           hover:shadow-lg hover:shadow-brand-gold/10 hover:-translate-y-1;
+  }
+
+  /* Page hero */
+  .page-hero {
+    @apply bg-gradient-to-b from-brand-sapphire to-brand-navy py-16 md:py-24;
+  }
+
+  /* Badge */
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+           bg-brand-gold/20 text-brand-champagne border border-brand-gold/30;
+  }
+
+  .badge-success {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+           bg-green-500/20 text-green-300 border border-green-500/30;
+  }
+
+  .badge-warning {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+           bg-yellow-500/20 text-yellow-300 border border-yellow-500/30;
+  }
+
+  .badge-error {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+           bg-red-500/20 text-red-300 border border-red-500/30;
+  }
+
+  /* Admin table */
+  .admin-table {
+    @apply w-full text-sm text-brand-silver;
+  }
+  .admin-table th {
+    @apply text-brand-champagne font-semibold text-left py-3 px-4 border-b border-brand-sapphire;
+  }
+  .admin-table td {
+    @apply py-3 px-4 border-b border-brand-sapphire/50;
+  }
+  .admin-table tr:hover td {
+    @apply bg-brand-sapphire/30;
+  }
+}
+
+/* Gold border glow effect */
+@layer utilities {
+  .glow-gold {
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.15), 0 0 40px rgba(212, 175, 55, 0.05);
+  }
+
+  .text-gradient-gold {
+    background: linear-gradient(135deg, #D4AF37, #F3E5AB, #D4AF37);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
