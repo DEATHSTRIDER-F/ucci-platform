@@ -114,15 +114,14 @@ export async function createChapterAdmin(data: {
 
   const { error: profileError } = await supabase
     .from('profiles')
-    .insert({
-      id: authData.user.id,
-      email: data.email,
+    .update({
       full_name: data.full_name,
       role: 'chapter_admin',
       status: 'approved',
       chapter_id: data.chapter_id,
       membership_fee_paid: true,
     })
+    .eq('id', authData.user.id)
 
   if (profileError) {
     await supabase.auth.admin.deleteUser(authData.user.id)

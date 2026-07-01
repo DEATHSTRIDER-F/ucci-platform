@@ -140,11 +140,10 @@ export function OnboardingForm({ areas, categories }: OnboardingFormProps) {
         <CheckCircle className="w-16 h-16 text-green-400 mx-auto mb-4" />
         <h2 className="font-display text-2xl font-bold text-brand-white mb-3">Application Submitted!</h2>
         <p className="text-brand-silver leading-relaxed">
-          Your application has been received. We have created your UCCI account and sent login credentials to your email.
-          Your profile will be reviewed by the chapter admin after your scheduled interview.
+          Your application has been received. Your profile will be reviewed by the chapter admin after your scheduled interview.
         </p>
         <div className="mt-6 bg-brand-gold/10 border border-brand-gold/30 rounded-lg p-4 text-brand-champagne text-sm">
-          <strong>Next steps:</strong> Check your email for login credentials. Attend your scheduled interview appointment.
+          <strong>Next steps:</strong> Attend your scheduled interview appointment.
         </div>
       </div>
     )

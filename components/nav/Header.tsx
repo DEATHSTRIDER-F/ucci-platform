@@ -4,9 +4,10 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image';
 import { usePathname } from 'next/navigation'
-import { Menu, X, ChevronDown, ChevronRight, LogOut, User } from 'lucide-react'
+import { Menu, X, ChevronDown, ChevronRight, LogOut, User, Search } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { GlobalSearch } from '@/components/search/GlobalSearch'
 
 interface AreaWithChapters {
   id: string
@@ -40,6 +41,7 @@ const CLOSE_DELAY = 120 // ms — enough to cross a small gap, not noticeable to
 
 export function Header({ profile, featuredCategories, areasWithChapters }: HeaderProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
   const [activeChapterArea, setActiveChapterArea] = useState<string | null>(null)
   const pathname = usePathname()
@@ -84,6 +86,7 @@ export function Header({ profile, featuredCategories, areasWithChapters }: Heade
   // Close dropdowns on route change
   useEffect(() => {
     setMobileOpen(false)
+    setMobileSearchOpen(false)
     setActiveDropdown(null)
     setActiveChapterArea(null)
   }, [pathname])
@@ -247,12 +250,10 @@ export function Header({ profile, featuredCategories, areasWithChapters }: Heade
               )}
             </div>
 
-            {/* Start a Chapter — only when authenticated */}
-            {profile && (
-              <Link href="/join" className={navLinkClass('/join')}>
-                Start a Chapter
-              </Link>
-            )}
+            {/* Start a Chapter */}
+            <Link href="/join" className={navLinkClass('/join')}>
+              Start a Chapter
+            </Link>
 
             {/* Contact */}
             <Link href="/contact" className={navLinkClass('/contact')}>Contact Us</Link>
@@ -294,17 +295,40 @@ export function Header({ profile, featuredCategories, areasWithChapters }: Heade
             )}
           </div>
 
-          {/* Mobile Hamburger */}
-          <button
-            className="lg:hidden btn-ghost p-2"
-            onClick={() => setMobileOpen(!mobileOpen)}
-            aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
-            aria-expanded={mobileOpen}
-          >
-            {mobileOpen ? <X className="w-6 h-6 text-brand-white" /> : <Menu className="w-6 h-6 text-brand-white" />}
-          </button>
+          {/* Mobile Actions */}
+          <div className="lg:hidden flex items-center gap-1">
+            <button
+              className="btn-ghost p-2"
+              onClick={() => {
+                setMobileSearchOpen(!mobileSearchOpen)
+                if (mobileOpen) setMobileOpen(false)
+              }}
+              aria-label={mobileSearchOpen ? 'Close search' : 'Open search'}
+              aria-expanded={mobileSearchOpen}
+            >
+              {mobileSearchOpen ? <X className="w-6 h-6 text-brand-white" /> : <Search className="w-6 h-6 text-brand-white" />}
+            </button>
+            <button
+              className="btn-ghost p-2"
+              onClick={() => {
+                setMobileOpen(!mobileOpen)
+                if (mobileSearchOpen) setMobileSearchOpen(false)
+              }}
+              aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={mobileOpen}
+            >
+              {mobileOpen ? <X className="w-6 h-6 text-brand-white" /> : <Menu className="w-6 h-6 text-brand-white" />}
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* Mobile Search */}
+      {mobileSearchOpen && (
+        <div className="lg:hidden bg-brand-sapphire border-t border-brand-gold/20 animate-fade-in p-4">
+          <GlobalSearch />
+        </div>
+      )}
 
       {/* Mobile Menu */}
       {mobileOpen && (
@@ -335,7 +359,7 @@ export function Header({ profile, featuredCategories, areasWithChapters }: Heade
 
             <Link href="/categories" className="block py-3 px-3 text-brand-silver hover:text-brand-gold rounded-lg hover:bg-brand-navy/50 transition-colors">Categories</Link>
 
-            {profile && <Link href="/join" className="block py-3 px-3 text-brand-silver hover:text-brand-gold rounded-lg hover:bg-brand-navy/50 transition-colors">Start a Chapter</Link>}
+            <Link href="/join" className="block py-3 px-3 text-brand-silver hover:text-brand-gold rounded-lg hover:bg-brand-navy/50 transition-colors">Start a Chapter</Link>
 
             <Link href="/contact" className="block py-3 px-3 text-brand-silver hover:text-brand-gold rounded-lg hover:bg-brand-navy/50 transition-colors">Contact Us</Link>
             <Link href="/gallery" className="block py-3 px-3 text-brand-silver hover:text-brand-gold rounded-lg hover:bg-brand-navy/50 transition-colors">Gallery</Link>

@@ -160,26 +160,8 @@ export default async function MemberProfilePage({ params }: Props) {
 
               {/* Contact Details */}
               <section className="glass-card p-8 mb-6" aria-labelledby="contact-heading">
-                <h2 id="contact-heading" className="font-display text-xl font-bold text-brand-gold mb-4">Contact & Location</h2>
+                <h2 id="contact-heading" className="font-display text-xl font-bold text-brand-gold mb-4">Location</h2>
                 <div className="space-y-3">
-                  {p.phone && (
-                    <a href={`tel:${p.phone}`} className="flex items-center gap-3 text-brand-silver hover:text-brand-gold transition-colors group">
-                      <Phone className="w-5 h-5 text-brand-gold/60 group-hover:text-brand-gold" />
-                      <span itemProp="telephone">{p.phone}</span>
-                    </a>
-                  )}
-                  {p.website_url && (
-                    <a href={p.website_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-brand-silver hover:text-brand-gold transition-colors group">
-                      <Globe className="w-5 h-5 text-brand-gold/60 group-hover:text-brand-gold" />
-                      <span itemProp="url" className="truncate">{p.website_url}</span>
-                    </a>
-                  )}
-                  {p.linkedin_url && (
-                    <a href={p.linkedin_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-brand-silver hover:text-brand-gold transition-colors group">
-                      <Linkedin className="w-5 h-5 text-brand-gold/60 group-hover:text-brand-gold" />
-                      <span>LinkedIn Profile</span>
-                    </a>
-                  )}
                   {p.business_address && (
                     <div className="flex items-start gap-3 text-brand-silver">
                       <MapPin className="w-5 h-5 text-brand-gold/60 mt-0.5 flex-shrink-0" />

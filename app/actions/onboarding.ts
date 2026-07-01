@@ -54,22 +54,12 @@ export async function submitOnboarding(
     return { success: false, error: 'The selected appointment slot is no longer available. Please choose another slot.' }
   }
 
-  // ── Create Supabase Auth User ─────────────────────────────
-  const tempEmail = `${data.company_full_name.toLowerCase().replace(/[^a-z0-9]/g, '')}-${Date.now()}@ucci-applicant.in`
-  const tempPassword = Math.random().toString(36).slice(-10) + Math.random().toString(36).toUpperCase().slice(-4) + '!1'
-
-  // Use admin createUser — sends invitation email automatically
-  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-    email: tempEmail,
-    password: tempPassword,
-    email_confirm: true,
-  })
-
-  if (authError || !authData.user) {
-    return { success: false, error: `Failed to create account: ${authError?.message ?? 'Unknown error'}` }
+  // ── Get Authenticated User ────────────────────────────────
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { success: false, error: 'You must be logged in to submit an application.' }
   }
-
-  const userId = authData.user.id
+  const userId = user.id
 
   // ── Upload Logo (if provided) ─────────────────────────────
   let logoUrl: string | null = null
@@ -101,13 +91,10 @@ export async function submitOnboarding(
     }
   }
 
-  // ── Create Profile Record ─────────────────────────────────
+  // ── Update Profile Record ─────────────────────────────────
   const { error: profileError } = await supabase
     .from('profiles')
-    .insert({
-      id: userId,
-      email: tempEmail,
-      full_name: data.company_full_name.trim(),
+    .update({
       business_name: data.company_full_name.trim(),
       brand_tagline: data.brand_tagline?.trim() || null,
       bio: data.bio.trim(),
@@ -117,20 +104,17 @@ export async function submitOnboarding(
       business_address: data.business_address.trim(),
       ideal_referral_target: data.ideal_referral_target?.trim() || null,
       referral_triggers: data.referral_triggers?.trim() || null,
-      logo_url: logoUrl,
+      ...(logoUrl ? { logo_url: logoUrl } : {}),
       chapter_id: data.chapter_id,
       category_id: data.category_id,
       status: 'pending',
-      role: 'member',
-      membership_fee_paid: false,
       appointment_timestamp: slot ? new Date().toISOString() : null,
     })
+    .eq('id', userId)
 
   if (profileError) {
-    // Clean up auth user on failure
-    await supabase.auth.admin.deleteUser(userId)
-    console.error('Profile insert error:', profileError)
-    return { success: false, error: `Failed to create profile: ${profileError.message}` }
+    console.error('Profile update error:', profileError)
+    return { success: false, error: `Failed to update profile: ${profileError.message}` }
   }
 
   // ── Mark Slot as Occupied ─────────────────────────────────

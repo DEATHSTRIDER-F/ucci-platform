@@ -49,7 +49,7 @@ CREATE TABLE profiles (
   email                  VARCHAR(255) UNIQUE NOT NULL,
   full_name              VARCHAR(255) NOT NULL,
   role                   user_role DEFAULT 'member',
-  status                 profile_status DEFAULT 'pending',
+  status                 profile_status DEFAULT NULL,
   business_name          VARCHAR(255),
   brand_tagline          VARCHAR(255),
   bio                    TEXT,

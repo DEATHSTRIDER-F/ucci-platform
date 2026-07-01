@@ -61,7 +61,7 @@ export default async function HomePage() {
       <section aria-label="Hero section" className="relative">
         <HeroCarousel slides={(heroSlides as HeroSlide[]) ?? []} />
         {/* Search bar anchored at bottom of hero, extending slightly below */}
-        <div className="absolute top-0 left-0 right-0 z-20">
+        <div className="absolute top-0 left-0 right-0 z-20 hidden md:block">
           {/* Gradient fade from transparent to brand-navy */}
           {/* <div className="h-24 bg-gradient-to-b from-transparent to-brand-navy" /> */}
           <div className="pt-10">

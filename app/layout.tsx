@@ -6,6 +6,8 @@ import { Footer } from '@/components/nav/Footer'
 import { buildSiteMetadata } from '@/lib/seo/metadata'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 
+import { LenisProvider } from '@/components/LenisProvider'
+
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
@@ -55,18 +57,20 @@ export default async function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${outfit.variable}`}>
       <body suppressHydrationWarning className="bg-brand-navy text-brand-white font-sans antialiased min-h-screen flex flex-col">
-        <Header
-          profile={profile}
-          featuredCategories={featuredCategories ?? []}
-          areasWithChapters={(areasWithChapters as Array<{
-            id: string; name: string; slug: string;
-            chapters: Array<{ id: string; name: string; slug: string }>
-          }>) ?? []}
-        />
-        <main className="flex-1">
-          {children}
-        </main>
-        <Footer />
+        <LenisProvider>
+          <Header
+            profile={profile}
+            featuredCategories={featuredCategories ?? []}
+            areasWithChapters={(areasWithChapters as Array<{
+              id: string; name: string; slug: string;
+              chapters: Array<{ id: string; name: string; slug: string }>
+            }>) ?? []}
+          />
+          <main className="flex-1">
+            {children}
+          </main>
+          <Footer />
+        </LenisProvider>
       </body>
     </html>
   )

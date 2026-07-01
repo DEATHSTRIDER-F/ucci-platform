@@ -39,7 +39,7 @@ export interface Profile {
   email: string
   full_name: string
   role: UserRole
-  status: ProfileStatus
+  status: ProfileStatus | null
   business_name: string | null
   brand_tagline: string | null
   bio: string | null

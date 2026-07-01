@@ -1,13 +1,13 @@
 import type { Metadata } from 'next'
-import { LoginForm } from '@/components/forms/LoginForm'
+import { SignupForm } from '@/components/forms/SignupForm'
 
 export const metadata: Metadata = {
-  title: 'Sign In | UCCI',
-  description: 'Sign in to your UCCI member account to access your dashboard, profile, and chapter features.',
+  title: 'Sign Up | UCCI',
+  description: 'Create your UCCI member account to apply for a chapter and access member features.',
   robots: { index: false, follow: false },
 }
 
-export default function LoginPage({ searchParams }: { searchParams: { redirectTo?: string } }) {
+export default function SignupPage({ searchParams }: { searchParams: { redirectTo?: string } }) {
   const redirectTo = searchParams.redirectTo ? `?redirectTo=${encodeURIComponent(searchParams.redirectTo)}` : ''
 
   return (
@@ -25,19 +25,19 @@ export default function LoginPage({ searchParams }: { searchParams: { redirectTo
             U
           </div>
           <h1 className="font-display text-3xl font-bold text-brand-white">
-            Welcome Back
+            Create an Account
           </h1>
-          <p className="text-brand-silver mt-2">Sign in to your UCCI account</p>
+          <p className="text-brand-silver mt-2">Sign up to apply and join UCCI</p>
         </div>
 
         <div className="glass-card p-8">
-          <LoginForm />
+          <SignupForm />
         </div>
 
         <p className="text-center text-brand-silver/60 text-sm mt-6">
-          Not a member?{' '}
-          <a href={`/signup${redirectTo}`} className="text-brand-gold hover:text-brand-champagne transition-colors">
-            Sign up to join →
+          Already a member?{' '}
+          <a href={`/login${redirectTo}`} className="text-brand-gold hover:text-brand-champagne transition-colors">
+            Sign in to your account →
           </a>
         </p>
       </div>
