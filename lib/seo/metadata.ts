@@ -28,6 +28,9 @@ export function buildSiteMetadata(): Metadata {
       index: true,
       follow: true,
     },
+    icons: {
+      icon: '/icon.webp',
+    },
   }
 }
 
