@@ -28,9 +28,17 @@ export function buildSiteMetadata(): Metadata {
       index: true,
       follow: true,
     },
-    icons: {
-      icon: '/icon.webp',
-    },
+    icons: [
+      {
+        rel: 'icon',
+        type: 'image/webp',
+        url: '/icon.webp',
+      },
+      {
+        rel: 'apple-touch-icon',
+        url: '/icon.webp',
+      },
+    ],
   }
 }
 
