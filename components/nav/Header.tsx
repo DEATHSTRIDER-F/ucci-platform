@@ -119,7 +119,7 @@ export function Header({ profile, featuredCategories, areasWithChapters }: Heade
           <Link href="/" className="flex items-center gap-3 flex-shrink-0">
             {/* <div className="w-10 h-10 rounded-full bg-brand-gold flex items-center justify-center font-display font-bold text-brand-navy text-lg"> */}
             <div className="h-full w-auto">
-              <Image src="/ucci.png" alt="Logo" className="opacity-100 w-24" width={110} height={40} />
+              <Image src="/ucci.webp" alt="Logo" className="opacity-100 w-24" width={110} height={40} />
             </div>
             {/* <span className="font-display font-bold text-brand-white text-xl hidden sm:block">
               <span className="text-brand-gold">UCCI</span>

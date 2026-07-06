@@ -1,23 +1,27 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { MapPin, Phone, Mail, ExternalLink } from 'lucide-react'
 
 export function Footer() {
   const currentYear = new Date().getFullYear()
 
   return (
-    <footer className="bg-brand-navy border-t border-brand-gold/20 pt-12 pb-6" role="contentinfo">
+    <footer className="bg-brand-sapphire border-t border-brand-gold/20 pt-12 pb-6" role="contentinfo">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
 
           {/* Brand */}
           <div className="lg:col-span-1">
             <Link href="/" className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-brand-gold flex items-center justify-center font-display font-bold text-brand-navy text-lg">
+              {/* <div className="w-10 h-10 rounded-full bg-brand-gold flex items-center justify-center font-display font-bold text-brand-navy text-lg">
                 U
               </div>
               <span className="font-display font-bold text-brand-white text-xl">
                 <span className="text-brand-gold">UCCI</span>
-              </span>
+              </span> */}
+              <div className="h-full w-auto">
+              <Image src="/ucci.webp" alt="Logo" className="opacity-100 w-24" width={110} height={40} />
+            </div>
             </Link>
             <p className="text-brand-silver text-sm leading-relaxed">
               United Chamber of Commerce India — an elite business networking organization connecting professionals through exclusive referral chapters.
