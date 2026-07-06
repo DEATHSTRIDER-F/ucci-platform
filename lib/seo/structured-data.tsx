@@ -18,7 +18,7 @@ export function buildOrganizationSchema() {
       postalCode: '411048',
       addressCountry: 'IN',
     },
-    telephone: '+918600241900',
+    telephone: '+918600241900, +919552319748, +918485878785, +919923309468',
     description:
       'UCCI is an elite business networking organization connecting professionals through exclusive referral chapters in Pune and PCMC.',
     sameAs: [],

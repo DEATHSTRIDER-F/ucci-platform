@@ -85,6 +85,24 @@ export function Footer() {
                 </a>
               </li>
               <li className="flex items-center gap-2">
+                <Phone className="w-4 h-4 text-brand-gold flex-shrink-0" />
+                <a href="tel:9552319748" className="text-brand-silver text-sm hover:text-brand-gold transition-colors">
+                  9552319748
+                </a>
+              </li>
+              <li className="flex items-center gap-2">
+                <Phone className="w-4 h-4 text-brand-gold flex-shrink-0" />
+                <a href="tel:8485878785" className="text-brand-silver text-sm hover:text-brand-gold transition-colors">
+                  8485878785
+                </a>
+              </li>
+              <li className="flex items-center gap-2">
+                <Phone className="w-4 h-4 text-brand-gold flex-shrink-0" />
+                <a href="tel:9923309468" className="text-brand-silver text-sm hover:text-brand-gold transition-colors">
+                  9923309468
+                </a>
+              </li>
+              <li className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-brand-gold flex-shrink-0" />
                 <a href="mailto:info@ucci.in" className="text-brand-silver text-sm hover:text-brand-gold transition-colors">
                   info@ucci.in

@@ -1,7 +1,6 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { buildGalleryMetadata } from '@/lib/seo/metadata'
-import { ImageCarousel } from '@/components/gallery/ImageCarousel'
-import { formatDate } from '@/lib/utils/utils'
+import { MasonryGallery } from '@/components/gallery/MasonryGallery'
 import { Camera } from 'lucide-react'
 import type { Metadata } from 'next'
 
@@ -39,39 +38,7 @@ export default async function GalleryPage() {
             <p className="text-brand-silver/60 mt-2">Check back soon for event photos!</p>
           </div>
         ) : (
-          <div className="space-y-10">
-            {(posts ?? []).map(post => {
-              const images = (post.images ?? []) as Array<{ id: string; image_url: string; alt_text: string; display_order: number }>
-              const chapter = Array.isArray(post.chapter) ? post.chapter[0] : post.chapter
-              const area = Array.isArray(post.area) ? post.area[0] : post.area
-              const sortedImages = [...images].sort((a, b) => a.display_order - b.display_order)
-              return (
-              <article key={post.id} className="glass-card overflow-hidden">
-                {/* Image Carousel */}
-                {sortedImages.length > 0 && (
-                  <ImageCarousel images={sortedImages} />
-                )}
-
-                {/* Post Content */}
-                <div className="p-6">
-                  <div className="flex items-start justify-between gap-4 flex-wrap">
-                    <div>
-                      <h2 className="font-display text-xl font-bold text-brand-white">{post.title}</h2>
-                      <div className="flex items-center gap-3 mt-1 text-sm text-brand-silver/60">
-                        <span>{formatDate(post.created_at)}</span>
-                        {chapter && <span>· {(chapter as { name: string }).name} Chapter</span>}
-                        {area && <span>· {(area as { name: string }).name}</span>}
-                      </div>
-                    </div>
-                  </div>
-                  {post.content && (
-                    <p className="text-brand-silver mt-4 leading-relaxed">{post.content}</p>
-                  )}
-                </div>
-              </article>
-              )
-            })}
-          </div>
+          <MasonryGallery posts={posts as any} />
         )}
       </section>
     </div>

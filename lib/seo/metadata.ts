@@ -122,7 +122,7 @@ export function buildCategoryMetadata(category: Category, memberCount: number): 
 export function buildContactMetadata(): Metadata {
   return {
     title: 'Contact Us',
-    description: 'Get in touch with UCCI. We are located at Office No 202, Commercial Building 4 HM Royal, Kondhwa, Pune - 411048. Call: 8600241900.',
+    description: 'Get in touch with UCCI. We are located at Office No 202, Commercial Building 4 HM Royal, Kondhwa, Pune - 411048. Call: 8600241900, 9552319748, 8485878785, 9923309468.',
     alternates: { canonical: absoluteUrl('/contact') },
   }
 }

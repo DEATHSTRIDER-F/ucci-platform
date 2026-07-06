@@ -56,7 +56,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: '/admin/members', icon: Users, label: 'Members' },
     { href: '/admin/inquiries', icon: MessageSquare, label: 'Lead Inquiries' },
     { href: '/admin/availability', icon: Calendar, label: 'Availability' },
-    { href: '/admin/gallery/new', icon: Image, label: 'Add Gallery Post' },
+    { href: '/admin/gallery', icon: Image, label: 'Manage Gallery' },
     ...(isSuperAdmin ? [
       { href: '/admin/categories', icon: Tag, label: 'Categories' },
       { href: '/admin/areas', icon: MapPin, label: 'Areas & Chapters' },

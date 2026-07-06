@@ -76,6 +76,92 @@ export async function createGalleryPost(data: {
   if (imgError) return { success: false, error: imgError.message }
 
   revalidatePath('/gallery')
+  revalidatePath('/admin/gallery')
+  return { success: true }
+}
+
+export async function updateGalleryPost(
+  postId: string,
+  data: {
+    title: string
+    content: string | null
+    area_id: string | null
+    chapter_id: string | null
+    images: Array<{
+      id?: string
+      b64?: string
+      image_url?: string
+      alt_text: string
+      display_order: number
+    }>
+  }
+): Promise<{ success: boolean; error?: string }> {
+  if (!data.title?.trim()) return { success: false, error: 'Title is required.' }
+  if (!data.images?.length) return { success: false, error: 'At least one image is required.' }
+
+  const supabase = await createAdminClient()
+
+  // Update post fields
+  const { error: postError } = await supabase
+    .from('gallery_posts')
+    .update({
+      title: data.title,
+      content: data.content,
+      area_id: data.area_id,
+      chapter_id: data.chapter_id,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', postId)
+
+  if (postError) return { success: false, error: postError.message }
+
+  // Handle Images
+  const { data: existingImages } = await supabase
+    .from('gallery_images')
+    .select('id, image_url')
+    .eq('post_id', postId)
+
+  const existingImageIds = new Set((existingImages || []).map(img => img.id))
+  const incomingIds = new Set(data.images.map(img => img.id).filter(Boolean))
+
+  // Images to delete
+  const idsToDelete = [...existingImageIds].filter(id => !incomingIds.has(id))
+  
+  if (idsToDelete.length > 0) {
+    const pathsToDelete = idsToDelete.map(id => `gallery/${postId}/${id}.webp`)
+    await supabase.storage.from(BUCKET).remove(pathsToDelete)
+    await supabase.from('gallery_images').delete().in('id', idsToDelete)
+  }
+
+  // Update existing or insert new images
+  for (const img of data.images) {
+    if (img.id && existingImageIds.has(img.id)) {
+      // Update existing
+      await supabase
+        .from('gallery_images')
+        .update({
+          alt_text: img.alt_text,
+          display_order: img.display_order
+        })
+        .eq('id', img.id)
+    } else if (img.b64) {
+      // Insert new
+      const newImageId = crypto.randomUUID()
+      const imageUrl = await uploadGalleryImage(img.b64, postId, newImageId)
+      if (imageUrl) {
+        await supabase.from('gallery_images').insert({
+          id: newImageId,
+          post_id: postId,
+          image_url: imageUrl,
+          alt_text: img.alt_text,
+          display_order: img.display_order
+        })
+      }
+    }
+  }
+
+  revalidatePath('/gallery')
+  revalidatePath('/admin/gallery')
   return { success: true }
 }
 
@@ -93,5 +179,6 @@ export async function deleteGalleryPost(postId: string): Promise<{ success: bool
   if (error) return { success: false, error: error.message }
 
   revalidatePath('/gallery')
+  revalidatePath('/admin/gallery')
   return { success: true }
 }

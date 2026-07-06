@@ -44,7 +44,16 @@ export default function ContactPage() {
                   <div>
                     <div className="text-brand-champagne font-semibold text-sm mb-1">Phone</div>
                     <a href="tel:8600241900" className="text-brand-silver hover:text-brand-gold transition-colors text-lg font-medium">
-                      8600241900
+                      8600241900 <br />
+                    </a>
+                    <a href="tel:9552319748" className="text-brand-silver hover:text-brand-gold transition-colors text-lg font-medium">
+                      9552319748 <br />
+                    </a>
+                    <a href="tel:8485878785" className="text-brand-silver hover:text-brand-gold transition-colors text-lg font-medium">
+                      8485878785 <br />
+                    </a>
+                    <a href="tel:9923309468" className="text-brand-silver hover:text-brand-gold transition-colors text-lg font-medium">
+                      9923309468 <br />
                     </a>
                   </div>
                 </div>
