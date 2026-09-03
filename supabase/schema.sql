@@ -39,6 +39,8 @@ CREATE TABLE categories (
   is_featured      BOOLEAN DEFAULT FALSE,
   meta_description TEXT,
   alt_text         VARCHAR(255),
+  icon_name        VARCHAR(100),
+  icon_color       VARCHAR(7),
   created_at       TIMESTAMPTZ DEFAULT NOW(),
   updated_at       TIMESTAMPTZ DEFAULT NOW()
 );

@@ -3,35 +3,57 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { slugify } from '@/lib/utils/slugify'
+import { validateCategoryInput, normalizeCategoryPayload } from '@/lib/validation/category'
 import type { Category } from '@/lib/types/database'
 
-export async function createCategory(data: {
-  name: string; slug: string; is_featured: boolean; meta_description: string; alt_text: string
-}): Promise<{ success: boolean; data?: Category; error?: string }> {
-  if (!data.name?.trim()) return { success: false, error: 'Name is required.' }
-  const supabase = await createAdminClient()
-  const slug = data.slug?.trim() || slugify(data.name)
-  const { data: cat, error } = await supabase
-    .from('categories')
-    .insert({ name: data.name.trim(), slug, is_featured: data.is_featured, meta_description: data.meta_description?.trim() || null, alt_text: data.alt_text?.trim() || null })
-    .select().single()
-  if (error) return { success: false, error: error.code === '23505' ? 'A category with this slug already exists.' : error.message }
-  revalidatePath('/categories'); revalidatePath('/admin/categories')
-  return { success: true, data: cat }
+type CategoryPayload = {
+  name: string
+  slug: string
+  is_featured: boolean
+  meta_description: string
+  alt_text: string
+  icon_name?: string | null
+  icon_color?: string | null
 }
 
-export async function updateCategory(id: string, data: {
-  name: string; slug: string; is_featured: boolean; meta_description: string; alt_text: string
-}): Promise<{ success: boolean; data?: Category; error?: string }> {
-  if (!data.name?.trim()) return { success: false, error: 'Name is required.' }
+export async function createCategory(data: CategoryPayload): Promise<{ success: boolean; data?: Category; error?: string }> {
+  // Zod validation at API boundary
+  const slug = data.slug?.trim() || slugify(data.name)
+  const validated = validateCategoryInput({ ...data, slug })
+  if (!validated.success) return { success: false, error: validated.error }
+
+  const payload = normalizeCategoryPayload(validated.data)
   const supabase = await createAdminClient()
   const { data: cat, error } = await supabase
     .from('categories')
-    .update({ name: data.name.trim(), slug: data.slug?.trim() || slugify(data.name), is_featured: data.is_featured, meta_description: data.meta_description?.trim() || null, alt_text: data.alt_text?.trim() || null })
-    .eq('id', id).select().single()
+    .insert(payload as unknown as Record<string, unknown>)
+    .select()
+    .single()
+  if (error) return { success: false, error: error.code === '23505' ? 'A category with this slug already exists.' : error.message }
+  revalidatePath('/categories')
+  revalidatePath('/admin/categories')
+  revalidatePath('/')
+  return { success: true, data: cat as Category }
+}
+
+export async function updateCategory(id: string, data: CategoryPayload): Promise<{ success: boolean; data?: Category; error?: string }> {
+  const slug = data.slug?.trim() || slugify(data.name)
+  const validated = validateCategoryInput({ ...data, slug })
+  if (!validated.success) return { success: false, error: validated.error }
+
+  const payload = normalizeCategoryPayload(validated.data)
+  const supabase = await createAdminClient()
+  const { data: cat, error } = await supabase
+    .from('categories')
+    .update(payload as unknown as Record<string, unknown>)
+    .eq('id', id)
+    .select()
+    .single()
   if (error) return { success: false, error: error.message }
-  revalidatePath('/categories'); revalidatePath('/admin/categories')
-  return { success: true, data: cat }
+  revalidatePath('/categories')
+  revalidatePath('/admin/categories')
+  revalidatePath('/')
+  return { success: true, data: cat as Category }
 }
 
 export async function deleteCategory(id: string): Promise<{ success: boolean; error?: string }> {

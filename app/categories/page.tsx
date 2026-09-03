@@ -1,6 +1,7 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { ArrowRight, Tag } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
+import { CategoryIcon } from '@/components/category-icon'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -14,7 +15,7 @@ export default async function CategoriesPage() {
   const { data: categories } = await supabase
     .from('categories')
     .select(`
-      id, name, slug, is_featured, meta_description,
+      id, name, slug, is_featured, meta_description, icon_name, icon_color,
       members:profiles(count)
     `)
     .order('name')
@@ -46,32 +47,36 @@ export default async function CategoriesPage() {
 
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12" aria-label="All categories">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {categoriesWithCounts.map(cat => (
-            <Link
-              key={cat.id}
-              href={`/categories/${cat.slug}`}
-              className="glass-card p-6 group hover:border-brand-gold/50 hover:-translate-y-1 transition-all duration-300"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Tag className="w-4 h-4 text-brand-gold/60" />
-                    <h2 className="font-display font-semibold text-brand-white group-hover:text-brand-gold transition-colors">
-                      {cat.name}
-                    </h2>
-                    {cat.is_featured && <span className="badge text-xs py-0.5">Featured</span>}
+          {categoriesWithCounts.map(cat => {
+            const iconName = (cat as unknown as { icon_name?: string | null }).icon_name
+            const iconColor = (cat as unknown as { icon_color?: string | null }).icon_color
+            return (
+              <Link
+                key={cat.id}
+                href={`/categories/${cat.slug}`}
+                className="glass-card p-6 group hover:border-brand-gold/50 hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2.5 mb-1">
+                      <CategoryIcon name={iconName} color={iconColor} size={18} />
+                      <h2 className="font-display font-semibold text-brand-white group-hover:text-brand-gold transition-colors truncate">
+                        {cat.name}
+                      </h2>
+                      {cat.is_featured && <span className="badge text-xs py-0.5 shrink-0">Featured</span>}
+                    </div>
+                    {cat.meta_description && (
+                      <p className="text-brand-silver text-sm line-clamp-2 mt-1">{cat.meta_description}</p>
+                    )}
                   </div>
-                  {cat.meta_description && (
-                    <p className="text-brand-silver text-sm line-clamp-2 mt-1">{cat.meta_description}</p>
-                  )}
+                  <ArrowRight className="w-5 h-5 text-brand-gold/40 group-hover:text-brand-gold group-hover:translate-x-1 transition-all flex-shrink-0 mt-2" />
                 </div>
-                <ArrowRight className="w-5 h-5 text-brand-gold/40 group-hover:text-brand-gold group-hover:translate-x-1 transition-all flex-shrink-0 mt-1" />
-              </div>
-              <div className="mt-3 text-brand-silver/60 text-xs">
-                {cat.memberCount} {cat.memberCount === 1 ? 'member' : 'members'}
-              </div>
-            </Link>
-          ))}
+                <div className="mt-3 text-brand-silver/60 text-xs">
+                  {cat.memberCount} {cat.memberCount === 1 ? 'member' : 'members'}
+                </div>
+              </Link>
+            )
+          })}
         </div>
       </section>
     </div>

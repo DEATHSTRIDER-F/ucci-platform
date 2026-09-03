@@ -4,6 +4,7 @@ import { buildCategoryMetadata } from '@/lib/seo/metadata'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowLeft, User } from 'lucide-react'
+import { CategoryIcon } from '@/components/category-icon'
 import type { Category } from '@/lib/types/database'
 import type { Metadata } from 'next'
 
@@ -61,9 +62,16 @@ export default async function CategoryPage({ params }: Props) {
           <Link href="/categories" className="inline-flex items-center gap-2 text-brand-silver hover:text-brand-gold transition-colors mb-6 text-sm">
             <ArrowLeft className="w-4 h-4" /> All Categories
           </Link>
-          <h1 className="section-title">
-            <span className="text-gradient-gold">{category.name}</span> Professionals
-          </h1>
+          <div className="flex items-center gap-4 mb-3">
+            <CategoryIcon
+              name={(category as unknown as { icon_name?: string | null }).icon_name}
+              color={(category as unknown as { icon_color?: string | null }).icon_color}
+              size={28}
+            />
+            <h1 className="section-title !mb-0">
+              <span className="text-gradient-gold">{category.name}</span> Professionals
+            </h1>
+          </div>
           <p className="section-subtitle">
             {members?.length ?? 0} verified {category.name} expert{(members?.length ?? 0) !== 1 ? 's' : ''} across all UCCI chapters
           </p>

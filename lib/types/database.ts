@@ -30,6 +30,8 @@ export interface Category {
   is_featured: boolean
   meta_description: string | null
   alt_text: string | null
+  icon_name: string | null
+  icon_color: string | null
   created_at: string
   updated_at: string
 }
