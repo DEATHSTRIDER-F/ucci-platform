@@ -1,10 +1,42 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 
 export const metadata: Metadata = {
   title: 'About UCCI | Our Story & How It Works',
   description:
     'Learn about UCCI — United Chamber of Commerce India. Discover our story, our BNI-inspired networking model, and how our exclusive chapter system helps professionals grow.',
 }
+
+const FOUNDERS = [
+  {
+    image: '/1.png',
+    quote:
+      'UCCI is more than a business networking platform—it’s a movement to empower, connect, and strengthen the Muslim business community.',
+    name: 'MOHAMMED PASHA',
+    title: 'Founder & President, UCCI',
+  },
+  {
+    image: '/2.png',
+    quote:
+      'At UCCI, we strengthen bonds and empower success. Fostering unity, trust, and growth within the Muslim business community. Together, we build stronger businesses and a brighter future.',
+    name: 'SAYEED NAMDAR',
+    title: 'Founder Vice President',
+  },
+  {
+    image: '/3.png',
+    quote:
+      'At UCCI, we believe in growing together—not just individual success, but community success. ‘Together, We Grow.’ Success is better when shared.',
+    name: 'HAMEED SHAIKH',
+    title: 'Founder Vice President',
+  },
+  {
+    image: '/4.png',
+    quote:
+      'UCCI brings Muslim entrepreneurs and professionals together to create meaningful business relationships, exchange referrals, and foster collaborations.',
+    name: 'ABOOBAKAR MEMON',
+    title: 'Founder Vice President',
+  },
+]
 
 export default function AboutPage() {
   return (
@@ -51,6 +83,38 @@ export default function AboutPage() {
               business and their commitment to the network.
             </p>
           </div>
+        </div>
+      </section>
+
+      {/* Founders */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16" aria-labelledby="founders-heading">
+        <h2 id="founders-heading" className="section-title text-center mb-4">
+          Our <span className="text-gradient-gold">Founders</span>
+        </h2>
+        <p className="section-subtitle text-center max-w-2xl mx-auto mb-10">
+          The visionaries behind UCCI — building unity, trust, and growth.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {FOUNDERS.map(founder => (
+            <div key={founder.name} className="glass-card p-6 text-center flex flex-col items-center">
+              <div className="relative w-36 h-36 mb-5 rounded-full overflow-hidden border-2 border-brand-gold/40 shrink-0">
+                <Image
+                  src={founder.image}
+                  alt={`${founder.name} — ${founder.title}`}
+                  fill
+                  className="object-cover"
+                  sizes="144px"
+                />
+              </div>
+              <p className="text-brand-silver text-sm leading-relaxed italic mb-4">
+                &ldquo;{founder.quote}&rdquo;
+              </p>
+              <h3 className="font-display text-base font-bold text-brand-white tracking-wide">
+                {founder.name}
+              </h3>
+              <p className="text-brand-gold text-xs font-medium mt-1">{founder.title}</p>
+            </div>
+          ))}
         </div>
       </section>
 
