@@ -163,14 +163,17 @@ function SlideForm({
       {/* CTA */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-brand-silver text-sm font-medium mb-1">CTA Button Text <span className="text-brand-silver/50">(opt)</span></label>
+          <label className="block text-brand-silver text-sm font-medium mb-1">CTA Button Text <span className="text-brand-silver/50">(needs URL too)</span></label>
           <input type="text" value={form.cta_text} onChange={e => setForm(f => ({ ...f, cta_text: e.target.value }))} className="input-field" placeholder="Join UCCI Today" />
         </div>
         <div>
-          <label className="block text-brand-silver text-sm font-medium mb-1">CTA URL <span className="text-brand-silver/50">(opt)</span></label>
+          <label className="block text-brand-silver text-sm font-medium mb-1">CTA URL <span className="text-brand-silver/50">(needs text too)</span></label>
           <input type="text" value={form.cta_url} onChange={e => setForm(f => ({ ...f, cta_url: e.target.value }))} className="input-field" placeholder="/join" />
         </div>
       </div>
+      {(form.cta_text.trim() || form.cta_url.trim()) && !(form.cta_text.trim() && form.cta_url.trim()) && (
+        <p className="text-yellow-300/90 text-xs">Fill both CTA text and URL, otherwise no button appears on the homepage.</p>
+      )}
 
       {/* Display Order + Active */}
       <div className="grid grid-cols-2 gap-3">
@@ -466,6 +469,15 @@ export function SlidesManagerClient({ slides: initial, adminId }: SlidesManagerC
                     </span>
                     <span className="text-brand-silver/50 text-xs">Order: {slide.display_order}</span>
                     {slide.mobile_image_url && <span className="text-xs px-2 py-0.5 rounded-full bg-brand-gold/15 text-brand-gold">Mobile</span>}
+                    {slide.cta_text?.trim() && slide.cta_url?.trim() ? (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-300" title={`${slide.cta_text} → ${slide.cta_url}`}>
+                        CTA: {slide.cta_text.length > 18 ? slide.cta_text.slice(0, 18) + '…' : slide.cta_text}
+                      </span>
+                    ) : (slide.cta_text?.trim() || slide.cta_url?.trim()) ? (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-300" title="Button needs BOTH text and URL to appear on homepage">
+                        CTA incomplete
+                      </span>
+                    ) : null}
                   </div>
                   <p className="text-brand-silver/60 text-xs mt-1 truncate">{slide.alt_text}</p>
                   {slide.subtitle && <p className="text-brand-silver text-sm truncate mt-0.5">{slide.subtitle}</p>}

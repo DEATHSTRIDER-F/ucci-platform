@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
@@ -32,6 +32,20 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
   const next = useCallback(() => {
     goTo((current + 1) % activeSlides.length)
   }, [current, activeSlides.length, goTo])
+
+  // Swipe navigation (mobile): arrows are hidden below md, so swipes take over
+  const touchStartX = useRef<number | null>(null)
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX
+  }, [])
+  const onTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (touchStartX.current === null) return
+    const dx = e.changedTouches[0].clientX - touchStartX.current
+    touchStartX.current = null
+    if (Math.abs(dx) < 50) return
+    if (dx < 0) next()
+    else prev()
+  }, [next, prev])
 
   // Auto-advance every 5 seconds; skip when tab hidden
   useEffect(() => {
@@ -72,7 +86,13 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
   const isFirst = current === 0
 
   return (
-    <div className="relative h-[92vh] min-h-[500px] overflow-hidden group" aria-label="Hero image carousel" role="region">
+    <div
+      className="relative h-[92vh] min-h-[500px] overflow-hidden group touch-pan-y"
+      aria-label="Hero image carousel"
+      role="region"
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+    >
 
       {/* Slide Image: desktop + mobile variants */}
       <div className={`absolute inset-0 transition-opacity duration-700 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
@@ -130,19 +150,19 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
       </div>
       )}
 
-      {/* Navigation Arrows */}
+      {/* Navigation Arrows: desktop only (md+), mobile uses swipe */}
       {activeSlides.length > 1 && (
         <>
           <button
             onClick={prev}
-            className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-brand-sapphire/80 border border-brand-gold/30 flex items-center justify-center text-brand-white hover:bg-brand-gold hover:text-brand-navy transition-all duration-200 opacity-0 group-hover:opacity-100 focus:opacity-100"
+            className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-brand-sapphire/80 border border-brand-gold/30 items-center justify-center text-brand-white hover:bg-brand-gold hover:text-brand-navy transition-all duration-200 opacity-0 group-hover:opacity-100 focus:opacity-100"
             aria-label="Previous slide"
           >
             <ChevronLeft className="w-6 h-6" />
           </button>
           <button
             onClick={next}
-            className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-brand-sapphire/80 border border-brand-gold/30 flex items-center justify-center text-brand-white hover:bg-brand-gold hover:text-brand-navy transition-all duration-200 opacity-0 group-hover:opacity-100 focus:opacity-100"
+            className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-brand-sapphire/80 border border-brand-gold/30 items-center justify-center text-brand-white hover:bg-brand-gold hover:text-brand-navy transition-all duration-200 opacity-0 group-hover:opacity-100 focus:opacity-100"
             aria-label="Next slide"
           >
             <ChevronRight className="w-6 h-6" />
