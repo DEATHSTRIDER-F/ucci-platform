@@ -19,7 +19,7 @@ const FOUNDERS = [
   {
     image: '/2.png',
     quote: 'At UCCI, we strengthen bonds and empower success. Fostering unity, trust, and growth within the Muslim business community. Together, we build stronger businesses and a brighter future.',
-    name: 'SAYEED NAMDAR',
+    name: 'SAYEED INAMDAR',
     title: 'Founder Vice President',
     position: '50% 20%',
   },
