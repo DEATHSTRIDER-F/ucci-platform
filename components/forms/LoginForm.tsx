@@ -55,7 +55,7 @@ export function LoginForm() {
           value={email}
           onChange={e => setEmail(e.target.value)}
           className="input-field"
-          placeholder="admin@ucci.in"
+          placeholder="email@example.com"
           required
           autoComplete="email"
         />

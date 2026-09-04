@@ -65,7 +65,7 @@ export function SignupForm() {
           value={fullName}
           onChange={e => setFullName(e.target.value)}
           className="input-field"
-          placeholder="John Doe"
+          placeholder="enter your name"
           required
           autoComplete="name"
         />
@@ -79,7 +79,7 @@ export function SignupForm() {
           value={email}
           onChange={e => setEmail(e.target.value)}
           className="input-field"
-          placeholder="admin@ucci.in"
+          placeholder="email@example.com"
           required
           autoComplete="email"
         />
