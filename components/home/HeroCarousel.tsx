@@ -65,8 +65,10 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
     slide.subtitle?.trim() ||
     (slide.cta_text?.trim() && slide.cta_url?.trim())
   )
-  const desktopSrc = slide.image_url.split('?')[0]
-  const mobileSrc = slide.mobile_image_url?.split('?')[0] ?? desktopSrc
+  // Keep the full image_url including ?t= cache-buster: uploads upsert to the
+  // same storage path, so the timestamp query is what defeats stale CDN/browser cache.
+  const desktopSrc = slide.image_url
+  const mobileSrc = slide.mobile_image_url ?? desktopSrc
   const isFirst = current === 0
 
   return (
@@ -78,7 +80,7 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
           src={desktopSrc}
           alt={slide.alt_text}
           fill
-          className="object-cover hidden md:block"
+          className="object-cover object-bottom hidden md:block"
           priority={isFirst}
           loading={isFirst ? undefined : 'lazy'}
           sizes="100vw"
@@ -88,7 +90,7 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
           src={mobileSrc}
           alt={slide.alt_text}
           fill
-          className="object-cover md:hidden"
+          className="object-cover object-bottom md:hidden"
           priority={isFirst}
           loading={isFirst ? undefined : 'lazy'}
           sizes="100vw"

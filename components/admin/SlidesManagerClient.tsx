@@ -75,7 +75,7 @@ function SlideForm({
             </div>
           ) : !isNew && currentImageUrl ? (
             <div className="relative w-32 h-20 rounded-lg overflow-hidden border-2 border-brand-sapphire flex-shrink-0">
-              <Image src={currentImageUrl.split('?')[0]} alt="Current desktop" fill className="object-cover" unoptimized />
+              <Image src={currentImageUrl} alt="Current desktop" fill className="object-cover" unoptimized />
               <div className="absolute inset-0 bg-brand-navy/40 flex items-center justify-center text-xs text-brand-silver">Current</div>
             </div>
           ) : null}
@@ -109,7 +109,7 @@ function SlideForm({
             </div>
           ) : showMobileCurrent ? (
             <div className="relative w-16 h-24 rounded-lg overflow-hidden border-2 border-brand-sapphire flex-shrink-0">
-              <Image src={currentMobileImageUrl!.split('?')[0]} alt="Current mobile" fill className="object-cover" unoptimized />
+              <Image src={currentMobileImageUrl!} alt="Current mobile" fill className="object-cover" unoptimized />
               <div className="absolute inset-0 bg-brand-navy/40 flex items-center justify-center text-[10px] text-brand-silver">Current</div>
             </div>
           ) : (
@@ -444,11 +444,11 @@ export function SlidesManagerClient({ slides: initial, adminId }: SlidesManagerC
                 {/* Thumbnails: desktop + mobile */}
                 <div className="flex items-end gap-2 flex-shrink-0">
                   <div className="relative w-24 h-16 rounded-lg overflow-hidden border border-brand-gold/20" title="Desktop / PC">
-                    <Image src={slide.image_url.split('?')[0]} alt={slide.alt_text} fill className="object-cover" sizes="96px" unoptimized />
+                    <Image src={slide.image_url} alt={slide.alt_text} fill className="object-cover" sizes="96px" unoptimized />
                   </div>
                   {slide.mobile_image_url ? (
                     <div className="relative w-10 h-16 rounded-lg overflow-hidden border border-brand-gold/40" title="Mobile">
-                      <Image src={slide.mobile_image_url.split('?')[0]} alt={`${slide.alt_text} mobile`} fill className="object-cover" sizes="40px" unoptimized />
+                      <Image src={slide.mobile_image_url} alt={`${slide.alt_text} mobile`} fill className="object-cover" sizes="40px" unoptimized />
                     </div>
                   ) : (
                     <div className="w-10 h-16 rounded-lg border border-dashed border-brand-silver/20 flex items-center justify-center text-[9px] text-brand-silver/40 text-center leading-tight" title="No mobile image, desktop will be used">
