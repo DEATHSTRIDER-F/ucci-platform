@@ -1,10 +1,8 @@
 'use client'
 
-import * as LucideIcons from 'lucide-react'
+import { Tag } from 'lucide-react'
 import { Icon as IconifyIcon } from '@iconify/react'
 import { cn } from '@/lib/utils/utils'
-
-type IconName = keyof typeof LucideIcons
 
 interface CategoryIconProps {
   name: string | null | undefined
@@ -37,15 +35,17 @@ function isIconifyName(name: string): boolean {
   return name.includes(':')
 }
 
+function normalizeLegacyIcon(name: string): string {
+  // "ShoppingBag" -> "lucide:shopping-bag" , "Building2" -> "lucide:building-2"
+  if (name.includes(':')) return name
+  const kebab = name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase()
+  return `lucide:${kebab}`
+}
+
 /**
- * Dynamically renders an icon by string name.
- * - Lucide PascalCase: "ShoppingBag" -> lucide-react
- * - Iconify: "lucide:shopping-bag" | "mdi:account-tie" | "tabler:building" -> Iconify CDN (200k+ icons)
- * Stores only `icon_name` + `icon_color` in DB.
- *
- * Usage:
- *   <CategoryIcon name="ShoppingBag" color="#3B82F6" size={20} withBackground />
- *   <CategoryIcon name="mdi:account-tie" color="#3B82F6" />
+ * Iconify-only renderer — Lucide bundle removed (was 1799 icons, ~400kb).
+ * - Iconify: "lucide:shopping-bag" | "mdi:account-tie" | "tabler:building" -> Iconify CDN
+ * - Legacy PascalCase "ShoppingBag" is normalized to "lucide:shopping-bag" for backward compat.
  */
 export function CategoryIcon({
   name,
@@ -59,9 +59,9 @@ export function CategoryIcon({
   const safeColor = color && isValidHex(color) ? color : '#D4AF37'
   const bg = hexToRgba(safeColor, bgOpacity)
 
-  // ─── Iconify path (contains :) ────────────────────────────────────────
-  if (name && isIconifyName(name)) {
-    const iconNode = <IconifyIcon icon={name} width={size} height={size} style={{ color: safeColor }} aria-hidden />
+  if (name) {
+    const iconName = isIconifyName(name) ? name : normalizeLegacyIcon(name)
+    const iconNode = <IconifyIcon icon={iconName} width={size} height={size} style={{ color: safeColor }} aria-hidden />
     if (withBackground) {
       return (
         <span
@@ -76,27 +76,7 @@ export function CategoryIcon({
     return <span className={cn('inline-flex items-center justify-center shrink-0', className)} aria-hidden>{iconNode}</span>
   }
 
-  // ─── Lucide path (PascalCase) ─────────────────────────────────────────
-  const IconComponent = (name ? (LucideIcons[name as IconName] as unknown as LucideIcons.LucideIcon) : null) as LucideIcons.LucideIcon | null
-  const isValidIcon = IconComponent !== null && (typeof IconComponent === 'object' || typeof IconComponent === 'function')
-
-  if (!name || !IconComponent || !isValidIcon) {
-    if (fallback) return <>{fallback}</>
-    const FallbackIcon = LucideIcons.Tag
-    if (withBackground) {
-      return (
-        <span
-          className={cn('inline-flex items-center justify-center rounded-xl shrink-0', className)}
-          style={{ backgroundColor: bg, width: size * 2, height: size * 2 }}
-          aria-hidden
-        >
-          <FallbackIcon size={size} style={{ color: safeColor }} />
-        </span>
-      )
-    }
-    return <FallbackIcon size={size} style={{ color: safeColor }} className={cn('shrink-0', className)} aria-hidden />
-  }
-
+  if (fallback) return <>{fallback}</>
   if (withBackground) {
     return (
       <span
@@ -104,12 +84,11 @@ export function CategoryIcon({
         style={{ backgroundColor: bg, width: size * 2, height: size * 2 }}
         aria-hidden
       >
-        <IconComponent size={size} style={{ color: safeColor }} />
+        <Tag size={size} style={{ color: safeColor }} />
       </span>
     )
   }
-
-  return <IconComponent size={size} style={{ color: safeColor }} className={cn('shrink-0', className)} aria-hidden />
+  return <Tag size={size} style={{ color: safeColor }} className={cn('shrink-0', className)} aria-hidden />
 }
 
 /** Helper for non-background inline usage */

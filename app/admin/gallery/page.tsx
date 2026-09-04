@@ -1,3 +1,6 @@
+﻿export const dynamic = 'force-dynamic'
+export const fetchCache = 'default-no-store'
+
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
@@ -93,3 +96,4 @@ export default async function ManageGalleryPage() {
     </div>
   )
 }
+

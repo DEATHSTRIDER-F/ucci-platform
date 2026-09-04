@@ -9,28 +9,33 @@ export const metadata: Metadata = {
   description: 'Browse all professional categories available in UCCI chapters across Pune and PCMC. Find vetted experts by specialty.',
 }
 
+export const dynamic = 'force-dynamic'
+export const fetchCache = 'default-no-store'
+
 export default async function CategoriesPage() {
   const supabase = await createServerSupabaseClient()
 
   const { data: categories } = await supabase
     .from('categories')
-    .select(`
-      id, name, slug, is_featured, meta_description, icon_name, icon_color,
-      members:profiles(count)
-    `)
+    .select('id, name, slug, is_featured, meta_description, icon_name, icon_color')
     .order('name')
 
-  // Count approved members per category
-  const categoriesWithCounts = await Promise.all(
-    (categories ?? []).map(async (cat) => {
-      const { count } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('category_id', cat.id)
-        .eq('status', 'approved')
-      return { ...cat, memberCount: count ?? 0 }
-    })
-  )
+  // Single aggregated count query — eliminates N+1 (was 20 extra round-trips)
+  const { data: countRows } = await supabase
+    .from('profiles')
+    .select('category_id')
+    .eq('status', 'approved')
+    .not('category_id', 'is', null)
+
+  const countMap = new Map<string, number>()
+  for (const row of countRows ?? []) {
+    if (row.category_id) countMap.set(row.category_id, (countMap.get(row.category_id) ?? 0) + 1)
+  }
+
+  const categoriesWithCounts = (categories ?? []).map(cat => ({
+    ...cat,
+    memberCount: countMap.get(cat.id) ?? 0,
+  }))
 
   return (
     <div className="min-h-screen bg-brand-navy">

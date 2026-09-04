@@ -1,3 +1,6 @@
+﻿export const dynamic = 'force-dynamic'
+export const fetchCache = 'default-no-store'
+
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import { EditGalleryFormClient } from '@/components/admin/EditGalleryFormClient'

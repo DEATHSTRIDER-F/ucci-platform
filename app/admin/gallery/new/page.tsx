@@ -3,6 +3,9 @@ import { redirect } from 'next/navigation'
 import { GalleryFormClient } from '@/components/admin/GalleryFormClient'
 import type { Metadata } from 'next'
 
+export const dynamic = 'force-dynamic'
+export const fetchCache = 'default-no-store'
+
 export const metadata: Metadata = { title: 'Add Gallery Post | UCCI Admin' }
 
 export default async function NewGalleryPostPage() {
@@ -24,3 +27,4 @@ export default async function NewGalleryPostPage() {
     </div>
   )
 }
+

@@ -1,34 +1,34 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { getCurrentProfile } from '@/lib/auth/getCurrentProfile'
 import Link from 'next/link'
 import { FileText, MessageSquare, Users, Calendar } from 'lucide-react'
 import type { Metadata } from 'next'
 
+export const dynamic = 'force-dynamic'
+export const fetchCache = 'default-no-store'
+
 export const metadata: Metadata = { title: 'Admin Dashboard | UCCI' }
 
 export default async function AdminDashboard() {
+  const profile = await getCurrentProfile()
   const supabase = await createServerSupabaseClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role, chapter_id')
-    .eq('id', user!.id)
-    .single()
-
   const isSuperAdmin = profile?.role === 'super_admin'
 
-  // Stats
-  let pendingQuery = supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('status', 'pending')
-  if (!isSuperAdmin && profile?.chapter_id) pendingQuery = pendingQuery.eq('chapter_id', profile.chapter_id)
-  const { count: pendingCount } = await pendingQuery
+  // Parallelize stats â€” was 4 sequential count queries
+  const pendingBase = supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('status', 'pending')
+  const inquiryBase = supabase.from('member_inquiries').select('*', { count: 'exact', head: true }).eq('status', 'pending')
 
-  let inquiryQuery = supabase.from('member_inquiries').select('*', { count: 'exact', head: true }).eq('status', 'pending')
-  if (!isSuperAdmin && profile?.chapter_id) inquiryQuery = inquiryQuery.eq('chapter_id', profile.chapter_id)
-  const { count: inquiryCount } = await inquiryQuery
+  const [pendingRes, inquiryRes, memberRes, contactRes] = await Promise.all([
+    (!isSuperAdmin && profile?.chapter_id ? pendingBase.eq('chapter_id', profile.chapter_id) : pendingBase),
+    (!isSuperAdmin && profile?.chapter_id ? inquiryBase.eq('chapter_id', profile.chapter_id) : inquiryBase),
+    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
+    isSuperAdmin ? supabase.from('contact_inquiries').select('*', { count: 'exact', head: true }) : Promise.resolve({ count: 0 } as { count: number }),
+  ])
 
-  const { count: memberCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('status', 'approved')
-  const { count: contactCount } = isSuperAdmin
-    ? await supabase.from('contact_inquiries').select('*', { count: 'exact', head: true })
-    : { count: 0 }
+  const pendingCount = (pendingRes as { count: number | null }).count
+  const inquiryCount = (inquiryRes as { count: number | null }).count
+  const memberCount = (memberRes as { count: number | null }).count
+  const contactCount = (contactRes as { count: number | null }).count
 
   const stats = [
     { label: 'Pending Applications', value: pendingCount ?? 0, icon: FileText, href: '/admin/applications', color: 'text-yellow-400' },
@@ -76,3 +76,4 @@ export default async function AdminDashboard() {
     </div>
   )
 }
+

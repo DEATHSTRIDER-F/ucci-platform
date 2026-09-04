@@ -3,6 +3,9 @@ import { redirect } from 'next/navigation'
 import { AreasManagerClient } from '@/components/admin/AreasManagerClient'
 import type { Metadata } from 'next'
 
+export const dynamic = 'force-dynamic'
+export const fetchCache = 'default-no-store'
+
 export const metadata: Metadata = { title: 'Areas & Chapters | UCCI Admin' }
 
 export default async function AreasPage() {
@@ -24,3 +27,4 @@ export default async function AreasPage() {
     </div>
   )
 }
+

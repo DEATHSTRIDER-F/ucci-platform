@@ -6,8 +6,7 @@ type CookieToSet = { name: string; value: string; options?: Record<string, unkno
 
 // Protected routes that require authentication
 const PROTECTED_PATHS = ['/admin', '/join', '/dashboard']
-// Admin-only routes
-const ADMIN_PATHS = ['/admin']
+
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -46,19 +45,7 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(loginUrl)
     }
 
-    // For admin paths, verify admin role
-    if (ADMIN_PATHS.some(path => pathname.startsWith(path))) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single()
-
-      if (!profile || (profile.role !== 'super_admin' && profile.role !== 'chapter_admin')) {
-        return NextResponse.redirect(new URL('/unauthorized', request.url))
-      }
-    }
-
+    // Role check is done in layout (cached) — proxy only verifies auth to avoid duplicate DB hit per tab switch
     return response
   } catch {
     const loginUrl = new URL('/login', request.url)
@@ -68,7 +55,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|images|api/webhooks).*)',
-  ],
+  matcher: ['/admin/:path*', '/join/:path*', '/dashboard/:path*'],
 }

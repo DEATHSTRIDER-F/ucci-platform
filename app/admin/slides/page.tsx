@@ -3,6 +3,9 @@ import { redirect } from 'next/navigation'
 import { SlidesManagerClient } from '@/components/admin/SlidesManagerClient'
 import type { Metadata } from 'next'
 
+export const dynamic = 'force-dynamic'
+export const fetchCache = 'default-no-store'
+
 export const metadata: Metadata = { title: 'Hero Slides | UCCI Admin' }
 
 export default async function SlidesPage() {
@@ -31,3 +34,4 @@ export default async function SlidesPage() {
     </div>
   )
 }
+

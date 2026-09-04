@@ -3,6 +3,9 @@ import { ApplicationReviewClient } from '@/components/admin/ApplicationReviewCli
 import type { Profile } from '@/lib/types/database'
 import type { Metadata } from 'next'
 
+export const dynamic = 'force-dynamic'
+export const fetchCache = 'default-no-store'
+
 export const metadata: Metadata = { title: 'Applications | UCCI Admin' }
 
 export default async function ApplicationsPage() {
@@ -56,3 +59,4 @@ export default async function ApplicationsPage() {
     </div>
   )
 }
+

@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { MapPin, Phone, Mail, ExternalLink } from 'lucide-react'
+import { Icon } from '@iconify/react'
 
 export function Footer() {
   const currentYear = new Date().getFullYear()
@@ -24,7 +25,7 @@ export function Footer() {
             </div>
             </Link>
             <p className="text-brand-silver text-sm leading-relaxed">
-              United Chamber of Commerce India — an elite business networking organization connecting professionals through exclusive referral chapters.
+              UNITED CHAMBER OF COMMERCE & INDUSTRIES — Connect | Collaborate | Grow. Trusted business community across 7 chapters in Pune & PCMC.
             </p>
           </div>
 
@@ -79,37 +80,27 @@ export function Footer() {
               <li className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 text-brand-gold mt-0.5 flex-shrink-0" />
                 <span className="text-brand-silver text-sm">
-                  Office No 202, Commercial Building 4 HM Royal, Next To Talab Masjid, Kondhwa, Pune - 411048
+                  Office No.202, Second Floor, Commercial Building 4, HM Royal Society, Opp. Ranka Jewellers, Talab, Kondhwa, Pune – 411048
                 </span>
               </li>
               <li className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-brand-gold flex-shrink-0" />
-                <a href="tel:8600241900" className="text-brand-silver text-sm hover:text-brand-gold transition-colors">
-                  8600241900
-                </a>
-              </li>
-              <li className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-brand-gold flex-shrink-0" />
-                <a href="tel:9552319748" className="text-brand-silver text-sm hover:text-brand-gold transition-colors">
-                  9552319748
-                </a>
-              </li>
-              <li className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-brand-gold flex-shrink-0" />
-                <a href="tel:8485878785" className="text-brand-silver text-sm hover:text-brand-gold transition-colors">
-                  8485878785
-                </a>
-              </li>
-              <li className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-brand-gold flex-shrink-0" />
-                <a href="tel:9923309468" className="text-brand-silver text-sm hover:text-brand-gold transition-colors">
-                  9923309468
-                </a>
-              </li>
-              <li className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-brand-gold flex-shrink-0" />
-                <a href="mailto:info@ucci.in" className="text-brand-silver text-sm hover:text-brand-gold transition-colors">
-                  info@ucci.in
+                <a href="mailto:info@ucciindia.org" className="text-brand-silver text-sm hover:text-brand-gold transition-colors">
+                  info@ucciindia.org
+                </a>
+              </li>
+              {['8600241900','9552319748','8485878785','9923309468'].map(num => (
+                <li key={num} className="flex items-center gap-2">
+                  <Phone className="w-4 h-4 text-brand-gold flex-shrink-0" />
+                  <a href={`tel:${num}`} className="text-brand-silver text-sm hover:text-brand-gold transition-colors">
+                    {num}
+                  </a>
+                </li>
+              ))}
+              <li className="flex items-center gap-2">
+                <Icon icon="mdi:instagram" width={16} height={16} className="text-brand-gold flex-shrink-0" />
+                <a href="https://instagram.com/ucci_muslimbizclub" target="_blank" rel="noopener noreferrer" className="text-brand-silver text-sm hover:text-brand-gold transition-colors">
+                  ucci_muslimbizclub
                 </a>
               </li>
             </ul>

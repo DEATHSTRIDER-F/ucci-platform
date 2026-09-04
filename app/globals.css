@@ -154,3 +154,12 @@
     background-clip: text;
   }
 }
+
+@keyframes glare {
+  0% { transform: translateX(180%) translateY(80%); }
+  100% { transform: translateX(-180%) translateY(-80%); }
+}
+@keyframes glare-r2l {
+  0% { transform: translateX(220%); }
+  100% { transform: translateX(-220%); }
+}

@@ -24,6 +24,7 @@ export function IconPicker({ value, color, onIconChange, onColorChange, label = 
   const [onlineLoading, setOnlineLoading] = useState(false)
   const [onlineError, setOnlineError] = useState<string | null>(null)
   const [onlineVisible, setOnlineVisible] = useState(ICONIFY_LIMIT)
+  // Bounded LRU cache — prevents unbounded memory growth (max 20 queries × 150 = 3k entries)
   const cacheRef = useRef<Map<string, string[]>>(new Map())
 
   useEffect(() => { setHexInput(color) }, [color])
@@ -52,6 +53,11 @@ export function IconPicker({ value, color, onIconChange, onColorChange, label = 
         if (!res.ok) throw new Error(`Iconify ${res.status}`)
         const data: { icons?: string[] } = await res.json()
         const icons = (data.icons ?? []).slice(0, ICONIFY_LIMIT)
+        // Evict oldest if over 20 entries
+        if (cacheRef.current.size >= 20) {
+          const firstKey = cacheRef.current.keys().next().value as string
+          cacheRef.current.delete(firstKey)
+        }
         cacheRef.current.set(effectiveQuery, icons)
         setOnlineIcons(icons)
       } catch (e) {

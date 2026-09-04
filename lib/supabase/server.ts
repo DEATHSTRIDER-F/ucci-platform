@@ -29,6 +29,9 @@ export async function createAdminClient() {
           }
         },
       },
+      global: {
+        fetch: (url: string, init?: RequestInit) => fetch(url, { ...(init ?? {}), cache: 'no-store' } as RequestInit),
+      },
     }
   )
 }
@@ -58,6 +61,9 @@ export async function createServerSupabaseClient() {
             // setAll called from Server Component
           }
         },
+      },
+      global: {
+        fetch: (url: string, init?: RequestInit) => fetch(url, { ...(init ?? {}), cache: 'no-store' } as RequestInit),
       },
     }
   )

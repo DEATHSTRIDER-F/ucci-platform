@@ -3,6 +3,9 @@ import { redirect } from 'next/navigation'
 import { AdminsManagerClient } from '@/components/admin/AdminsManagerClient'
 import type { Metadata } from 'next'
 
+export const dynamic = 'force-dynamic'
+export const fetchCache = 'default-no-store'
+
 export const metadata: Metadata = { title: 'Chapter Admins | UCCI Admin' }
 
 export default async function AdminsPage() {
@@ -32,7 +35,7 @@ export default async function AdminsPage() {
       : (ch.area as { name: string } | null),
   }))
 
-  // Normalize Supabase join arrays → AdminItem shape
+  // Normalize Supabase join arrays â†’ AdminItem shape
   const admins = (adminsRaw ?? []).map(admin => {
     const rawChapter = Array.isArray(admin.chapter) ? admin.chapter[0] : admin.chapter
     const rawArea = rawChapter && (Array.isArray((rawChapter as { area?: unknown }).area) ? (rawChapter as { area?: unknown[] }).area![0] : (rawChapter as { area?: unknown }).area)
@@ -53,3 +56,4 @@ export default async function AdminsPage() {
     </div>
   )
 }
+

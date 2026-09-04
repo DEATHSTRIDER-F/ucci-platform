@@ -4,8 +4,14 @@ import { useState } from 'react'
 import { createCategory, updateCategory, deleteCategory } from '@/app/actions/categories'
 import { Plus, Trash2, Loader2, Edit2, Star, AlertCircle, CheckCircle } from 'lucide-react'
 import { CategoryIcon } from '@/components/category-icon'
-import { CategoryForm, type CategoryFormState } from '@/components/admin/CategoryForm'
+import type { CategoryFormState } from '@/components/admin/CategoryForm'
 import type { Category } from '@/lib/types/database'
+import dynamic from 'next/dynamic'
+
+const CategoryForm = dynamic(() => import('@/components/admin/CategoryForm').then(m => m.CategoryForm), {
+  ssr: false,
+  loading: () => <div className="glass-card p-8 flex items-center justify-center text-brand-silver/60 text-sm">Loading form…</div>,
+})
 
 interface CategoriesManagerClientProps {
   categories: Category[]

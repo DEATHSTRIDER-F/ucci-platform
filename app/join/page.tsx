@@ -8,8 +8,8 @@ import { Globe, Linkedin, Phone, MapPin, Building2, Tag, Users, User } from 'luc
 import type { Profile } from '@/lib/types/database'
 
 export const metadata: Metadata = {
-  title: 'Join UCCI | Apply for Membership',
-  description: 'Apply to join a UCCI chapter. Fill in your business details, select your chapter and category, and schedule a vetting interview.',
+  title: 'Join UCCI | Start a Chapter — Curated Onboarding',
+  description: 'Start a Chapter: inquiry goes to UCCI Admin (info@ucciindia.org) + schedule a call. Curated creation, vetted leads, Rs. 6k + 6k venue offline. Office 202 HM Royal, Kondhwa Pune.',
 }
 
 export default async function JoinPage() {
@@ -209,11 +209,33 @@ export default async function JoinPage() {
       <div className="page-hero py-10">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="section-title">
-            Join <span className="text-gradient-gold">UCCI</span>
+            Start a <span className="text-gradient-gold">Chapter</span> — Join UCCI
           </h1>
           <p className="section-subtitle max-w-2xl mx-auto">
-            Complete your member profile and schedule your vetting interview to secure your exclusive seat in a UCCI chapter.
+            Curated onboarding: fill the inquiry, schedule a call with leadership, and Admin creates your profile. Leads go to Admin for vetting.
           </p>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <span className="badge">Rs. 6,000 Membership + Rs. 6,000 Venue</span>
+            <span className="badge">Offline payments — no gateway</span>
+            <span className="badge">No Featured / Banner ads yet</span>
+          </div>
+          <div className="mt-4 flex flex-wrap justify-center gap-3">
+            <a href="https://wa.me/918600241900" target="_blank" rel="noopener noreferrer" className="btn-primary text-sm">WhatsApp +91-86002 41900</a>
+            <a href="mailto:info@ucciindia.org" className="btn-outline text-sm">info@ucciindia.org</a>
+          </div>
+        </div>
+      </div>
+
+      {/* Curated flow explainer */}
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+        <div className="glass-card p-6">
+          <h2 className="font-display font-bold text-brand-gold mb-3">How joining works (Form 1)</h2>
+          <ul className="space-y-2 text-brand-silver text-sm list-disc pl-5">
+            <li><strong className="text-brand-white">Inquiry → Admin:</strong> Your form is sent to UCCI Admin (info@ucciindia.org) — not directly to a member.</li>
+            <li><strong className="text-brand-white">Call with Leadership:</strong> Admin schedules a call to confirm chapter/locality fit across 7 chapters.</li>
+            <li><strong className="text-brand-white">Admin creates profile:</strong> No self-service dashboard yet — curated, manual creation.</li>
+            <li><strong className="text-brand-white">Fees offline:</strong> Rs. 6k + Rs. 6k venue, tracked manually. No revenue share.</li>
+          </ul>
         </div>
       </div>
 

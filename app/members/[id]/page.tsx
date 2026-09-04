@@ -9,6 +9,9 @@ import { LeadInquiryForm } from '@/components/forms/LeadInquiryForm'
 import type { Profile } from '@/lib/types/database'
 import type { Metadata } from 'next'
 
+export const dynamic = 'force-dynamic'
+export const fetchCache = 'default-no-store'
+
 interface Props {
   params: Promise<{ id: string }>
 }

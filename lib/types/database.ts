@@ -18,6 +18,7 @@ export interface Chapter {
   name: string
   slug: string
   area_id: string
+  description: string | null
   area?: Area
   created_at: string
   updated_at: string

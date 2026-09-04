@@ -2,6 +2,9 @@ import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { InquiriesClient } from '@/components/admin/InquiriesClient'
 import type { Metadata } from 'next'
 
+export const dynamic = 'force-dynamic'
+export const fetchCache = 'default-no-store'
+
 export const metadata: Metadata = { title: 'Lead Inquiries | UCCI Admin' }
 
 export default async function InquiriesPage() {
@@ -31,3 +34,4 @@ export default async function InquiriesPage() {
     </div>
   )
 }
+

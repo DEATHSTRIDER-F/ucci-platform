@@ -2,6 +2,9 @@ import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { CategoriesManagerClient } from '@/components/admin/CategoriesManagerClient'
 import type { Metadata } from 'next'
 
+export const dynamic = 'force-dynamic'
+export const fetchCache = 'default-no-store'
+
 export const metadata: Metadata = { title: 'Categories | UCCI Admin' }
 
 export default async function CategoriesPage() {
@@ -20,3 +23,4 @@ export default async function CategoriesPage() {
     </div>
   )
 }
+

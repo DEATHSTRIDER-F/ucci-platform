@@ -26,6 +26,7 @@ CREATE TABLE chapters (
   name        VARCHAR(100) NOT NULL,
   slug        VARCHAR(100) NOT NULL,
   area_id     UUID NOT NULL REFERENCES areas(id) ON DELETE RESTRICT,
+  description TEXT,
   created_at  TIMESTAMPTZ DEFAULT NOW(),
   updated_at  TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE (area_id, slug)

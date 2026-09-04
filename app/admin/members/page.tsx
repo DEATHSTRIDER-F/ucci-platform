@@ -1,5 +1,9 @@
+﻿export const dynamic = 'force-dynamic'
+export const fetchCache = 'default-no-store'
+
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { getCurrentProfile } from '@/lib/auth/getCurrentProfile'
 import Link from 'next/link'
 import { Building2, Tag, ChevronRight } from 'lucide-react'
 
@@ -8,26 +12,15 @@ export const metadata = {
 }
 
 export default async function AdminMembersPage() {
+  const profile = await getCurrentProfile()
+  if (!profile) redirect('/login')
+  if (profile.role !== 'super_admin' && profile.role !== 'chapter_admin') redirect('/unauthorized')
   const supabase = await createServerSupabaseClient()
-
-  // Get auth user
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
-
-  // Get profile to check role and chapter
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role, chapter_id')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile || (profile.role !== 'super_admin' && profile.role !== 'chapter_admin')) {
-    redirect('/unauthorized')
-  }
-
   const isSuperAdmin = profile.role === 'super_admin'
 
-  // Fetch approved members
+  // Fetch approved members — paginated to avoid loading thousands at once
+  const page = 1
+  const pageSize = 50
   let query = supabase
     .from('profiles')
     .select(`
@@ -38,17 +31,19 @@ export default async function AdminMembersPage() {
       created_at,
       chapter:chapters(id, name, area:areas(name)),
       category:categories(name)
-    `)
+    `, { count: 'exact' })
     .eq('status', 'approved')
     .neq('role', 'super_admin')
     .neq('role', 'chapter_admin')
+    .order('created_at', { ascending: false })
+    .range((page - 1) * pageSize, page * pageSize - 1)
 
   // Apply scope
   if (!isSuperAdmin && profile.chapter_id) {
     query = query.eq('chapter_id', profile.chapter_id)
   }
 
-  const { data: members, error } = await query
+  const { data: members, error, count } = await query
 
   if (error) {
     return (
@@ -68,7 +63,7 @@ export default async function AdminMembersPage() {
           </p>
         </div>
         <div className="bg-brand-sapphire px-4 py-2 rounded-lg border border-brand-gold/20 text-brand-gold font-medium">
-          {members.length} Total Members
+          {count ?? members.length} Total Members {count !== null && count > pageSize ? `· showing ${members.length}` : ''}
         </div>
       </div>
 

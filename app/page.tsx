@@ -11,47 +11,31 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = buildSiteMetadata()
 
+export const dynamic = 'force-dynamic'
+export const fetchCache = 'default-no-store'
+
 export default async function HomePage() {
   const supabase = await createServerSupabaseClient()
 
-  // Fetch hero slides (active only for public)
-  const { data: heroSlides } = await supabase
-    .from('hero_slides')
-    .select('*')
-    .eq('is_active', true)
-    .order('display_order')
+  // Parallelize — was 5 sequential round-trips (~800ms), now 1 batch
+  const [heroRes, featRes, areasRes, showcaseRes, countRes] = await Promise.all([
+    supabase.from('hero_slides').select('*').eq('is_active', true).order('display_order'),
+    supabase.from('categories').select('id, name, slug, meta_description').eq('is_featured', true).order('name').limit(5),
+    supabase.from('areas').select('id, name, slug, chapters(id, name, slug)').order('name'),
+    supabase
+      .from('profiles')
+      .select(`id, full_name, business_name, logo_url, brand_tagline, category:categories(name, slug), chapter:chapters(name, area:areas(name))`)
+      .eq('status', 'approved')
+      .order('created_at', { ascending: false })
+      .limit(6),
+    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
+  ])
 
-  // Fetch featured categories
-  const { data: featuredCategories } = await supabase
-    .from('categories')
-    .select('id, name, slug, meta_description')
-    .eq('is_featured', true)
-    .order('name')
-    .limit(5)
-
-  // Fetch areas with chapter counts
-  const { data: areas } = await supabase
-    .from('areas')
-    .select('id, name, slug, chapters(id, name, slug)')
-    .order('name')
-
-  // Fetch recent approved members (showcase)
-  const { data: showcaseMembers } = await supabase
-    .from('profiles')
-    .select(`
-      id, full_name, business_name, logo_url, brand_tagline,
-      category:categories(name, slug),
-      chapter:chapters(name, area:areas(name))
-    `)
-    .eq('status', 'approved')
-    .order('created_at', { ascending: false })
-    .limit(6)
-
-  // Stats
-  const { count: memberCount } = await supabase
-    .from('profiles')
-    .select('*', { count: 'exact', head: true })
-    .eq('status', 'approved')
+  const heroSlides = heroRes.data
+  const featuredCategories = featRes.data
+  const areas = areasRes.data
+  const showcaseMembers = showcaseRes.data
+  const memberCount = countRes.count
 
   return (
     <>

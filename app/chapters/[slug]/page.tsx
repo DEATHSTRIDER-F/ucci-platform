@@ -7,6 +7,9 @@ import { User, ArrowLeft, Tag } from 'lucide-react'
 import type { Chapter, Area } from '@/lib/types/database'
 import type { Metadata } from 'next'
 
+export const dynamic = 'force-dynamic'
+export const fetchCache = 'default-no-store'
+
 interface Props {
   params: Promise<{ slug: string }>
 }

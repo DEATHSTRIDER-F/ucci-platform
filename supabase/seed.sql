@@ -22,6 +22,15 @@ INSERT INTO chapters (id, name, slug, area_id) VALUES
   ('c1000000-0000-0000-0000-000000000006', 'East', 'east', 'a1000000-0000-0000-0000-000000000002'),
   ('c1000000-0000-0000-0000-000000000007', 'West', 'west', 'a1000000-0000-0000-0000-000000000002');
 
+-- ─── Chapter locality descriptions (Form 1) ─────────────────────────────────
+UPDATE chapters SET description = 'Includes localities within Kharadi, Wadgaosheri, Mundhwa, Hadapsar' WHERE id = 'c1000000-0000-0000-0000-000000000001';
+UPDATE chapters SET description = 'Includes localities within Kothrud, Aundh, Baner, Pashan, Bavdhan, Warje' WHERE id = 'c1000000-0000-0000-0000-000000000002';
+UPDATE chapters SET description = 'Includes localities within Viman Nagar, Lohegaon, Dhanori, Vishrantwadi, Wagholi' WHERE id = 'c1000000-0000-0000-0000-000000000003';
+UPDATE chapters SET description = 'Includes localities within Kondhwa, Mohammadwadi, Undri, Pisoli, Wanwadi, Katraj, Bibvewadi, Handewadi' WHERE id = 'c1000000-0000-0000-0000-000000000004';
+UPDATE chapters SET description = 'Includes localities within Peth areas, Camp, Swargate, Koregaon Park, Ghorpadi' WHERE id = 'c1000000-0000-0000-0000-000000000005';
+UPDATE chapters SET description = 'Includes localities within Chikali, Bhosari, Alandi, Moshi' WHERE id = 'c1000000-0000-0000-0000-000000000006';
+UPDATE chapters SET description = 'Includes localities within Wakad, Hinjewadi, Ravet, Nigdi, Dehu Road' WHERE id = 'c1000000-0000-0000-0000-000000000007';
+
 -- ─── Categories (20 realistic Indian business categories) ─────────────────────
 INSERT INTO categories (name, slug, is_featured, meta_description) VALUES
   ('Chartered Accountant',       'chartered-accountant',       TRUE,  'Find verified Chartered Accountants in your UCCI chapter for tax, audit, and financial advisory services.'),

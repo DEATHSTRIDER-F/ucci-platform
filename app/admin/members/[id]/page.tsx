@@ -1,3 +1,6 @@
+﻿export const dynamic = 'force-dynamic'
+export const fetchCache = 'default-no-store'
+
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import Image from 'next/image'
@@ -129,7 +132,7 @@ export default async function AdminMemberProfilePage({ params }: Props) {
                 )}
                 {p.chapter && (
                   <div className="badge flex items-center gap-1">
-                    <Users className="w-3 h-3" /> UCCI {p.chapter.name} — {p.chapter.area?.name}
+                    <Users className="w-3 h-3" /> UCCI {p.chapter.name} â€” {p.chapter.area?.name}
                   </div>
                 )}
               </div>

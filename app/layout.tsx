@@ -4,7 +4,8 @@ import './globals.css'
 import { Header } from '@/components/nav/Header'
 import { Footer } from '@/components/nav/Footer'
 import { buildSiteMetadata } from '@/lib/seo/metadata'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { getNavData } from '@/lib/data/nav'
+import { getCurrentProfile, getCurrentUser } from '@/lib/auth/getCurrentProfile'
 
 import { LenisProvider } from '@/components/LenisProvider'
 
@@ -22,37 +23,16 @@ const outfit = Outfit({
 
 export const metadata: Metadata = buildSiteMetadata()
 
+export const dynamic = 'force-dynamic'
+export const fetchCache = 'default-no-store'
+
 export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  // Fetch session and profile for the header
-  const supabase = await createServerSupabaseClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  let profile: { id: string; full_name: string; email: string; role: string; status: string; logo_url: string | null } | null = null
-  if (user) {
-    const { data } = await supabase
-      .from('profiles')
-      .select('id, full_name, email, role, status, logo_url')
-      .eq('id', user.id)
-      .single()
-    profile = data as { id: string; full_name: string; email: string; role: string; status: string; logo_url: string | null }
-  }
-
-  // Fetch featured categories and chapter hierarchy for nav
-  const { data: featuredCategories } = await supabase
-    .from('categories')
-    .select('id, name, slug')
-    .eq('is_featured', true)
-    .order('name')
-    .limit(5)
-
-  const { data: areasWithChapters } = await supabase
-    .from('areas')
-    .select('id, name, slug, chapters(id, name, slug)')
-    .order('name')
+  const [user, profile] = await Promise.all([getCurrentUser(), getCurrentProfile()])
+  const { featuredCategories, areasWithChapters } = await getNavData()
 
   return (
     <html lang="en" className={`${inter.variable} ${outfit.variable}`}>

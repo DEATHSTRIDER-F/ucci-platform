@@ -151,6 +151,9 @@ export function Header({ profile, featuredCategories, areasWithChapters }: Heade
                     <Link href="/about" className="block px-4 py-2 text-sm text-brand-silver hover:text-brand-gold hover:bg-brand-navy/50 transition-colors">
                       Our Story
                     </Link>
+                    <Link href="/about#why-ucci" className="block px-4 py-2 text-sm text-brand-silver hover:text-brand-gold hover:bg-brand-navy/50 transition-colors">
+                      Why UCCI
+                    </Link>
                     <Link href="/about#how-it-works" className="block px-4 py-2 text-sm text-brand-silver hover:text-brand-gold hover:bg-brand-navy/50 transition-colors">
                       How It Works
                     </Link>
@@ -289,7 +292,7 @@ export function Header({ profile, featuredCategories, areasWithChapters }: Heade
                 </button>
               </div>
             ) : (
-              <Link href="/login" className="btn-primary text-sm py-2 px-4">
+              <Link href="/login" className="btn-primary text-sm !py-2.5 !px-6 inline-flex items-center justify-center leading-none">
                 Sign In
               </Link>
             )}
@@ -336,6 +339,7 @@ export function Header({ profile, featuredCategories, areasWithChapters }: Heade
           <nav className="max-w-7xl mx-auto px-4 py-4 flex flex-col gap-1" aria-label="Mobile navigation">
             <Link href="/" className="block py-3 px-3 text-brand-silver hover:text-brand-gold rounded-lg hover:bg-brand-navy/50 transition-colors">Home</Link>
             <Link href="/about" className="block py-3 px-3 text-brand-silver hover:text-brand-gold rounded-lg hover:bg-brand-navy/50 transition-colors">Our Story</Link>
+            <Link href="/about#why-ucci" className="block py-3 px-3 text-brand-silver hover:text-brand-gold rounded-lg hover:bg-brand-navy/50 transition-colors">Why UCCI</Link>
             <Link href="/about#how-it-works" className="block py-3 px-3 text-brand-silver hover:text-brand-gold rounded-lg hover:bg-brand-navy/50 transition-colors">How It Works</Link>
 
             {/* Mobile Chapters */}
@@ -384,7 +388,7 @@ export function Header({ profile, featuredCategories, areasWithChapters }: Heade
                   </button>
                 </div>
               ) : (
-                <Link href="/login" className="btn-primary block text-center mx-3">Sign In</Link>
+                <Link href="/login" className="btn-primary block text-center mx-3 !py-3 flex items-center justify-center leading-none">Sign In</Link>
               )}
             </div>
           </nav>
