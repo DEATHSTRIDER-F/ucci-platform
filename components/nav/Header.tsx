@@ -118,8 +118,8 @@ export function Header({ profile, featuredCategories, areasWithChapters }: Heade
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 flex-shrink-0">
             {/* <div className="w-10 h-10 rounded-full bg-brand-gold flex items-center justify-center font-display font-bold text-brand-navy text-lg"> */}
-            <div className="h-full w-auto">
-              <Image src="/ucci.webp" alt="Logo" className="opacity-100 w-24" width={110} height={40} />
+            <div className="h-full w-auto flex items-center">
+              <Image src="/ucci.webp" alt="UCCI logo" className="opacity-100 h-16 w-auto" width={320} height={160} priority />
             </div>
             {/* <span className="font-display font-bold text-brand-white text-xl hidden sm:block">
               <span className="text-brand-gold">UCCI</span>
