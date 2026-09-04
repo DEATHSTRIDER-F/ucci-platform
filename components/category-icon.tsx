@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import { Tag } from 'lucide-react'
 import { Icon as IconifyIcon } from '@iconify/react'
 import { cn } from '@/lib/utils/utils'
@@ -47,7 +48,7 @@ function normalizeLegacyIcon(name: string): string {
  * - Iconify: "lucide:shopping-bag" | "mdi:account-tie" | "tabler:building" -> Iconify CDN
  * - Legacy PascalCase "ShoppingBag" is normalized to "lucide:shopping-bag" for backward compat.
  */
-export function CategoryIcon({
+export const CategoryIcon = memo(function CategoryIcon({
   name,
   color,
   size = 20,
@@ -89,7 +90,7 @@ export function CategoryIcon({
     )
   }
   return <Tag size={size} style={{ color: safeColor }} className={cn('shrink-0', className)} aria-hidden />
-}
+})
 
 /** Helper for non-background inline usage */
 export function CategoryIconInline(props: Omit<CategoryIconProps, 'withBackground'>) {

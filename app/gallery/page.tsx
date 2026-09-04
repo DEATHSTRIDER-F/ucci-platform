@@ -7,7 +7,6 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = buildGalleryMetadata()
 
 export const dynamic = 'force-dynamic'
-export const fetchCache = 'default-no-store'
 
 export default async function GalleryPage() {
   const supabase = await createServerSupabaseClient()

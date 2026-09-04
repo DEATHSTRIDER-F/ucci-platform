@@ -246,7 +246,7 @@ export function OnboardingForm({ areas, categories }: OnboardingFormProps) {
               {areas.map(area => (
                 <optgroup key={area.id} label={area.name}>
                   {area.chapters.map(ch => (
-                    <option key={ch.id} value={ch.id}>{area.name} — {ch.name}</option>
+                    <option key={ch.id} value={ch.id}>{area.name} - {ch.name}</option>
                   ))}
                 </optgroup>
               ))}

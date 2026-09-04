@@ -190,7 +190,7 @@ export function AvailabilityManager({ adminId, blockedDates, slots }: Availabili
                   <div>
                     <div className="text-brand-white text-sm">{bd.blocked_date}</div>
                     <div className="text-brand-silver/60 text-xs">
-                      {bd.start_time ? `${bd.start_time}${bd.end_time ? ` – ${bd.end_time}` : '+'}` : 'All day'}
+                      {bd.start_time ? `${bd.start_time}${bd.end_time ? ` - ${bd.end_time}` : '+'}` : 'All day'}
                       {bd.reason && ` · ${bd.reason}`}
                     </div>
                   </div>

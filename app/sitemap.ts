@@ -2,6 +2,9 @@ import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { absoluteUrl } from '@/lib/utils/absoluteUrl'
 import type { MetadataRoute } from 'next'
 
+// Sitemap is hit by every bot crawl: cache for 1h instead of re-querying 4 tables per hit
+export const revalidate = 3600
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const supabase = await createServerSupabaseClient()
 

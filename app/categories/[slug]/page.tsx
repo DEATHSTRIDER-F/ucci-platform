@@ -9,7 +9,6 @@ import type { Category } from '@/lib/types/database'
 import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
-export const fetchCache = 'default-no-store'
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -21,7 +20,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const { data: category } = await supabase
     .from('categories')
-    .select('*')
+    .select('id, name, slug, meta_description, icon_name, icon_color')
     .eq('slug', slug)
     .single()
 
@@ -29,7 +28,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const { count } = await supabase
     .from('profiles')
-    .select('*', { count: 'exact', head: true })
+    .select('id', { count: 'exact', head: true })
     .eq('category_id', category.id)
     .eq('status', 'approved')
 
@@ -42,7 +41,7 @@ export default async function CategoryPage({ params }: Props) {
 
   const { data: category } = await supabase
     .from('categories')
-    .select('*')
+    .select('id, name, slug, meta_description, icon_name, icon_color')
     .eq('slug', slug)
     .single()
 
@@ -69,7 +68,7 @@ export default async function CategoryPage({ params }: Props) {
             <CategoryIcon
               name={(category as unknown as { icon_name?: string | null }).icon_name}
               color={(category as unknown as { icon_color?: string | null }).icon_color}
-              size={28}
+              size={34}
             />
             <h1 className="section-title !mb-0">
               <span className="text-gradient-gold">{category.name}</span> Professionals

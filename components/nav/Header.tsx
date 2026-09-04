@@ -100,7 +100,7 @@ export function Header({ profile, featuredCategories, areasWithChapters }: Heade
   const handleLogout = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
-    router.push('/')
+    router.replace('/')
     router.refresh()
   }
 

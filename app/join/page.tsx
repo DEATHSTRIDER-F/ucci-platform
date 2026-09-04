@@ -8,7 +8,7 @@ import { Globe, Linkedin, Phone, MapPin, Building2, Tag, Users, User } from 'luc
 import type { Profile } from '@/lib/types/database'
 
 export const metadata: Metadata = {
-  title: 'Join UCCI | Start a Chapter — Curated Onboarding',
+  title: 'Join UCCI | Start a Chapter: Curated Onboarding',
   description: 'Start a Chapter: inquiry goes to UCCI Admin (info@ucciindia.org) + schedule a call. Curated creation, vetted leads, Rs. 6k + 6k venue offline. Office 202 HM Royal, Kondhwa Pune.',
 }
 
@@ -21,7 +21,8 @@ export default async function JoinPage() {
     const { data: profile } = await supabase
       .from('profiles')
       .select(`
-        *,
+        id, status, logo_url, business_name, full_name, brand_tagline, bio, phone,
+        website_url, linkedin_url, business_address, ideal_referral_target, referral_triggers,
         chapter:chapters(id, name, slug, area:areas(id, name, slug)),
         category:categories(id, name, slug)
       `)
@@ -96,7 +97,7 @@ export default async function JoinPage() {
                           href={`/chapters/${p.chapter.area?.slug}-${p.chapter.slug}`}
                           className="badge flex items-center gap-1"
                         >
-                          <Users className="w-3 h-3" /> UCCI {p.chapter.name} — {p.chapter.area?.name}
+                          <Users className="w-3 h-3" /> UCCI {p.chapter.name}, {p.chapter.area?.name}
                         </Link>
                       )}
                     </div>
@@ -209,14 +210,14 @@ export default async function JoinPage() {
       <div className="page-hero py-10">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="section-title">
-            Start a <span className="text-gradient-gold">Chapter</span> — Join UCCI
+            Start a <span className="text-gradient-gold">Chapter</span>: Join UCCI
           </h1>
           <p className="section-subtitle max-w-2xl mx-auto">
             Curated onboarding: fill the inquiry, schedule a call with leadership, and Admin creates your profile. Leads go to Admin for vetting.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <span className="badge">Rs. 6,000 Membership + Rs. 6,000 Venue</span>
-            <span className="badge">Offline payments — no gateway</span>
+            <span className="badge">Offline payments: no gateway</span>
             <span className="badge">No Featured / Banner ads yet</span>
           </div>
           <div className="mt-4 flex flex-wrap justify-center gap-3">
@@ -231,9 +232,9 @@ export default async function JoinPage() {
         <div className="glass-card p-6">
           <h2 className="font-display font-bold text-brand-gold mb-3">How joining works (Form 1)</h2>
           <ul className="space-y-2 text-brand-silver text-sm list-disc pl-5">
-            <li><strong className="text-brand-white">Inquiry → Admin:</strong> Your form is sent to UCCI Admin (info@ucciindia.org) — not directly to a member.</li>
+            <li><strong className="text-brand-white">Inquiry to Admin:</strong> Your form is sent to UCCI Admin (info@ucciindia.org), not directly to a member.</li>
             <li><strong className="text-brand-white">Call with Leadership:</strong> Admin schedules a call to confirm chapter/locality fit across 7 chapters.</li>
-            <li><strong className="text-brand-white">Admin creates profile:</strong> No self-service dashboard yet — curated, manual creation.</li>
+            <li><strong className="text-brand-white">Admin creates profile:</strong> No self-service dashboard yet, curated manual creation.</li>
             <li><strong className="text-brand-white">Fees offline:</strong> Rs. 6k + Rs. 6k venue, tracked manually. No revenue share.</li>
           </ul>
         </div>

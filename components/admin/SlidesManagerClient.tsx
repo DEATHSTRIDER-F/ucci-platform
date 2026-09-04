@@ -38,41 +38,50 @@ interface SlideFormProps {
   imageFile: File | null
   imagePreview: string | null
   imageError: string
+  mobileImageFile: File | null
+  mobileImagePreview: string | null
+  mobileImageError: string
+  mobileRemoved: boolean
   errors: Record<string, string>
   loading: string | null
   currentImageUrl?: string
+  currentMobileImageUrl?: string | null
   onImageSelect: (e: React.ChangeEvent<HTMLInputElement>) => void
+  onMobileImageSelect: (e: React.ChangeEvent<HTMLInputElement>) => void
+  onRemoveMobile: () => void
   onSave: () => void
   onCancel: () => void
 }
 
 function SlideForm({
   isNew, slideId, form, setForm, imageFile, imagePreview, imageError,
-  errors, loading, currentImageUrl, onImageSelect, onSave, onCancel,
+  mobileImageFile, mobileImagePreview, mobileImageError, mobileRemoved,
+  errors, loading, currentImageUrl, currentMobileImageUrl, onImageSelect, onMobileImageSelect, onRemoveMobile, onSave, onCancel,
 }: SlideFormProps) {
+  const showMobileCurrent = !isNew && currentMobileImageUrl && !mobileImagePreview && !mobileRemoved
   return (
     <div className="glass-card p-6 space-y-4 border-brand-gold/40">
       <h3 className="font-display font-semibold text-brand-white">{isNew ? 'New Slide' : 'Edit Slide'}</h3>
 
-      {/* Image Upload */}
+      {/* Desktop / PC Image Upload */}
       <div>
         <label className="block text-brand-silver text-sm font-medium mb-2">
-          Slide Image {isNew ? '*' : '(leave blank to keep existing)'}
+          Desktop / PC Image {isNew ? '*' : '(leave blank to keep existing)'} <span className="text-brand-silver/50">(landscape, shown on md screens and up)</span>
         </label>
         <div className="flex items-start gap-4">
           {imagePreview ? (
             <div className="relative w-32 h-20 rounded-lg overflow-hidden border-2 border-brand-gold/40 flex-shrink-0">
-              <Image src={imagePreview} alt="Preview" fill className="object-cover" />
+              <Image src={imagePreview} alt="Desktop preview" fill className="object-cover" />
             </div>
           ) : !isNew && currentImageUrl ? (
             <div className="relative w-32 h-20 rounded-lg overflow-hidden border-2 border-brand-sapphire flex-shrink-0">
-              <Image src={currentImageUrl.split('?')[0]} alt="Current" fill className="object-cover" unoptimized />
+              <Image src={currentImageUrl.split('?')[0]} alt="Current desktop" fill className="object-cover" unoptimized />
               <div className="absolute inset-0 bg-brand-navy/40 flex items-center justify-center text-xs text-brand-silver">Current</div>
             </div>
           ) : null}
           <div>
             <label htmlFor={isNew ? 'slide_img_new' : `slide_img_${slideId}`} className="btn-outline text-sm py-2 px-4 cursor-pointer inline-flex items-center gap-2">
-              <Upload className="w-4 h-4" /> {imageFile ? 'Change Image' : 'Upload Image'}
+              <Upload className="w-4 h-4" /> {imageFile ? 'Change Desktop Image' : 'Upload Desktop Image'}
             </label>
             <input
               id={isNew ? 'slide_img_new' : `slide_img_${slideId}`}
@@ -84,6 +93,50 @@ function SlideForm({
             <p className="text-brand-silver/60 text-xs mt-1">Auto-converted to WebP · Max 500KB</p>
             {imageError && <p className="text-red-400 text-xs mt-1">{imageError}</p>}
             {errors.image && <p className="text-red-400 text-xs mt-1">{errors.image}</p>}
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Image Upload */}
+      <div>
+        <label className="block text-brand-silver text-sm font-medium mb-2">
+          Mobile Image <span className="text-brand-silver/50">(optional, portrait recommended, shown below md breakpoint. Falls back to desktop if empty.)</span>
+        </label>
+        <div className="flex items-start gap-4">
+          {mobileImagePreview ? (
+            <div className="relative w-16 h-24 rounded-lg overflow-hidden border-2 border-brand-gold/40 flex-shrink-0">
+              <Image src={mobileImagePreview} alt="Mobile preview" fill className="object-cover" />
+            </div>
+          ) : showMobileCurrent ? (
+            <div className="relative w-16 h-24 rounded-lg overflow-hidden border-2 border-brand-sapphire flex-shrink-0">
+              <Image src={currentMobileImageUrl!.split('?')[0]} alt="Current mobile" fill className="object-cover" unoptimized />
+              <div className="absolute inset-0 bg-brand-navy/40 flex items-center justify-center text-[10px] text-brand-silver">Current</div>
+            </div>
+          ) : (
+            <div className="w-16 h-24 rounded-lg border border-dashed border-brand-silver/20 flex items-center justify-center text-[10px] text-brand-silver/50 text-center px-1 flex-shrink-0">
+              No mobile image
+            </div>
+          )}
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <label htmlFor={isNew ? 'slide_img_mobile_new' : `slide_img_mobile_${slideId}`} className="btn-outline text-sm py-2 px-4 cursor-pointer inline-flex items-center gap-2">
+                <Upload className="w-4 h-4" /> {mobileImageFile ? 'Change Mobile Image' : 'Upload Mobile Image'}
+              </label>
+              {(mobileImageFile || showMobileCurrent) && (
+                <button type="button" onClick={onRemoveMobile} className="text-xs text-red-400 hover:text-red-300 px-2 py-2">
+                  Remove
+                </button>
+              )}
+            </div>
+            <input
+              id={isNew ? 'slide_img_mobile_new' : `slide_img_mobile_${slideId}`}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={onMobileImageSelect}
+            />
+            <p className="text-brand-silver/60 text-xs mt-1">Portrait works best · Auto-converted to WebP · Max 500KB</p>
+            {mobileImageError && <p className="text-red-400 text-xs mt-1">{mobileImageError}</p>}
           </div>
         </div>
       </div>
@@ -158,6 +211,10 @@ export function SlidesManagerClient({ slides: initial, adminId }: SlidesManagerC
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [imageError, setImageError] = useState('')
+  const [mobileImageFile, setMobileImageFile] = useState<File | null>(null)
+  const [mobileImagePreview, setMobileImagePreview] = useState<string | null>(null)
+  const [mobileImageError, setMobileImageError] = useState('')
+  const [mobileRemoved, setMobileRemoved] = useState(false)
   const [loading, setLoading] = useState<string | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -176,6 +233,29 @@ export function SlidesManagerClient({ slides: initial, adminId }: SlidesManagerC
     }
   }, [])
 
+  const handleMobileImageSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const validation = validateImageFile(file)
+    if (!validation.valid) { setMobileImageError(validation.error!); return }
+    setMobileImageError('')
+    try {
+      const compressed = await compressImage(file, { maxSizeKB: 500 })
+      setMobileImageFile(compressed)
+      setMobileImagePreview(URL.createObjectURL(compressed))
+      setMobileRemoved(false)
+    } catch {
+      setMobileImageError('Failed to process image. Try another file.')
+    }
+  }, [])
+
+  const handleRemoveMobile = useCallback(() => {
+    setMobileImageFile(null)
+    setMobileImagePreview(null)
+    setMobileImageError('')
+    setMobileRemoved(true)
+  }, [])
+
   const fileToBase64 = (file: File): Promise<string> =>
     new Promise((res, rej) => {
       const reader = new FileReader()
@@ -192,18 +272,22 @@ export function SlidesManagerClient({ slides: initial, adminId }: SlidesManagerC
   }
 
   const handleCreate = async () => {
-    if (!imageFile) { setErrors({ image: 'Please upload an image.' }); return }
+    if (!imageFile) { setErrors({ image: 'Please upload a desktop image.' }); return }
     if (!validateForm()) return
     setLoading('create')
     try {
       const b64 = await fileToBase64(imageFile)
-      const result = await createSlide({ ...form, image_b64: b64, created_by: adminId })
+      const mobileB64 = mobileImageFile ? await fileToBase64(mobileImageFile) : null
+      const result = await createSlide({ ...form, image_b64: b64, image_b64_mobile: mobileB64, created_by: adminId })
       if (result.success && result.data) {
         setSlides(s => [...s, result.data!].sort((a, b) => a.display_order - b.display_order))
         setShowAddForm(false)
         setForm(defaultForm)
         setImageFile(null)
         setImagePreview(null)
+        setMobileImageFile(null)
+        setMobileImagePreview(null)
+        setMobileRemoved(false)
       } else {
         setErrors({ submit: result.error ?? 'Failed to create slide.' })
       }
@@ -219,12 +303,16 @@ export function SlidesManagerClient({ slides: initial, adminId }: SlidesManagerC
     setLoading(`update-${slideId}`)
     try {
       const b64 = imageFile ? await fileToBase64(imageFile) : null
-      const result = await updateSlide(slideId, { ...form, image_b64: b64 })
+      const mobileB64 = mobileImageFile ? await fileToBase64(mobileImageFile) : null
+      const result = await updateSlide(slideId, { ...form, image_b64: b64, image_b64_mobile: mobileB64, remove_mobile_image: mobileRemoved && !mobileImageFile })
       if (result.success && result.data) {
         setSlides(s => s.map(sl => sl.id === slideId ? result.data! : sl))
         setEditingId(null)
         setImageFile(null)
         setImagePreview(null)
+        setMobileImageFile(null)
+        setMobileImagePreview(null)
+        setMobileRemoved(false)
       } else {
         setErrors({ submit: result.error ?? 'Failed to update slide.' })
       }
@@ -236,7 +324,7 @@ export function SlidesManagerClient({ slides: initial, adminId }: SlidesManagerC
   }
 
   const handleDelete = async (slideId: string) => {
-    if (!confirm('Delete this slide? This will remove the image from storage.')) return
+    if (!confirm('Delete this slide? This will remove both desktop and mobile images from storage.')) return
     setLoading(`delete-${slideId}`)
     const result = await deleteSlide(slideId)
     if (result.success) setSlides(s => s.filter(sl => sl.id !== slideId))
@@ -263,6 +351,10 @@ export function SlidesManagerClient({ slides: initial, adminId }: SlidesManagerC
     })
     setImageFile(null)
     setImagePreview(null)
+    setMobileImageFile(null)
+    setMobileImagePreview(null)
+    setMobileImageError('')
+    setMobileRemoved(false)
     setErrors({})
   }
 
@@ -272,6 +364,10 @@ export function SlidesManagerClient({ slides: initial, adminId }: SlidesManagerC
     setForm(defaultForm)
     setImageFile(null)
     setImagePreview(null)
+    setMobileImageFile(null)
+    setMobileImagePreview(null)
+    setMobileImageError('')
+    setMobileRemoved(false)
     setErrors({})
   }
 
@@ -293,9 +389,15 @@ export function SlidesManagerClient({ slides: initial, adminId }: SlidesManagerC
           imageFile={imageFile}
           imagePreview={imagePreview}
           imageError={imageError}
+          mobileImageFile={mobileImageFile}
+          mobileImagePreview={mobileImagePreview}
+          mobileImageError={mobileImageError}
+          mobileRemoved={mobileRemoved}
           errors={errors}
           loading={loading}
           onImageSelect={handleImageSelect}
+          onMobileImageSelect={handleMobileImageSelect}
+          onRemoveMobile={handleRemoveMobile}
           onSave={handleCreate}
           onCancel={cancelForm}
         />
@@ -320,10 +422,17 @@ export function SlidesManagerClient({ slides: initial, adminId }: SlidesManagerC
                 imageFile={imageFile}
                 imagePreview={imagePreview}
                 imageError={imageError}
+                mobileImageFile={mobileImageFile}
+                mobileImagePreview={mobileImagePreview}
+                mobileImageError={mobileImageError}
+                mobileRemoved={mobileRemoved}
                 errors={errors}
                 loading={loading}
                 currentImageUrl={slide.image_url}
+                currentMobileImageUrl={slide.mobile_image_url}
                 onImageSelect={handleImageSelect}
+                onMobileImageSelect={handleMobileImageSelect}
+                onRemoveMobile={handleRemoveMobile}
                 onSave={() => handleUpdate(slide.id)}
                 onCancel={cancelForm}
               />
@@ -332,19 +441,31 @@ export function SlidesManagerClient({ slides: initial, adminId }: SlidesManagerC
                 {/* Drag Handle */}
                 <GripVertical className="w-5 h-5 text-brand-silver/30 flex-shrink-0 cursor-grab" />
 
-                {/* Thumbnail */}
-                <div className="relative w-24 h-16 rounded-lg overflow-hidden flex-shrink-0 border border-brand-gold/20">
-                  <Image src={slide.image_url.split('?')[0]} alt={slide.alt_text} fill className="object-cover" sizes="96px" unoptimized />
+                {/* Thumbnails: desktop + mobile */}
+                <div className="flex items-end gap-2 flex-shrink-0">
+                  <div className="relative w-24 h-16 rounded-lg overflow-hidden border border-brand-gold/20" title="Desktop / PC">
+                    <Image src={slide.image_url.split('?')[0]} alt={slide.alt_text} fill className="object-cover" sizes="96px" unoptimized />
+                  </div>
+                  {slide.mobile_image_url ? (
+                    <div className="relative w-10 h-16 rounded-lg overflow-hidden border border-brand-gold/40" title="Mobile">
+                      <Image src={slide.mobile_image_url.split('?')[0]} alt={`${slide.alt_text} mobile`} fill className="object-cover" sizes="40px" unoptimized />
+                    </div>
+                  ) : (
+                    <div className="w-10 h-16 rounded-lg border border-dashed border-brand-silver/20 flex items-center justify-center text-[9px] text-brand-silver/40 text-center leading-tight" title="No mobile image, desktop will be used">
+                      PC only
+                    </div>
+                  )}
                 </div>
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-brand-white font-medium truncate">{slide.title || '(No title)'}</span>
+                    <span className="text-brand-white font-medium truncate">{slide.title || '(No title, overlay off)'}</span>
                     <span className={`text-xs px-2 py-0.5 rounded-full ${slide.is_active ? 'bg-green-500/20 text-green-300' : 'bg-brand-sapphire text-brand-silver/60'}`}>
                       {slide.is_active ? 'Active' : 'Hidden'}
                     </span>
                     <span className="text-brand-silver/50 text-xs">Order: {slide.display_order}</span>
+                    {slide.mobile_image_url && <span className="text-xs px-2 py-0.5 rounded-full bg-brand-gold/15 text-brand-gold">Mobile</span>}
                   </div>
                   <p className="text-brand-silver/60 text-xs mt-1 truncate">{slide.alt_text}</p>
                   {slide.subtitle && <p className="text-brand-silver text-sm truncate mt-0.5">{slide.subtitle}</p>}

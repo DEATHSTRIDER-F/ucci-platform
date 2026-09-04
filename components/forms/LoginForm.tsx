@@ -25,16 +25,18 @@ export function LoginForm() {
     setPending(true)
     try {
       const supabase = createClient()
-      const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
+      const { error: authError } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
       if (authError) {
         setError('Invalid email or password. Please try again.')
+        setPending(false)
         return
       }
-      router.push(redirectTo)
+      // Replace (no login page in history) + single refresh to pick up new session cookies.
+      // Prefetch was already triggered by Next Link; refresh re-runs the now-cached getAuth once.
+      router.replace(redirectTo)
       router.refresh()
     } catch {
       setError('An unexpected error occurred. Please try again.')
-    } finally {
       setPending(false)
     }
   }

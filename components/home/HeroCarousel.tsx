@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
@@ -14,7 +14,7 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
   const [current, setCurrent] = useState(0)
   const [isTransitioning, setIsTransitioning] = useState(false)
 
-  const activeSlides = slides.filter(s => s.is_active)
+  const activeSlides = useMemo(() => slides.filter(s => s.is_active), [slides])
 
   const goTo = useCallback((index: number) => {
     if (isTransitioning || index === current) return
@@ -33,10 +33,13 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
     goTo((current + 1) % activeSlides.length)
   }, [current, activeSlides.length, goTo])
 
-  // Auto-advance every 5 seconds
+  // Auto-advance every 5 seconds; skip when tab hidden
   useEffect(() => {
     if (activeSlides.length <= 1) return
-    const interval = setInterval(next, 5000)
+    const interval = setInterval(() => {
+      if (document.hidden) return
+      next()
+    }, 5000)
     return () => clearInterval(interval)
   }, [next, activeSlides.length])
 
@@ -49,7 +52,7 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
             Welcome to <span className="text-gradient-gold">UCCI</span>
           </h1>
           <p className="text-brand-silver text-xl max-w-2xl mx-auto">
-            United Chamber of Commerce India — Elite Business Networking
+            United Chamber of Commerce India: Elite Business Networking
           </p>
         </div>
       </div>
@@ -57,27 +60,51 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
   }
 
   const slide = activeSlides[current]
+  const hasText = Boolean(
+    slide.title?.trim() ||
+    slide.subtitle?.trim() ||
+    (slide.cta_text?.trim() && slide.cta_url?.trim())
+  )
+  const desktopSrc = slide.image_url.split('?')[0]
+  const mobileSrc = slide.mobile_image_url?.split('?')[0] ?? desktopSrc
+  const isFirst = current === 0
 
   return (
     <div className="relative h-[92vh] min-h-[500px] overflow-hidden group" aria-label="Hero image carousel" role="region">
 
-      {/* Slide Image */}
+      {/* Slide Image: desktop + mobile variants */}
       <div className={`absolute inset-0 transition-opacity duration-700 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
         <Image
-          src={slide.image_url.split('?')[0]}
+          src={desktopSrc}
           alt={slide.alt_text}
           fill
-          className="object-cover"
-          priority
+          className="object-cover hidden md:block"
+          priority={isFirst}
+          loading={isFirst ? undefined : 'lazy'}
           sizes="100vw"
           unoptimized
         />
-        {/* Dark overlay for text legibility */}
-        <div className="absolute inset-0 bg-gradient-to-r from-brand-navy/80 via-brand-navy/50 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-brand-navy/60 to-transparent" />
+        <Image
+          src={mobileSrc}
+          alt={slide.alt_text}
+          fill
+          className="object-cover md:hidden"
+          priority={isFirst}
+          loading={isFirst ? undefined : 'lazy'}
+          sizes="100vw"
+          unoptimized
+        />
+        {/* Dark overlay for text legibility: only when text/CTA exists */}
+        {hasText && (
+          <>
+            <div className="absolute inset-0 bg-gradient-to-r from-brand-navy/80 via-brand-navy/50 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-brand-navy/60 to-transparent" />
+          </>
+        )}
       </div>
 
-      {/* Slide Content */}
+      {/* Slide Content: only when text/CTA exists */}
+      {hasText && (
       <div className="relative h-full flex items-center">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
           <div className={`max-w-2xl transition-all duration-500 ${isTransitioning ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}>
@@ -99,6 +126,7 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
           </div>
         </div>
       </div>
+      )}
 
       {/* Navigation Arrows */}
       {activeSlides.length > 1 && (

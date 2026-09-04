@@ -8,7 +8,6 @@ import type { Chapter, Area } from '@/lib/types/database'
 import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
-export const fetchCache = 'default-no-store'
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -25,7 +24,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const { data } = await supabase
     .from('chapters')
-    .select('*, area:areas(*)')
+    .select('id, name, slug, description, area:areas(id, name, slug)')
     .eq('slug', chapterSlug)
     .eq('areas.slug', areaSlug)
     .single()
@@ -34,7 +33,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const { count } = await supabase
     .from('profiles')
-    .select('*', { count: 'exact', head: true })
+    .select('id', { count: 'exact', head: true })
     .eq('chapter_id', data.id)
     .eq('status', 'approved')
 
@@ -61,7 +60,7 @@ export default async function ChapterPage({ params }: Props) {
 
   const { data: chapter } = await supabase
     .from('chapters')
-    .select('*')
+    .select('id, name, slug, description')
     .eq('slug', chapterSlug)
     .eq('area_id', areas.id)
     .single()

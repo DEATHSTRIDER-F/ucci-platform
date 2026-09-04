@@ -33,7 +33,7 @@ export default function ContactPage() {
                     <address className="not-italic text-brand-silver leading-relaxed">
                       Office No.202, Second Floor, Commercial Building 4,<br />
                       HM Royal Society, Opp. Ranka Jewellers, Talab,<br />
-                      Kondhwa, Pune – 411048
+                      Kondhwa, Pune 411048
                     </address>
                     <a href="mailto:info@ucciindia.org" className="inline-flex items-center gap-1.5 text-brand-gold text-sm mt-2 hover:text-brand-champagne">
                       <Mail className="w-4 h-4" /> info@ucciindia.org
@@ -94,7 +94,7 @@ export default function ContactPage() {
                   <div>
                     <div className="text-brand-champagne font-semibold text-sm mb-1">Business Hours</div>
                     <div className="text-brand-silver">
-                      <div>Monday – Saturday: 10:00 AM – 6:00 PM</div>
+                      <div>Monday to Saturday: 10:00 AM to 6:00 PM</div>
                       <div className="text-brand-silver/60 text-sm">Sunday: Closed</div>
                     </div>
                   </div>
@@ -104,7 +104,7 @@ export default function ContactPage() {
 
             <div className="glass-card p-0 overflow-hidden aspect-video">
               <iframe
-                title="UCCI Location — HM Royal Society, Kondhwa"
+                title="UCCI Location: HM Royal Society, Kondhwa"
                 src="https://www.google.com/maps?q=HM+Royal+Society+Kondhwa+Pune+411048&z=15&output=embed"
                 className="w-full h-full border-0"
                 loading="lazy"

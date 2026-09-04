@@ -3,7 +3,6 @@ import { CategoriesManagerClient } from '@/components/admin/CategoriesManagerCli
 import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
-export const fetchCache = 'default-no-store'
 
 export const metadata: Metadata = { title: 'Categories | UCCI Admin' }
 

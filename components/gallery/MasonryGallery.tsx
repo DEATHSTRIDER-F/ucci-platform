@@ -111,7 +111,6 @@ export function MasonryGallery({ posts }: { posts: GalleryPost[] }) {
                     fill
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    unoptimized
                   />
                   {images.length > 1 && (
                     <div className="absolute top-3 right-3 bg-brand-navy/80 backdrop-blur-sm text-brand-gold px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1">
@@ -186,8 +185,6 @@ export function MasonryGallery({ posts }: { posts: GalleryPost[] }) {
                       fill
                       className="object-contain transition-opacity duration-300"
                       sizes="100vw"
-                      unoptimized
-                      priority
                     />
                   </div>
                 )
@@ -235,7 +232,6 @@ export function MasonryGallery({ posts }: { posts: GalleryPost[] }) {
                         fill
                         className="object-cover"
                         sizes="96px"
-                        unoptimized
                       />
                     </button>
                   ))

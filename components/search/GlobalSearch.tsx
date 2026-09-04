@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useMemo } from 'react'
 import { Search, X, Loader2, User, Tag, Images, Building2 } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -50,28 +50,35 @@ export function GlobalSearch() {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  // Single shared browser client + request id to drop stale responses (no abort in postgrest, so ignore outdated).
+  const supabase = useMemo(() => createClient(), [])
+  const requestIdRef = useRef(0)
 
   const totalResults = groups.members.length + groups.categories.length + groups.gallery.length
 
   const search = useCallback(async (q: string) => {
-    if (q.trim().length < 2) {
+    const trimmed = q.trim()
+    if (trimmed.length < 2) {
       setGroups({ members: [], categories: [], gallery: [] })
       setShowPanel(false)
       setHasSearched(false)
       return
     }
 
+    const requestId = ++requestIdRef.current
     setLoading(true)
     setShowPanel(true)
 
     try {
-      const supabase = createClient()
+      // Gallery is the least-used group: only fetch for 3+ chars to save 1 query per keystroke.
+      const fetchGallery = trimmed.length >= 3
+      const escaped = trimmed.replace(/[%_,]/g, '')
 
       const [
         { data: membersByName },
         { data: membersByCat },
         { data: cats },
-        { data: galleryPosts },
+        galleryRes,
       ] = await Promise.all([
         // Members by name or business name
         supabase
@@ -82,7 +89,7 @@ export function GlobalSearch() {
             chapter:chapters(name, slug)
           `)
           .eq('status', 'approved')
-          .or(`full_name.ilike.%${q}%,business_name.ilike.%${q}%`)
+          .or(`full_name.ilike.%${escaped}%,business_name.ilike.%${escaped}%`)
           .limit(5),
 
         // Members by category name
@@ -94,27 +101,33 @@ export function GlobalSearch() {
             chapter:chapters(name, slug)
           `)
           .eq('status', 'approved')
-          .ilike('categories.name', `%${q}%`)
+          .ilike('categories.name', `%${escaped}%`)
           .limit(4),
 
         // Categories by name
         supabase
           .from('categories')
           .select('id, name, slug')
-          .ilike('name', `%${q}%`)
+          .ilike('name', `%${escaped}%`)
           .limit(5),
 
         // Gallery posts by title or content
-        supabase
-          .from('gallery_posts')
-          .select(`
-            id, title,
-            chapter:chapters(name),
-            area:areas(name)
-          `)
-          .or(`title.ilike.%${q}%,content.ilike.%${q}%`)
-          .limit(3),
+        fetchGallery
+          ? supabase
+              .from('gallery_posts')
+              .select(`
+                id, title,
+                chapter:chapters(name),
+                area:areas(name)
+              `)
+              .or(`title.ilike.%${escaped}%,content.ilike.%${escaped}%`)
+              .limit(3)
+          : Promise.resolve({ data: [] as never[] }),
       ])
+      const galleryPosts = (galleryRes as { data?: Array<{ id: string; title: string; chapter: unknown; area: unknown }> })?.data
+
+      // Drop stale responses from rapid typing
+      if (requestIdRef.current !== requestId) return
 
       // Deduplicate members
       const seen = new Set<string>()
@@ -158,21 +171,24 @@ export function GlobalSearch() {
       setGroups({ members: allMembers, categories: allCategories, gallery: allGallery })
       setHasSearched(true)
     } catch {
+      if (requestIdRef.current !== requestId) return
       setGroups({ members: [], categories: [], gallery: [] })
       setHasSearched(true)
     } finally {
-      setLoading(false)
+      if (requestIdRef.current === requestId) setLoading(false)
     }
-  }, [])
+  }, [supabase])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value
     setQuery(val)
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => search(val), 300)
+    // 450ms: fewer requests while typing fast, still feels instant
+    debounceRef.current = setTimeout(() => search(val), 450)
   }
 
   const clear = () => {
+    requestIdRef.current++
     setQuery('')
     setGroups({ members: [], categories: [], gallery: [] })
     setShowPanel(false)
@@ -256,7 +272,7 @@ export function GlobalSearch() {
                     >
                       {m.logo_url ? (
                         <div className="relative w-9 h-9 rounded-full overflow-hidden flex-shrink-0 border border-brand-gold/30">
-                          <Image src={m.logo_url.split('?')[0]} alt={m.business_name ?? m.full_name} fill className="object-cover" unoptimized />
+                          <Image src={m.logo_url.split('?')[0]} alt={m.business_name ?? m.full_name} fill className="object-cover" sizes="36px" />
                         </div>
                       ) : (
                         <div className="w-9 h-9 rounded-full bg-brand-gold/20 flex items-center justify-center flex-shrink-0 border border-brand-gold/30">

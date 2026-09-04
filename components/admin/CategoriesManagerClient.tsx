@@ -188,7 +188,7 @@ export function CategoriesManagerClient({ categories: initial }: CategoriesManag
                       </div>
                     </td>
                     <td className="text-brand-silver/60 text-xs font-mono max-w-[140px] truncate">{cat.slug}</td>
-                    <td>{cat.is_featured ? <Star className="w-4 h-4 text-brand-gold" /> : <span className="text-brand-silver/30">—</span>}</td>
+                    <td>{cat.is_featured ? <Star className="w-4 h-4 text-brand-gold" /> : <span className="text-brand-silver/30">-</span>}</td>
                     <td className="text-right">
                       <div className="flex items-center justify-end gap-1">
                         <button

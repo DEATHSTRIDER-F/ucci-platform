@@ -3,7 +3,6 @@ import { AvailabilityManager } from '@/components/admin/AvailabilityManager'
 import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
-export const fetchCache = 'default-no-store'
 
 export const metadata: Metadata = { title: 'Availability | UCCI Admin' }
 

@@ -5,7 +5,6 @@ import { FileText, MessageSquare, Users, Calendar } from 'lucide-react'
 import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
-export const fetchCache = 'default-no-store'
 
 export const metadata: Metadata = { title: 'Admin Dashboard | UCCI' }
 

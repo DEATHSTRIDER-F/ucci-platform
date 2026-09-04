@@ -130,7 +130,7 @@ export function IconPicker({ value, color, onIconChange, onColorChange, label = 
         </div>
       </div>
       {hexInput && !isValidHex(hexInput) && (
-        <p className="text-red-400 text-xs -mt-1 sm:hidden">Invalid hex — use #RRGGBB</p>
+        <p className="text-red-400 text-xs -mt-1 sm:hidden">Invalid hex: use #RRGGBB</p>
       )}
 
       {/* Search */}
@@ -140,7 +140,7 @@ export function IconPicker({ value, color, onIconChange, onColorChange, label = 
           type="text"
           value={search}
           onChange={e => setSearch(e.target.value)}
-          placeholder="Search icons — e.g. Bag, Building, Heart, accountant..."
+          placeholder="Search icons: e.g. Bag, Building, Heart, accountant..."
           className="input-field pl-10 pr-16 text-sm"
           aria-label="Search icons"
         />
@@ -187,12 +187,12 @@ export function IconPicker({ value, color, onIconChange, onColorChange, label = 
           ) : onlineError ? (
             <div className="col-span-full flex flex-col items-center justify-center py-8 text-brand-silver/50 text-sm">
               <WifiOff className="w-6 h-6 mb-2 opacity-50" />
-              Offline — check connection
+              Offline: check connection
               <span className="text-xs mt-1 text-brand-silver/30">{onlineError}</span>
             </div>
           ) : onlineFiltered.length === 0 ? (
             <div className="col-span-full flex flex-col items-center justify-center py-8 text-brand-silver/50 text-sm">
-              No matches — try &ldquo;building&rdquo;, &ldquo;briefcase&rdquo;, &ldquo;medical&rdquo;
+              No matches: try &ldquo;building&rdquo;, &ldquo;briefcase&rdquo;, &ldquo;medical&rdquo;
             </div>
           ) : (
             onlineFiltered.map(iconName => {

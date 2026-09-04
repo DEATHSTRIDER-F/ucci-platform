@@ -1,11 +1,11 @@
 import type { Metadata } from 'next'
-import { Inter, Outfit } from 'next/font/google'
+import { Inter, Poppins } from 'next/font/google'
 import './globals.css'
 import { Header } from '@/components/nav/Header'
 import { Footer } from '@/components/nav/Footer'
 import { buildSiteMetadata } from '@/lib/seo/metadata'
 import { getNavData } from '@/lib/data/nav'
-import { getCurrentProfile, getCurrentUser } from '@/lib/auth/getCurrentProfile'
+import { getAuth } from '@/lib/auth/getCurrentProfile'
 
 import { LenisProvider } from '@/components/LenisProvider'
 
@@ -15,27 +15,33 @@ const inter = Inter({
   display: 'swap',
 })
 
-const outfit = Outfit({
+const poppins = Poppins({
   subsets: ['latin'],
-  variable: '--font-outfit',
+  weight: ['500', '600', '700'],
+  variable: '--font-poppins',
   display: 'swap',
 })
 
 export const metadata: Metadata = buildSiteMetadata()
-
-export const dynamic = 'force-dynamic'
-export const fetchCache = 'default-no-store'
 
 export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const [user, profile] = await Promise.all([getCurrentUser(), getCurrentProfile()])
-  const { featuredCategories, areasWithChapters } = await getNavData()
+  // Single shared auth fetch (1x getUser + 1x profile). Nav data is separately cached for 5 min.
+  const [{ profile }, { featuredCategories, areasWithChapters }] = await Promise.all([
+    getAuth(),
+    getNavData(),
+  ])
 
   return (
-    <html lang="en" className={`${inter.variable} ${outfit.variable}`}>
+    <html lang="en" className={`${inter.variable} ${poppins.variable}`}>
+      <head>
+        {/* Iconify CDN preconnect: CategoryIcon SVGs load faster, less layout shift */}
+        <link rel="preconnect" href="https://api.iconify.design" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://api.iconify.design" />
+      </head>
       <body suppressHydrationWarning className="bg-brand-navy text-brand-white font-sans antialiased min-h-screen flex flex-col">
         <LenisProvider>
           <Header

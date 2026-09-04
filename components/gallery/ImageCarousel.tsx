@@ -32,7 +32,6 @@ export function ImageCarousel({ images }: ImageCarouselProps) {
         fill
         className="object-cover transition-opacity duration-300"
         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
-        unoptimized
       />
 
       {/* Navigation */}
@@ -69,7 +68,7 @@ export function ImageCarousel({ images }: ImageCarouselProps) {
                   idx === current ? 'border-brand-gold' : 'border-transparent opacity-60 hover:opacity-100'
                 }`}
               >
-                <Image src={img.image_url} alt={img.alt_text} fill className="object-cover" unoptimized />
+                <Image src={img.image_url} alt={img.alt_text} fill className="object-cover" sizes="48px" />
               </button>
             ))}
           </div>

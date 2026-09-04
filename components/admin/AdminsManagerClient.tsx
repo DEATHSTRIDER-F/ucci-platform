@@ -86,7 +86,7 @@ export function AdminsManagerClient({ admins: initial, chapters }: AdminsManager
               <select value={form.chapter_id} onChange={e => setForm(f => ({ ...f, chapter_id: e.target.value }))} className="input-field">
                 <option value="">-- Select Chapter --</option>
                 {chapters.map(ch => (
-                  <option key={ch.id} value={ch.id}>{ch.area?.name} — {ch.name}</option>
+                  <option key={ch.id} value={ch.id}>{ch.area?.name} - {ch.name}</option>
                 ))}
               </select>
               {errors.chapter && <p className="text-red-400 text-xs mt-1">{errors.chapter}</p>}

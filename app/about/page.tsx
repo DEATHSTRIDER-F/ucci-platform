@@ -5,13 +5,13 @@ import { Icon } from '@iconify/react'
 export const metadata: Metadata = {
   title: 'About UCCI | Our Story, Mission & Vision',
   description:
-    'UNITED CHAMBER OF COMMERCE & INDUSTRIES — Connect | Collaborate | Grow. A trusted business community where entrepreneurs build relationships, share knowledge, and grow together. Founded by Mohammad Pasha, Abdul Hameed Shaikh, CMA Sayeed Inamdar & Ar. Aboobakar Memon.',
+    'UNITED CHAMBER OF COMMERCE & INDUSTRIES: Connect | Collaborate | Grow. A trusted business community where entrepreneurs build relationships, share knowledge, and grow together. Founded by Mohammad Pasha, Abdul Hameed Shaikh, CMA Sayeed Inamdar & Ar. Aboobakar Memon.',
 }
 
 const FOUNDERS = [
   {
     image: '/1.png',
-    quote: 'UCCI is more than a business networking platform — it’s a movement to empower, connect, and strengthen the Muslim business community.',
+    quote: 'UCCI is more than a business networking platform. It is a movement to empower, connect, and strengthen the Muslim business community.',
     name: 'MOHAMMED PASHA',
     title: 'Founder & President, UCCI',
     position: '50% 8%',
@@ -25,7 +25,7 @@ const FOUNDERS = [
   },
   {
     image: '/3.png',
-    quote: 'At UCCI, we believe in growing together — not just individual success, but community success. ‘Together, We Grow.’ Success is better when shared.',
+    quote: 'At UCCI, we believe in growing together, not just individual success, but community success. ‘Together, We Grow.’ Success is better when shared.',
     name: 'HAMEED SHAIKH',
     title: 'Founder Vice President',
     position: '50% 8%',
@@ -50,7 +50,7 @@ export default function AboutPage() {
           </h1>
           <p className="text-brand-champagne font-display text-lg tracking-wide">UNITED CHAMBER OF COMMERCE & INDUSTRIES</p>
           <p className="text-brand-gold font-medium mt-1">Connect | Collaborate | Grow</p>
-          <p className="section-subtitle max-w-2xl mx-auto mt-3">More than a platform for business cards — an ecosystem of trusted relationships.</p>
+          <p className="section-subtitle max-w-2xl mx-auto mt-3">More than a platform for business cards: an ecosystem of trusted relationships.</p>
         </div>
       </div>
 
@@ -66,7 +66,7 @@ export default function AboutPage() {
               The group aims to become more than a platform for exchanging business cards or generating referrals. It seeks to create a strong ecosystem of trusted relationships in which members actively support one another, collaborate on opportunities, exchange expertise, develop strategic partnerships, and contribute to the growth of the wider business community.
             </p>
             <p>
-              Our vision is to foster a culture where <span className="text-brand-champagne font-medium">“business through relationships”</span> becomes a shared philosophy—where trust precedes transactions, collaboration creates value, and every member has the opportunity to both give and receive.
+              Our vision is to foster a culture where <span className="text-brand-champagne font-medium">“business through relationships”</span> becomes a shared philosophy, where trust precedes transactions, collaboration creates value, and every member has the opportunity to both give and receive.
             </p>
             <p>
               Over time, the group aspires to establish itself as a respected network known for the quality of its members, the strength of its relationships, the opportunities it creates, and the measurable value it delivers to its members and the community.
@@ -80,12 +80,12 @@ export default function AboutPage() {
         <h2 id="founders-heading" className="section-title text-center mb-4">
           Our <span className="text-gradient-gold">Founders</span>
         </h2>
-        <p className="section-subtitle text-center max-w-2xl mx-auto mb-10">The visionaries behind UCCI — building unity, trust, and growth.</p>
+        <p className="section-subtitle text-center max-w-2xl mx-auto mb-10">The visionaries behind UCCI: building unity, trust, and growth.</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {FOUNDERS.map(founder => (
             <div key={founder.name} className="glass-card p-6 text-center flex flex-col items-center">
               <div className="relative w-40 h-40 mb-5 rounded-full overflow-hidden border-2 border-brand-gold/40 shrink-0 aspect-square">
-                <Image src={founder.image} alt={`${founder.name} — ${founder.title}`} fill className="object-cover" style={{ objectPosition: founder.position }} sizes="160px" />
+                <Image src={founder.image} alt={`${founder.name}, ${founder.title}`} fill className="object-cover" style={{ objectPosition: founder.position }} sizes="160px" />
               </div>
               <p className="text-brand-silver text-sm leading-relaxed italic mb-4">&ldquo;{founder.quote}&rdquo;</p>
               <h3 className="font-display text-base font-bold text-brand-white tracking-wide">{founder.name}</h3>
@@ -154,7 +154,7 @@ export default function AboutPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
               { title: 'Trust', icon: '🤝', desc: 'Trust precedes transactions. We build relationships first, business follows.' },
-              { title: 'Collaboration', icon: '🤲', desc: 'Every member is enabled to both give and receive — sharing expertise, referrals, and opportunities.' },
+              { title: 'Collaboration', icon: '🤲', desc: 'Every member is enabled to both give and receive, sharing expertise, referrals, and opportunities.' },
               { title: 'Impact', icon: '📈', desc: 'Measured by the opportunities we create and the growth we deliver to members and the wider community.' },
             ].map(v => (
               <div key={v.title} className="glass-card p-8 text-center">
@@ -172,13 +172,13 @@ export default function AboutPage() {
         <h2 id="how-heading" className="section-title text-center mb-4">
           How It <span className="text-gradient-gold">Works</span>
         </h2>
-        <p className="text-center text-brand-silver mb-10">Curated onboarding — Admin creates your profile, leads are vetted by UCCI</p>
+        <p className="text-center text-brand-silver mb-10">Curated onboarding: Admin creates your profile, leads are vetted by UCCI</p>
         <div className="space-y-6">
           {[
-            { step: '01', title: 'Inquiry to Admin', desc: 'You fill out the “Start a Chapter” inquiry form. The lead goes directly to UCCI Admin (info@ucciindia.org) for vetting — not directly to a member.' },
-            { step: '02', title: 'Schedule a Call', desc: 'UCCI Leadership schedules a call to understand your business, chapter fit, and localities (Kharadi–Pune East, Kothrud–West, etc.).' },
+            { step: '01', title: 'Inquiry to Admin', desc: 'You fill out the “Start a Chapter” inquiry form. The lead goes directly to UCCI Admin (info@ucciindia.org) for vetting, not directly to a member.' },
+            { step: '02', title: 'Schedule a Call', desc: 'UCCI Leadership schedules a call to understand your business, chapter fit, and localities (Kharadi, Pune East; Kothrud, West; etc.).' },
             { step: '03', title: 'Curated Profile Creation', desc: 'Admin manually creates your profile in the preferred chapter. Category exclusivity and locality are verified.' },
-            { step: '04', title: 'Membership Confirmed', desc: 'Offline payment: Rs. 6,000 Membership fee + Rs. 6,000 Venue fee. No pay-per-lead, no online gateway — tracked manually.' },
+            { step: '04', title: 'Membership Confirmed', desc: 'Offline payment: Rs. 6,000 Membership fee + Rs. 6,000 Venue fee. No pay-per-lead, no online gateway, tracked manually.' },
             { step: '05', title: 'Grow Through Relationships', desc: 'Appear in directory, receive vetted leads via Admin, collaborate across 7 chapters in Pune & PCMC.' },
           ].map(item => (
             <div key={item.step} className="glass-card p-6 flex gap-6">
@@ -191,7 +191,7 @@ export default function AboutPage() {
           ))}
         </div>
         <div className="text-center mt-10 flex flex-col sm:flex-row gap-3 justify-center">
-          <a href="/join" className="btn-primary">Start a Chapter — Inquiry →</a>
+          <a href="/join" className="btn-primary">Start a Chapter: Inquiry →</a>
           <a href="https://wa.me/918600241900" target="_blank" rel="noopener noreferrer" className="btn-outline">WhatsApp +91-86002 41900</a>
         </div>
       </section>

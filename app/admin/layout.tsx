@@ -1,12 +1,13 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { getCurrentProfile, getCurrentUser } from '@/lib/auth/getCurrentProfile'
+import { getAuth } from '@/lib/auth/getCurrentProfile'
 import { AdminNav } from '@/components/admin/AdminNav'
 
 export const dynamic = 'force-dynamic'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const [user, profile] = await Promise.all([getCurrentUser(), getCurrentProfile()])
+  // Reuses the same request-cached auth as root layout: no extra getUser round-trip.
+  const { user, profile } = await getAuth()
 
   if (!user) redirect('/login?redirectTo=/admin')
 

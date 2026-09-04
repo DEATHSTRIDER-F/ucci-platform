@@ -6,14 +6,14 @@ import type { HeroSlide } from '@/lib/types/database'
 
 const BUCKET = 'ucci-media'
 
-async function uploadSlideImage(b64: string, slideId: string): Promise<string | null> {
+async function uploadSlideImage(b64: string, slideId: string, variant: 'desktop' | 'mobile' = 'desktop'): Promise<string | null> {
   const supabase = await createAdminClient()
   const base64Data = b64.split(',')[1]
   if (!base64Data) return null
 
   const buffer = Buffer.from(base64Data, 'base64')
   const blob = new Blob([buffer], { type: 'image/webp' })
-  const path = `slides/${slideId}.webp`
+  const path = variant === 'mobile' ? `slides/${slideId}-mobile.webp` : `slides/${slideId}.webp`
 
   const { error } = await supabase.storage
     .from(BUCKET)
@@ -39,6 +39,7 @@ export async function createSlide(data: {
   display_order: number
   is_active: boolean
   image_b64: string
+  image_b64_mobile?: string | null
   created_by: string
 }): Promise<{ success: boolean; data?: HeroSlide; error?: string }> {
   if (!data.alt_text?.trim()) return { success: false, error: 'Alt text is required.' }
@@ -65,16 +66,22 @@ export async function createSlide(data: {
 
   if (insertError || !slide) return { success: false, error: insertError?.message ?? 'Insert failed.' }
 
-  // Upload image with slide ID as storage path (deterministic upsert path)
-  const imageUrl = await uploadSlideImage(data.image_b64, slide.id)
+  // Upload desktop image with slide ID as storage path (deterministic upsert path)
+  const imageUrl = await uploadSlideImage(data.image_b64, slide.id, 'desktop')
   if (!imageUrl) {
     await supabase.from('hero_slides').delete().eq('id', slide.id)
     return { success: false, error: 'Image upload failed.' }
   }
 
+  // Optional mobile image (portrait). Falls back to desktop on frontend if absent.
+  let mobileImageUrl: string | null = null
+  if (data.image_b64_mobile) {
+    mobileImageUrl = await uploadSlideImage(data.image_b64_mobile, slide.id, 'mobile')
+  }
+
   const { data: updated, error: updateError } = await supabase
     .from('hero_slides')
-    .update({ image_url: imageUrl })
+    .update(mobileImageUrl ? { image_url: imageUrl, mobile_image_url: mobileImageUrl } : { image_url: imageUrl })
     .eq('id', slide.id)
     .select()
     .single()
@@ -98,6 +105,8 @@ export async function updateSlide(
     display_order: number
     is_active: boolean
     image_b64: string | null
+    image_b64_mobile?: string | null
+    remove_mobile_image?: boolean
   }
 ): Promise<{ success: boolean; data?: HeroSlide; error?: string }> {
   if (!data.alt_text?.trim()) return { success: false, error: 'Alt text is required.' }
@@ -114,10 +123,19 @@ export async function updateSlide(
     is_active: data.is_active,
   }
 
-  // If new image uploaded, upsert to same storage path
+  // If new desktop image uploaded, upsert to same storage path
   if (data.image_b64) {
-    const imageUrl = await uploadSlideImage(data.image_b64, slideId)
+    const imageUrl = await uploadSlideImage(data.image_b64, slideId, 'desktop')
     if (imageUrl) updates.image_url = imageUrl
+  }
+
+  // Mobile image: upload new, remove if flagged, otherwise keep existing
+  if (data.image_b64_mobile) {
+    const mobileUrl = await uploadSlideImage(data.image_b64_mobile, slideId, 'mobile')
+    if (mobileUrl) updates.mobile_image_url = mobileUrl
+  } else if (data.remove_mobile_image) {
+    await supabase.storage.from(BUCKET).remove([`slides/${slideId}-mobile.webp`])
+    updates.mobile_image_url = null
   }
 
   const { data: updated, error } = await supabase
@@ -138,8 +156,8 @@ export async function updateSlide(
 export async function deleteSlide(slideId: string): Promise<{ success: boolean; error?: string }> {
   const supabase = await createAdminClient()
 
-  // Delete from storage first (upsert means there's always exactly one file per slide)
-  await supabase.storage.from(BUCKET).remove([`slides/${slideId}.webp`])
+  // Delete from storage first (upsert means there's always exactly one file per variant)
+  await supabase.storage.from(BUCKET).remove([`slides/${slideId}.webp`, `slides/${slideId}-mobile.webp`])
 
   const { error } = await supabase.from('hero_slides').delete().eq('id', slideId)
   if (error) return { success: false, error: error.message }

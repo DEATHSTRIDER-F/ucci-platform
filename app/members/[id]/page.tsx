@@ -10,7 +10,6 @@ import type { Profile } from '@/lib/types/database'
 import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
-export const fetchCache = 'default-no-store'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -21,7 +20,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const supabase = await createServerSupabaseClient()
   const { data } = await supabase
     .from('profiles')
-    .select('*, chapter:chapters(name, slug, area:areas(name, slug)), category:categories(name, slug)')
+    .select('id, full_name, business_name, brand_tagline, bio, logo_url, business_address, chapter:chapters(name, slug, area:areas(name, slug)), category:categories(name, slug)')
     .eq('id', id)
     .eq('status', 'approved')
     .single()
@@ -46,7 +45,8 @@ export default async function MemberProfilePage({ params }: Props) {
   const { data: profile } = await supabase
     .from('profiles')
     .select(`
-      *,
+      id, full_name, business_name, brand_tagline, bio, logo_url, business_address,
+      ideal_referral_target, referral_triggers,
       chapter:chapters(id, name, slug, area:areas(id, name, slug)),
       category:categories(id, name, slug)
     `)
@@ -145,7 +145,7 @@ export default async function MemberProfilePage({ params }: Props) {
                           href={`/chapters/${p.chapter.area?.slug}-${p.chapter.slug}`}
                           className="badge flex items-center gap-1"
                         >
-                          <Users className="w-3 h-3" /> UCCI {p.chapter.name} — {p.chapter.area?.name}
+                          <Users className="w-3 h-3" /> UCCI {p.chapter.name}, {p.chapter.area?.name}
                         </Link>
                       )}
                     </div>

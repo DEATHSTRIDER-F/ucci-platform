@@ -111,7 +111,7 @@ export function GalleryFormClient({ areas, adminProfile }: GalleryFormClientProp
     <div className="glass-card p-8 space-y-6 max-w-3xl">
       <div>
         <label htmlFor="gallery_title" className="block text-brand-silver text-sm font-medium mb-1">Post Title *</label>
-        <input id="gallery_title" type="text" value={title} onChange={e => setTitle(e.target.value)} className="input-field" placeholder="UCCI Pune East Chapter Monthly Meeting — June 2026" />
+        <input id="gallery_title" type="text" value={title} onChange={e => setTitle(e.target.value)} className="input-field" placeholder="UCCI Pune East Chapter Monthly Meeting, June 2026" />
         {errors.title && <p className="text-red-400 text-xs mt-1">{errors.title}</p>}
       </div>
 

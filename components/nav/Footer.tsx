@@ -25,7 +25,7 @@ export function Footer() {
             </div>
             </Link>
             <p className="text-brand-silver text-sm leading-relaxed">
-              UNITED CHAMBER OF COMMERCE & INDUSTRIES — Connect | Collaborate | Grow. Trusted business community across 7 chapters in Pune & PCMC.
+              UNITED CHAMBER OF COMMERCE & INDUSTRIES: Connect | Collaborate | Grow. Trusted business community across 7 chapters in Pune & PCMC.
             </p>
           </div>
 
@@ -80,7 +80,7 @@ export function Footer() {
               <li className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 text-brand-gold mt-0.5 flex-shrink-0" />
                 <span className="text-brand-silver text-sm">
-                  Office No.202, Second Floor, Commercial Building 4, HM Royal Society, Opp. Ranka Jewellers, Talab, Kondhwa, Pune – 411048
+                  Office No.202, Second Floor, Commercial Building 4, HM Royal Society, Opp. Ranka Jewellers, Talab, Kondhwa, Pune 411048
                 </span>
               </li>
               <li className="flex items-center gap-2">
@@ -110,7 +110,7 @@ export function Footer() {
         {/* Bottom Bar */}
         <div className="border-t border-brand-gold/20 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-brand-silver/60 text-xs text-center sm:text-left">
-            © {currentYear} UCCI — United Chamber of Commerce India. All rights reserved.
+            © {currentYear} UCCI: United Chamber of Commerce India. All rights reserved.
           </p>
           <div className="flex items-center gap-4">
             <Link href="/join" className="text-brand-gold text-xs hover:text-brand-champagne transition-colors flex items-center gap-1">

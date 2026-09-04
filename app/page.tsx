@@ -5,6 +5,7 @@ import { JsonLd, buildOrganizationSchema, buildWebSiteSchema } from '@/lib/seo/s
 import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowRight, Users, MapPin, Star, TrendingUp } from 'lucide-react'
+import { CategoryIcon } from '@/components/category-icon'
 import type { HeroSlide } from '@/lib/types/database'
 import { buildSiteMetadata } from '@/lib/seo/metadata'
 import type { Metadata } from 'next'
@@ -12,15 +13,17 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = buildSiteMetadata()
 
 export const dynamic = 'force-dynamic'
-export const fetchCache = 'default-no-store'
 
 export default async function HomePage() {
   const supabase = await createServerSupabaseClient()
 
-  // Parallelize — was 5 sequential round-trips (~800ms), now 1 batch
-  const [heroRes, featRes, areasRes, showcaseRes, countRes] = await Promise.all([
-    supabase.from('hero_slides').select('*').eq('is_active', true).order('display_order'),
-    supabase.from('categories').select('id, name, slug, meta_description').eq('is_featured', true).order('name').limit(5),
+  // Parallel batch + lean selects (count uses id head, hero only needs display fields).
+  // NOTE: mobile_image_url requires supabase/add_hero_mobile_image.sql to be run.
+  // Falls back to a query without it so the carousel never breaks pre-migration.
+  const heroQuery = supabase.from('hero_slides').select('id, title, subtitle, image_url, mobile_image_url, alt_text, cta_text, cta_url, display_order, is_active').eq('is_active', true).order('display_order')
+  const [heroResRaw, featRes, areasRes, showcaseRes, countRes] = await Promise.all([
+    heroQuery,
+    supabase.from('categories').select('id, name, slug, meta_description, icon_name, icon_color').eq('is_featured', true).order('name').limit(5),
     supabase.from('areas').select('id, name, slug, chapters(id, name, slug)').order('name'),
     supabase
       .from('profiles')
@@ -28,8 +31,13 @@ export default async function HomePage() {
       .eq('status', 'approved')
       .order('created_at', { ascending: false })
       .limit(6),
-    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
+    supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('status', 'approved'),
   ])
+  let heroRes = heroResRaw
+  if (heroRes.error && heroRes.error.message.includes('mobile_image_url')) {
+    const retry = await supabase.from('hero_slides').select('id, title, subtitle, image_url, alt_text, cta_text, cta_url, display_order, is_active').eq('is_active', true).order('display_order')
+    heroRes = { ...retry, data: (retry.data ?? []).map((s: Record<string, unknown>) => ({ ...s, mobile_image_url: null })) } as unknown as typeof heroRes
+  }
 
   const heroSlides = heroRes.data
   const featuredCategories = featRes.data
@@ -94,9 +102,16 @@ export default async function HomePage() {
                 href={`/categories/${cat.slug}`}
                 className="glass-card p-5 hover:border-brand-gold/60 hover:-translate-y-1 transition-all duration-300 group"
               >
-                <h3 className="font-display font-semibold text-brand-white group-hover:text-brand-gold transition-colors">
-                  {cat.name}
-                </h3>
+                <div className="flex items-center gap-3 mb-1">
+                  <CategoryIcon
+                    name={(cat as unknown as { icon_name?: string | null }).icon_name}
+                    color={(cat as unknown as { icon_color?: string | null }).icon_color}
+                    size={30}
+                  />
+                  <h3 className="font-display font-semibold text-brand-white group-hover:text-brand-gold transition-colors">
+                    {cat.name}
+                  </h3>
+                </div>
                 {cat.meta_description && (
                   <p className="text-brand-silver text-sm mt-1 line-clamp-2">{cat.meta_description}</p>
                 )}
@@ -172,7 +187,7 @@ export default async function HomePage() {
                     <div className="flex items-start gap-4">
                       <div className="relative w-14 h-14 rounded-full overflow-hidden border-2 border-brand-gold/30 flex-shrink-0">
                         {member.logo_url ? (
-                          <Image src={member.logo_url} alt={member.business_name ?? member.full_name} fill className="object-cover" unoptimized />
+                          <Image src={member.logo_url} alt={member.business_name ?? member.full_name} fill className="object-cover" sizes="56px" />
                         ) : (
                           <div className="w-full h-full bg-brand-gold/20 flex items-center justify-center">
                             <span className="text-brand-gold font-bold text-lg">

@@ -150,18 +150,19 @@ CREATE TABLE appointment_slots (
 
 -- ─── Hero Slides (Superadmin-Controlled Carousel) ─────────────────────────────
 CREATE TABLE hero_slides (
-  id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  title         VARCHAR(255),
-  subtitle      TEXT,
-  image_url     VARCHAR(500) NOT NULL,
-  alt_text      VARCHAR(255) NOT NULL,
-  cta_text      VARCHAR(100),
-  cta_url       VARCHAR(255),
-  display_order INTEGER DEFAULT 0,
-  is_active     BOOLEAN DEFAULT TRUE,
-  created_by    UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  created_at    TIMESTAMPTZ DEFAULT NOW(),
-  updated_at    TIMESTAMPTZ DEFAULT NOW()
+  id               UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  title            VARCHAR(255),
+  subtitle         TEXT,
+  image_url        VARCHAR(500) NOT NULL,
+  mobile_image_url VARCHAR(500),
+  alt_text         VARCHAR(255) NOT NULL,
+  cta_text         VARCHAR(100),
+  cta_url          VARCHAR(255),
+  display_order    INTEGER DEFAULT 0,
+  is_active        BOOLEAN DEFAULT TRUE,
+  created_by       UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  created_at       TIMESTAMPTZ DEFAULT NOW(),
+  updated_at       TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- ─── Updated At Trigger ───────────────────────────────────────────────────────

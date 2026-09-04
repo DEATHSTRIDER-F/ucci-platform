@@ -4,7 +4,7 @@ import type { Profile, Chapter, Category, Area } from '@/lib/types/database'
 
 const SITE_NAME = 'UCCI - United Chamber of Commerce & Industries'
 const DEFAULT_DESCRIPTION =
-  'UCCI — Connect | Collaborate | Grow. A trusted, collaborative, high-impact business community where entrepreneurs and leaders create meaningful opportunities, share knowledge, and grow together through trusted relationships.'
+  'UCCI: Connect | Collaborate | Grow. A trusted, collaborative, high-impact business community where entrepreneurs and leaders create meaningful opportunities, share knowledge, and grow together through trusted relationships.'
 const SITE_TAGLINE = 'Connect | Collaborate | Grow'
 
 // ─── Site-level Metadata ──────────────────────────────────────────────────────
@@ -134,7 +134,7 @@ export function buildCategoryMetadata(category: Category, memberCount: number): 
 export function buildContactMetadata(): Metadata {
   return {
     title: 'Contact Us',
-    description: 'Get in touch with UCCI — UNITED CHAMBER OF COMMERCE & INDUSTRIES. Office No.202, Second Floor, Commercial Building 4, HM Royal Society, Opp. Ranka Jewellers, Talab, Kondhwa, Pune – 411048. Email: info@ucciindia.org | WhatsApp: +91-86002 41900 | Instagram: ucci_muslimbizclub',
+    description: 'Get in touch with UCCI: UNITED CHAMBER OF COMMERCE & INDUSTRIES. Office No.202, Second Floor, Commercial Building 4, HM Royal Society, Opp. Ranka Jewellers, Talab, Kondhwa, Pune 411048. Email: info@ucciindia.org | WhatsApp: +91-86002 41900 | Instagram: ucci_muslimbizclub',
     alternates: { canonical: absoluteUrl('/contact') },
   }
 }

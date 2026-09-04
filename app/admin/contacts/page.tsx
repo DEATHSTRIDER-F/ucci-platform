@@ -5,7 +5,6 @@ import { Mail } from 'lucide-react'
 import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
-export const fetchCache = 'default-no-store'
 
 export const metadata: Metadata = { title: 'Contact Inquiries | UCCI Admin' }
 

@@ -145,6 +145,7 @@ export interface HeroSlide {
   title: string | null
   subtitle: string | null
   image_url: string
+  mobile_image_url: string | null
   alt_text: string
   cta_text: string | null
   cta_url: string | null
