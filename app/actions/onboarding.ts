@@ -16,7 +16,7 @@ interface OnboardingInput {
   referral_triggers?: string
   chapter_id: string
   category_id: string
-  appointment_slot_id: string
+  appointment_date: string // YYYY-MM-DD, whole-day open model
   logo_file: string | null // base64 data URL
   logo_filename: string | null
 }
@@ -31,9 +31,37 @@ export async function submitOnboarding(
   if (!data.business_address?.trim()) return { success: false, error: 'Business address is required.' }
   if (!data.chapter_id) return { success: false, error: 'Chapter is required.' }
   if (!data.category_id) return { success: false, error: 'Category is required.' }
-  if (!data.appointment_slot_id) return { success: false, error: 'Appointment slot is required.' }
+  if (!data.appointment_date) return { success: false, error: 'Appointment date is required.' }
 
   const supabase = await createAdminClient()
+
+  // ── Resolve responsible admin + verify date is still open ────────────
+  const { data: chapterAdmin } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('chapter_id', data.chapter_id)
+    .eq('role', 'chapter_admin')
+    .maybeSingle()
+
+  let adminId: string | null = chapterAdmin?.id ?? null
+  if (!adminId) {
+    const { data: superAdmin } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('role', 'super_admin')
+      .limit(1)
+      .maybeSingle()
+    adminId = superAdmin?.id ?? null
+  }
+  if (!adminId) return { success: false, error: 'No admin available for this chapter.' }
+
+  const { data: blocked } = await supabase
+    .from('admin_availability')
+    .select('id')
+    .eq('admin_id', adminId)
+    .eq('blocked_date', data.appointment_date)
+    .maybeSingle()
+  if (blocked) return { success: false, error: 'The selected date is no longer available. Please choose another date.' }
 
   // ── Exclusivity Check ─────────────────────────────────────
   const available = await isChapterCategoryAvailable(data.chapter_id, data.category_id)
@@ -41,17 +69,18 @@ export async function submitOnboarding(
     return { success: false, error: 'This category is already occupied in the selected chapter. Please choose a different chapter or category.' }
   }
 
-  // ── Lock appointment slot (SELECT FOR UPDATE SKIP LOCKED via RPC or direct) ──
-  // Check and mark slot as occupied atomically
-  const { data: slot, error: slotError } = await supabase
+  // ── Create + occupy appointment slot for the chosen date (11:00 local) ──
+  const slotDatetime = new Date(`${data.appointment_date}T11:00:00`).toISOString()
+  const { data: existing } = await supabase
     .from('appointment_slots')
-    .select('id, is_occupied, admin_id')
-    .eq('id', data.appointment_slot_id)
-    .eq('is_occupied', false)
-    .single()
+    .select('id')
+    .eq('admin_id', adminId)
+    .eq('slot_datetime', slotDatetime)
+    .eq('is_occupied', true)
+    .maybeSingle()
 
-  if (slotError || !slot) {
-    return { success: false, error: 'The selected appointment slot is no longer available. Please choose another slot.' }
+  if (existing) {
+    return { success: false, error: 'The selected date is no longer available. Please choose another date.' }
   }
 
   // ── Get Authenticated User ────────────────────────────────
@@ -108,7 +137,7 @@ export async function submitOnboarding(
       chapter_id: data.chapter_id,
       category_id: data.category_id,
       status: 'pending',
-      appointment_timestamp: slot ? new Date().toISOString() : null,
+      appointment_timestamp: slotDatetime,
     })
     .eq('id', userId)
 
@@ -117,14 +146,18 @@ export async function submitOnboarding(
     return { success: false, error: `Failed to update profile: ${profileError.message}` }
   }
 
-  // ── Mark Slot as Occupied ─────────────────────────────────
+  // ── Record the booking ──────────────────────────────────────
   const { error: slotUpdateError } = await supabase
     .from('appointment_slots')
-    .update({
-      is_occupied: true,
-      booked_by_profile_id: userId,
-    })
-    .eq('id', data.appointment_slot_id)
+    .upsert(
+      {
+        admin_id: adminId,
+        slot_datetime: slotDatetime,
+        is_occupied: true,
+        booked_by_profile_id: userId,
+      },
+      { onConflict: 'admin_id,slot_datetime' }
+    )
 
   if (slotUpdateError) {
     console.error('Slot update error:', slotUpdateError)

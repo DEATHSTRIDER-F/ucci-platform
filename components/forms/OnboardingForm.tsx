@@ -32,7 +32,7 @@ export function OnboardingForm({ areas, categories }: OnboardingFormProps) {
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [logoError, setLogoError] = useState('')
-  const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null)
+  const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [exclusivityWarning, setExclusivityWarning] = useState('')
   const [submitError, setSubmitError] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -112,7 +112,7 @@ export function OnboardingForm({ areas, categories }: OnboardingFormProps) {
   }
 
   const handleSubmit = async () => {
-    if (!selectedSlotId) return
+    if (!selectedDate) return
     setStep('submitting')
     setSubmitError('')
     try {
@@ -120,7 +120,7 @@ export function OnboardingForm({ areas, categories }: OnboardingFormProps) {
         ...form,
         logo_file: logoFile ? await fileToBase64(logoFile) : null,
         logo_filename: logoFile?.name ?? null,
-        appointment_slot_id: selectedSlotId,
+        appointment_date: selectedDate,
       })
       if (result.success) {
         setStep('success')
@@ -338,15 +338,15 @@ export function OnboardingForm({ areas, categories }: OnboardingFormProps) {
             <h2 className="font-display text-xl font-bold text-brand-white mb-4">Select Interview Appointment</h2>
             <AppointmentCalendar
               chapterId={form.chapter_id}
-              onSlotSelect={setSelectedSlotId}
-              selectedSlotId={selectedSlotId}
+              onDateSelect={setSelectedDate}
+              selectedDate={selectedDate}
             />
           </div>
 
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={!selectedSlotId || step === 'submitting'}
+            disabled={!selectedDate || step === 'submitting'}
             className="btn-primary w-full text-base flex items-center justify-center gap-2"
           >
             {step === 'submitting' ? (
@@ -356,8 +356,8 @@ export function OnboardingForm({ areas, categories }: OnboardingFormProps) {
             )}
           </button>
 
-          {!selectedSlotId && (
-            <p className="text-brand-silver/60 text-sm text-center">Please select an interview slot to proceed</p>
+          {!selectedDate && (
+            <p className="text-brand-silver/60 text-sm text-center">Please select an interview date to proceed</p>
           )}
         </div>
       )}

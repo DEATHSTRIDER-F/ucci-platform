@@ -1,52 +1,22 @@
 'use client'
 
 import { useState } from 'react'
-import { addSlot, deleteSlot, addBlockedDate, removeBlockedDate } from '@/app/actions/availability'
-import { formatDateTime } from '@/lib/utils/utils'
-import { Plus, Trash2, Loader2, Calendar, Clock } from 'lucide-react'
-import type { AppointmentSlot, AdminAvailability } from '@/lib/types/database'
+import { addBlockedDate, removeBlockedDate } from '@/app/actions/availability'
+import { Plus, Trash2, Loader2, Calendar } from 'lucide-react'
+import type { AdminAvailability } from '@/lib/types/database'
 
 interface AvailabilityManagerProps {
   adminId: string
   blockedDates: AdminAvailability[]
-  slots: AppointmentSlot[]
+  slots?: never
 }
 
-export function AvailabilityManager({ adminId, blockedDates, slots }: AvailabilityManagerProps) {
-  const [localSlots, setLocalSlots] = useState(slots)
+export function AvailabilityManager({ adminId, blockedDates }: AvailabilityManagerProps) {
   const [localBlocked, setLocalBlocked] = useState(blockedDates)
-  const [newSlot, setNewSlot] = useState('')
   const [newBlockDate, setNewBlockDate] = useState('')
-  const [newBlockStart, setNewBlockStart] = useState('')
-  const [newBlockEnd, setNewBlockEnd] = useState('')
   const [blockReason, setBlockReason] = useState('')
   const [loading, setLoading] = useState<string | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
-
-  const handleAddSlot = async () => {
-    if (!newSlot) { setErrors({ slot: 'Please select a date and time.' }); return }
-    const dt = new Date(newSlot)
-    if (dt <= new Date()) { setErrors({ slot: 'Slot must be in the future.' }); return }
-    setErrors({})
-    setLoading('add-slot')
-    const result = await addSlot({ admin_id: adminId, slot_datetime: dt.toISOString() })
-    if (result.success && result.data) {
-      setLocalSlots(s => [...s, result.data!].sort((a, b) => a.slot_datetime.localeCompare(b.slot_datetime)))
-      setNewSlot('')
-    } else {
-      setErrors({ slot: result.error ?? 'Failed to add slot.' })
-    }
-    setLoading(null)
-  }
-
-  const handleDeleteSlot = async (slotId: string) => {
-    setLoading(`del-${slotId}`)
-    const result = await deleteSlot(slotId)
-    if (result.success) {
-      setLocalSlots(s => s.filter(sl => sl.id !== slotId))
-    }
-    setLoading(null)
-  }
 
   const handleAddBlocked = async () => {
     if (!newBlockDate) { setErrors({ block: 'Please select a date.' }); return }
@@ -55,13 +25,13 @@ export function AvailabilityManager({ adminId, blockedDates, slots }: Availabili
     const result = await addBlockedDate({
       admin_id: adminId,
       blocked_date: newBlockDate,
-      start_time: newBlockStart || null,
-      end_time: newBlockEnd || null,
+      start_time: null,
+      end_time: null,
       reason: blockReason || null,
     })
     if (result.success && result.data) {
       setLocalBlocked(b => [...b, result.data!])
-      setNewBlockDate(''); setNewBlockStart(''); setNewBlockEnd(''); setBlockReason('')
+      setNewBlockDate(''); setBlockReason('')
     } else {
       setErrors({ block: result.error ?? 'Failed to add blocked date.' })
     }
@@ -79,71 +49,7 @@ export function AvailabilityManager({ adminId, blockedDates, slots }: Availabili
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-      {/* Appointment Slots */}
-      <div className="space-y-4">
-        <div className="glass-card p-6">
-          <h2 className="font-display text-lg font-bold text-brand-white mb-4 flex items-center gap-2">
-            <Clock className="w-5 h-5 text-brand-gold" /> Add Appointment Slot
-          </h2>
-          <div className="space-y-3">
-            <div>
-              <label htmlFor="new_slot" className="block text-brand-silver text-sm font-medium mb-1">Date & Time</label>
-              <input
-                id="new_slot"
-                type="datetime-local"
-                value={newSlot}
-                onChange={e => setNewSlot(e.target.value)}
-                className="input-field"
-                min={new Date().toISOString().slice(0, 16)}
-              />
-              {errors.slot && <p className="text-red-400 text-xs mt-1">{errors.slot}</p>}
-            </div>
-            <button
-              onClick={handleAddSlot}
-              disabled={loading === 'add-slot'}
-              className="btn-primary w-full flex items-center justify-center gap-2"
-            >
-              {loading === 'add-slot' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-              Add Slot
-            </button>
-          </div>
-        </div>
-
-        {/* Slots List */}
-        <div className="glass-card p-6">
-          <h2 className="font-display text-lg font-bold text-brand-white mb-4">
-            Upcoming Slots <span className="text-brand-silver/60 font-normal text-base">({localSlots.length})</span>
-          </h2>
-          {localSlots.length === 0 ? (
-            <p className="text-brand-silver/60 text-sm">No slots added yet.</p>
-          ) : (
-            <div className="space-y-2 max-h-80 overflow-y-auto">
-              {localSlots.map(slot => (
-                <div key={slot.id} className="flex items-center justify-between gap-3 py-2 border-b border-brand-sapphire/50 last:border-0">
-                  <div>
-                    <div className="text-brand-white text-sm">{formatDateTime(slot.slot_datetime)}</div>
-                    {slot.is_occupied && (
-                      <span className="badge-warning text-xs px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-300 border border-yellow-500/30">Booked</span>
-                    )}
-                  </div>
-                  {!slot.is_occupied && (
-                    <button
-                      onClick={() => handleDeleteSlot(slot.id)}
-                      disabled={loading === `del-${slot.id}`}
-                      className="text-red-400 hover:text-red-300 p-1 disabled:opacity-50"
-                      aria-label="Delete slot"
-                    >
-                      {loading === `del-${slot.id}` ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Blocked Dates */}
+      {/* Block a Date */}
       <div className="space-y-4">
         <div className="glass-card p-6">
           <h2 className="font-display text-lg font-bold text-brand-white mb-4 flex items-center gap-2">
@@ -154,16 +60,7 @@ export function AvailabilityManager({ adminId, blockedDates, slots }: Availabili
               <label htmlFor="block_date" className="block text-brand-silver text-sm font-medium mb-1">Date *</label>
               <input id="block_date" type="date" value={newBlockDate} onChange={e => setNewBlockDate(e.target.value)} className="input-field" min={new Date().toISOString().split('T')[0]} />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label htmlFor="block_start" className="block text-brand-silver text-sm font-medium mb-1">Start Time <span className="text-brand-silver/50">(opt)</span></label>
-                <input id="block_start" type="time" value={newBlockStart} onChange={e => setNewBlockStart(e.target.value)} className="input-field" />
-              </div>
-              <div>
-                <label htmlFor="block_end" className="block text-brand-silver text-sm font-medium mb-1">End Time <span className="text-brand-silver/50">(opt)</span></label>
-                <input id="block_end" type="time" value={newBlockEnd} onChange={e => setNewBlockEnd(e.target.value)} className="input-field" />
-              </div>
-            </div>
+            <p className="text-brand-silver/60 text-xs -mt-1">Whole day will be blocked — all dates are otherwise available unless booked.</p>
             <div>
               <label htmlFor="block_reason" className="block text-brand-silver text-sm font-medium mb-1">Reason <span className="text-brand-silver/50">(optional)</span></label>
               <input id="block_reason" type="text" value={blockReason} onChange={e => setBlockReason(e.target.value)} className="input-field" placeholder="Holiday, Out of office..." />
@@ -190,7 +87,7 @@ export function AvailabilityManager({ adminId, blockedDates, slots }: Availabili
                   <div>
                     <div className="text-brand-white text-sm">{bd.blocked_date}</div>
                     <div className="text-brand-silver/60 text-xs">
-                      {bd.start_time ? `${bd.start_time}${bd.end_time ? ` - ${bd.end_time}` : '+'}` : 'All day'}
+                      All day
                       {bd.reason && ` · ${bd.reason}`}
                     </div>
                   </div>

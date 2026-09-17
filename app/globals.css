@@ -86,6 +86,12 @@
            text-brand-white placeholder:text-brand-silver/50
            focus:outline-none focus:border-brand-gold focus:ring-1 focus:ring-brand-gold
            transition-all duration-200 min-h-[44px];
+    color-scheme: dark;
+  }
+  .input-field::-webkit-calendar-picker-indicator {
+    filter: invert(72%) sepia(61%) saturate(457%) hue-rotate(4deg) brightness(102%) contrast(92%);
+    opacity: 1;
+    cursor: pointer;
   }
 
   /* Section headings */
