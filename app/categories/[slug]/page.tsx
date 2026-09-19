@@ -64,7 +64,7 @@ export default async function CategoryPage({ params }: Props) {
           <Link href="/categories" className="inline-flex items-center gap-2 text-brand-silver hover:text-brand-gold transition-colors mb-6 text-sm">
             <ArrowLeft className="w-4 h-4" /> All Categories
           </Link>
-          <div className="flex items-center gap-4 mb-3">
+          <div className="flex items-center gap-3 sm:gap-4 mb-3 min-w-0">
             <CategoryIcon
               name={(category as unknown as { icon_name?: string | null }).icon_name}
               color={(category as unknown as { icon_color?: string | null }).icon_color}

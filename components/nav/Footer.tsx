@@ -76,18 +76,18 @@ export function Footer() {
           </div>
 
           {/* Contact */}
-          <div>
+          <div className="min-w-0">
             <h3 className="text-brand-champagne font-semibold text-sm uppercase tracking-wider mb-4">Contact</h3>
             <ul className="space-y-3">
               <li className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 text-brand-gold mt-0.5 flex-shrink-0" />
-                <span className="text-brand-silver text-sm">
+                <span className="text-brand-silver text-sm break-words">
                   Office No.202, Second Floor, Commercial Building 4, HM Royal Society, Opp. Ranka Jewellers, Talab, Kondhwa, Pune 411048
                 </span>
               </li>
-              <li className="flex items-center gap-2">
+              <li className="flex items-center gap-2 min-w-0">
                 <Mail className="w-4 h-4 text-brand-gold flex-shrink-0" />
-                <a href="mailto:info@ucciindia.org" className="text-brand-silver text-sm hover:text-brand-gold transition-colors">
+                <a href="mailto:info@ucciindia.org" className="text-brand-silver text-sm hover:text-brand-gold transition-colors break-all">
                   info@ucciindia.org
                 </a>
               </li>

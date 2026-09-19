@@ -59,9 +59,9 @@ export default function AboutPage() {
       </div>
 
       {/* Our Story — verbatim from Form 1 */}
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16" aria-labelledby="our-story-heading">
-        <div className="glass-card p-8 md:p-12">
-          <h2 id="our-story-heading" className="font-display text-3xl font-bold text-brand-gold mb-6">Our Story, Mission & Vision</h2>
+      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 lg:py-16" aria-labelledby="our-story-heading">
+        <div className="glass-card p-5 sm:p-8 md:p-12">
+          <h2 id="our-story-heading" className="font-display text-2xl sm:text-3xl font-bold text-brand-gold mb-4 sm:mb-6 break-words">Our Story, Mission & Vision</h2>
           <div className="space-y-5 text-brand-silver leading-relaxed">
             <p>
               <strong className="text-brand-white">UCCI</strong> aims to build a trusted, collaborative, and high-impact business community where entrepreneurs, professionals, business owners, and leaders connect with purpose, create meaningful opportunities, share knowledge, and grow together.
@@ -80,7 +80,7 @@ export default function AboutPage() {
       </section>
 
       {/* Founders — merged: friend portraits + Form 1 names */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16" aria-labelledby="founders-heading">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 lg:py-16" aria-labelledby="founders-heading">
         <h2 id="founders-heading" className="section-title text-center mb-4">
           Our <span className="text-gradient-gold">Founders</span>
         </h2>
@@ -102,20 +102,20 @@ export default function AboutPage() {
       </section>
 
       {/* Why Join UCCI — from brochure image */}
-      <section id="why-ucci" className="py-16 bg-brand-navy relative overflow-hidden" aria-labelledby="why-heading">
+      <section id="why-ucci" className="py-10 sm:py-14 lg:py-16 bg-brand-navy relative overflow-hidden scroll-mt-24" aria-labelledby="why-heading">
         <div className="absolute inset-0 pointer-events-none opacity-20" aria-hidden>
           <div className="absolute top-0 left-0 w-64 h-64 border border-brand-gold/10 rounded-full -translate-x-32 -translate-y-32" />
           <div className="absolute bottom-0 right-0 w-96 h-96 border border-brand-gold/10 rounded-full translate-x-32 translate-y-32" />
         </div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-10">
-            <h2 id="why-heading" className="font-display text-3xl md:text-4xl font-bold text-brand-white">
+            <h2 id="why-heading" className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-brand-white text-balance">
               Why Join <span className="text-gradient-gold">UCCI?</span>
             </h2>
             <div className="w-24 h-0.5 bg-brand-gold mx-auto mt-3" />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             {[
               { title: 'Business Networking', desc: 'Access curated monthly meetings and one-on-one introductions tailored for senior professionals.', icon: 'mdi:account-group' },
               { title: 'Quality B2B Referrals', desc: 'Referral vetting ensures leads are relevant, reducing time-to-close and improving margins.', icon: 'mdi:handshake' },
@@ -152,7 +152,7 @@ export default function AboutPage() {
       </section>
 
       {/* Values */}
-      <section className="py-16 bg-brand-sapphire" aria-labelledby="values-heading">
+      <section className="py-10 sm:py-14 lg:py-16 bg-brand-sapphire" aria-labelledby="values-heading">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 id="values-heading" className="section-title text-center mb-10">
             Our <span className="text-gradient-gold">Values</span>
@@ -174,7 +174,7 @@ export default function AboutPage() {
       </section>
 
       {/* How It Works — curated model */}
-      <section id="how-it-works" className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16" aria-labelledby="how-heading">
+      <section id="how-it-works" className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 lg:py-16 scroll-mt-24" aria-labelledby="how-heading">
         <h2 id="how-heading" className="section-title text-center mb-4">
           How It <span className="text-gradient-gold">Works</span>
         </h2>
@@ -187,16 +187,16 @@ export default function AboutPage() {
             { step: '04', title: 'Membership Confirmed', desc: 'Offline payment: Rs. 6,000 Membership fee + Rs. 6,000 Venue fee. No pay-per-lead, no online gateway, tracked manually.' },
             { step: '05', title: 'Grow Through Relationships', desc: 'Appear in directory, receive vetted leads via Admin, collaborate across 7 chapters in Pune & PCMC.' },
           ].map(item => (
-            <div key={item.step} className="glass-card p-6 flex gap-6">
-              <div className="font-display text-3xl font-bold text-brand-gold/30 flex-shrink-0 w-12">{item.step}</div>
-              <div>
-                <h3 className="font-display text-lg font-bold text-brand-white mb-2">{item.title}</h3>
-                <p className="text-brand-silver leading-relaxed">{item.desc}</p>
+            <div key={item.step} className="glass-card p-5 sm:p-6 flex gap-4 sm:gap-6">
+              <div className="font-display text-2xl sm:text-3xl font-bold text-brand-gold/30 flex-shrink-0 w-10 sm:w-12">{item.step}</div>
+              <div className="min-w-0">
+                <h3 className="font-display text-base sm:text-lg font-bold text-brand-white mb-2 break-words">{item.title}</h3>
+                <p className="text-brand-silver text-sm sm:text-base leading-relaxed">{item.desc}</p>
               </div>
             </div>
           ))}
         </div>
-        <div className="text-center mt-10 flex flex-col sm:flex-row gap-3 justify-center">
+        <div className="text-center mt-8 sm:mt-10 flex flex-col sm:flex-row gap-3 justify-center px-1">
           <a href="/join" className="btn-primary">Start a Chapter: Inquiry →</a>
           <a href="https://wa.me/918600241900" target="_blank" rel="noopener noreferrer" className="btn-outline">WhatsApp +91-86002 41900</a>
         </div>

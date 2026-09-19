@@ -175,22 +175,22 @@ export function MasonryGallery({ posts }: { posts: GalleryPost[] }) {
 
       {/* Lightbox Modal */}
       {selectedPost && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center bg-brand-navy/95 backdrop-blur-md transition-opacity duration-300"
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-brand-navy/95 backdrop-blur-md transition-opacity duration-300 p-2 sm:p-4"
           onClick={closeModal}
           role="dialog"
           aria-modal="true"
         >
-          <div 
-            className="relative w-full h-full max-w-7xl mx-auto flex flex-col justify-center"
+          <div
+            className="relative w-full h-full max-h-[100dvh] max-w-7xl mx-auto flex flex-col justify-center overflow-hidden rounded-xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-start z-10 bg-gradient-to-b from-brand-navy/80 to-transparent">
-              <div className="text-brand-white max-w-2xl">
-                <h3 className="text-xl font-display font-bold">{selectedPost.title}</h3>
+            <div className="absolute top-0 left-0 right-0 p-3 sm:p-4 flex justify-between items-start gap-3 z-10 bg-gradient-to-b from-brand-navy/80 to-transparent">
+              <div className="text-brand-white max-w-2xl min-w-0">
+                <h3 className="text-base sm:text-xl font-display font-bold break-words">{selectedPost.title}</h3>
                 {selectedPost.content && (
-                  <p className="text-sm text-brand-silver mt-1 line-clamp-2">{selectedPost.content}</p>
+                  <p className="text-xs sm:text-sm text-brand-silver mt-1 line-clamp-2">{selectedPost.content}</p>
                 )}
               </div>
               <button 

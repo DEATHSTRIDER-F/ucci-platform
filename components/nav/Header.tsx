@@ -91,6 +91,43 @@ export function Header({ profile, featuredCategories, areasWithChapters }: Heade
     setActiveChapterArea(null)
   }, [pathname])
 
+  // Lock background scroll while the mobile menu/search is open so the page
+  // behind never scrolls "invisibly" and the menu owns the gesture.
+  // Lenis is disabled on touch devices, so native overflow locking is enough.
+  useEffect(() => {
+    const locked = mobileOpen || mobileSearchOpen
+    const root = document.documentElement
+    const prevOverflow = root.style.overflow
+    const prevBodyOverflow = document.body.style.overflow
+    if (locked) {
+      root.style.overflow = 'hidden'
+      document.body.style.overflow = 'hidden'
+      window.__lenis?.stop()
+    } else {
+      root.style.overflow = prevOverflow
+      document.body.style.overflow = prevBodyOverflow
+      window.__lenis?.start()
+    }
+    return () => {
+      root.style.overflow = prevOverflow
+      document.body.style.overflow = prevBodyOverflow
+      window.__lenis?.start()
+    }
+  }, [mobileOpen, mobileSearchOpen])
+
+  // Close mobile panels with Escape for keyboard / accessibility users
+  useEffect(() => {
+    if (!mobileOpen && !mobileSearchOpen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setMobileOpen(false)
+        setMobileSearchOpen(false)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [mobileOpen, mobileSearchOpen])
+
   // Cleanup timers on unmount
   useEffect(() => () => {
     clearDropdownTimer()
@@ -115,11 +152,11 @@ export function Header({ profile, featuredCategories, areasWithChapters }: Heade
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
 
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 flex-shrink-0">
+          {/* Logo — scales down on phones so header actions never overflow */}
+          <Link href="/" className="flex items-center gap-3 flex-shrink-0 min-w-0">
             {/* <div className="w-10 h-10 rounded-full bg-brand-gold flex items-center justify-center font-display font-bold text-brand-navy text-lg"> */}
             <div className="h-full w-auto flex items-center">
-              <Image src="/ucci.webp" alt="UCCI logo" className="opacity-100 h-16 w-auto" width={320} height={160} priority />
+              <Image src="/ucci.webp" alt="UCCI logo" className="opacity-100 h-12 sm:h-14 lg:h-16 w-auto max-w-[180px] sm:max-w-none object-contain" width={320} height={160} priority />
             </div>
             {/* <span className="font-display font-bold text-brand-white text-xl hidden sm:block">
               <span className="text-brand-gold">UCCI</span>
@@ -388,17 +425,24 @@ export function Header({ profile, featuredCategories, areasWithChapters }: Heade
         </div>
       </div>
 
-      {/* Mobile Search */}
+      {/* Mobile Search — own scroll region, capped to viewport below the header */}
       {mobileSearchOpen && (
-        <div className="lg:hidden bg-brand-sapphire border-t border-brand-gold/20 animate-fade-in p-4">
-          <GlobalSearch />
+        <div className="lg:hidden bg-brand-sapphire border-t border-brand-gold/20 animate-fade-in">
+          <div className="max-h-[calc(100dvh-5rem)] overflow-y-auto overscroll-contain p-4">
+            <GlobalSearch />
+          </div>
         </div>
       )}
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu — the nav itself is the single scroll container.
+          max-h keeps it inside the viewport (header is h-20 = 5rem);
+          overscroll-contain stops the page behind from scrolling. */}
       {mobileOpen && (
         <div className="lg:hidden bg-brand-sapphire border-t border-brand-gold/20 animate-fade-in">
-          <nav className="max-w-7xl mx-auto px-4 py-4 flex flex-col gap-1" aria-label="Mobile navigation">
+          <nav
+            className="max-w-7xl mx-auto px-4 py-4 flex flex-col gap-1 max-h-[calc(100dvh-5rem)] overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]"
+            aria-label="Mobile navigation"
+          >
             <Link href="/" className="block py-3 px-3 text-brand-silver hover:text-brand-gold rounded-lg hover:bg-brand-navy/50 transition-colors">Home</Link>
             <Link href="/about" className="block py-3 px-3 text-brand-silver hover:text-brand-gold rounded-lg hover:bg-brand-navy/50 transition-colors">Our Story</Link>
             <Link href="/about#why-ucci" className="block py-3 px-3 text-brand-silver hover:text-brand-gold rounded-lg hover:bg-brand-navy/50 transition-colors">Why UCCI</Link>
@@ -455,10 +499,10 @@ export function Header({ profile, featuredCategories, areasWithChapters }: Heade
             {/* Mobile Auth */}
             <div className="border-t border-brand-gold/20 mt-2 pt-3">
               {profile ? (
-                <div className="flex items-center justify-between px-3 py-2">
-                  <div>
-                    <div className="text-sm font-medium text-brand-white">{profile.full_name}</div>
-                    <div className="text-xs text-brand-silver">{profile.email}</div>
+                <div className="flex items-center justify-between gap-3 px-3 py-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-medium text-brand-white truncate">{profile.full_name}</div>
+                    <div className="text-xs text-brand-silver truncate">{profile.email}</div>
                   </div>
                   <button
                     onClick={handleLogout}

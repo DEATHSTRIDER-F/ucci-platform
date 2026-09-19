@@ -98,14 +98,14 @@ export default async function MemberProfilePage({ params }: Props) {
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
 
             {/* Main Profile */}
-            <article className="lg:col-span-2" itemScope itemType="https://schema.org/ProfessionalService">
+            <article className="lg:col-span-2 min-w-0" itemScope itemType="https://schema.org/ProfessionalService">
 
               {/* Profile Header */}
-              <div className="glass-card p-8 mb-6">
+              <div className="glass-card p-5 sm:p-8 mb-6">
                 <div className="flex flex-col sm:flex-row items-start gap-6">
                   {/* Logo */}
                   <div className="relative w-24 h-24 rounded-xl overflow-hidden border-2 border-brand-gold/40 flex-shrink-0">
@@ -155,14 +155,14 @@ export default async function MemberProfilePage({ params }: Props) {
 
               {/* About / Bio */}
               {p.bio && (
-                <section className="glass-card p-8 mb-6" aria-labelledby="about-heading">
+                <section className="glass-card p-5 sm:p-8 mb-6" aria-labelledby="about-heading">
                   <h2 id="about-heading" className="font-display text-xl font-bold text-brand-gold mb-4">About</h2>
                   <p className="text-brand-silver leading-relaxed" itemProp="description">{p.bio}</p>
                 </section>
               )}
 
               {/* Contact Details */}
-              <section className="glass-card p-8 mb-6" aria-labelledby="contact-heading">
+              <section className="glass-card p-5 sm:p-8 mb-6" aria-labelledby="contact-heading">
                 <h2 id="contact-heading" className="font-display text-xl font-bold text-brand-gold mb-4">Location</h2>
                 <div className="space-y-3">
                   {p.business_address && (
@@ -184,7 +184,7 @@ export default async function MemberProfilePage({ params }: Props) {
 
               {/* Networking Profile */}
               {(p.ideal_referral_target || p.referral_triggers) && (
-                <section className="glass-card p-8" aria-labelledby="networking-heading">
+                <section className="glass-card p-5 sm:p-8" aria-labelledby="networking-heading">
                   <h2 id="networking-heading" className="font-display text-xl font-bold text-brand-gold mb-4">Networking Profile</h2>
                   <div className="space-y-4">
                     {p.ideal_referral_target && (
@@ -204,9 +204,9 @@ export default async function MemberProfilePage({ params }: Props) {
               )}
             </article>
 
-            {/* Sidebar — Lead Inquiry Form */}
-            <aside>
-              <div className="sticky top-24">
+            {/* Sidebar — Lead Inquiry Form (sticky only on desktop so mobile never traps scroll) */}
+            <aside className="min-w-0">
+              <div className="lg:sticky lg:top-24">
                 <div className="glass-card p-6">
                   <h2 className="font-display text-xl font-bold text-brand-white mb-2">
                     Send a Lead Inquiry

@@ -247,7 +247,7 @@ export function GlobalSearch() {
       {panelVisible && (
         <div
           id="search-results"
-          className="absolute top-full left-0 right-0 mt-2 glass-card overflow-hidden shadow-2xl shadow-brand-navy/80 z-50 max-h-[32rem] overflow-y-auto"
+          className="absolute top-full left-0 right-0 mt-2 glass-card overflow-hidden shadow-2xl shadow-brand-navy/80 z-50 max-h-[min(32rem,70dvh)] overflow-y-auto overscroll-contain"
         >
           {loading ? (
             <div className="px-4 py-6 text-center">

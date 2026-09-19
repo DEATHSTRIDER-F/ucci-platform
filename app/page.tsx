@@ -67,19 +67,19 @@ export default async function HomePage() {
       <div className="h-0" />
 
       {/* Stats Bar */}
-      <section className="py-10 bg-brand-sapphire border-y border-brand-gold/20" aria-label="Platform statistics">
+      <section className="py-8 sm:py-10 bg-brand-sapphire border-y border-brand-gold/20" aria-label="Platform statistics">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 text-center">
             {[
               { icon: Users, value: `${memberCount ?? 0}+`, label: 'Verified Members' },
               { icon: MapPin, value: '7', label: 'Active Chapters' },
               { icon: Star, value: '20+', label: 'Business Categories' },
               { icon: TrendingUp, value: '2', label: 'Geographic Areas' },
             ].map(stat => (
-              <div key={stat.label} className="flex flex-col items-center gap-2">
-                <stat.icon className="w-6 h-6 text-brand-gold" />
-                <div className="text-2xl md:text-3xl font-display font-bold text-gradient-gold">{stat.value}</div>
-                <div className="text-brand-silver text-sm">{stat.label}</div>
+              <div key={stat.label} className="flex flex-col items-center gap-1.5 sm:gap-2 px-2">
+                <stat.icon className="w-5 h-5 sm:w-6 sm:h-6 text-brand-gold" />
+                <div className="text-xl sm:text-2xl md:text-3xl font-display font-bold text-gradient-gold break-words">{stat.value}</div>
+                <div className="text-brand-silver text-xs sm:text-sm">{stat.label}</div>
               </div>
             ))}
           </div>
@@ -87,7 +87,7 @@ export default async function HomePage() {
       </section>
 
       {/* Featured Categories */}
-      <section className="py-16 bg-brand-navy" aria-labelledby="categories-heading">
+      <section className="py-10 sm:py-14 lg:py-16 bg-brand-navy" aria-labelledby="categories-heading">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-10">
             <h2 id="categories-heading" className="section-title">
@@ -135,7 +135,7 @@ export default async function HomePage() {
       </section>
 
       {/* Chapters Map Section */}
-      <section className="py-16 bg-brand-sapphire" aria-labelledby="chapters-heading">
+      <section className="py-10 sm:py-14 lg:py-16 bg-brand-sapphire" aria-labelledby="chapters-heading">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-10">
             <h2 id="chapters-heading" className="section-title">
@@ -147,9 +147,9 @@ export default async function HomePage() {
             {(areas ?? []).map(area => {
               const chapters = Array.isArray((area as { chapters?: unknown }).chapters) ? (area as { chapters?: Array<{ id: string; name: string; slug: string; is_active?: boolean }> }).chapters! : []
               return (
-                <div key={area.id} className="glass-card p-6">
-                  <h3 className="font-display text-xl font-bold text-brand-gold mb-4">{area.name}</h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div key={area.id} className="glass-card p-5 sm:p-6">
+                  <h3 className="font-display text-lg sm:text-xl font-bold text-brand-gold mb-4 break-words">{area.name}</h3>
+                  <div className="grid grid-cols-1 min-[420px]:grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3">
                     {chapters.map(chapter => {
                       const active = chapter.is_active !== false
                       return active ? (
@@ -183,7 +183,7 @@ export default async function HomePage() {
 
       {/* Showcase Members */}
       {showcaseMembers && showcaseMembers.length > 0 && (
-        <section className="py-16 bg-brand-navy" aria-labelledby="members-heading">
+        <section className="py-10 sm:py-14 lg:py-16 bg-brand-navy" aria-labelledby="members-heading">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-10">
               <h2 id="members-heading" className="section-title">
@@ -243,21 +243,21 @@ export default async function HomePage() {
       )}
 
       {/* How It Works Preview */}
-      <section className="py-16 bg-brand-sapphire" aria-labelledby="how-it-works-preview">
+      <section className="py-10 sm:py-14 lg:py-16 bg-brand-sapphire" aria-labelledby="how-it-works-preview">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 id="how-it-works-preview" className="section-title mb-4">
             How <span className="text-gradient-gold">UCCI</span> Works
           </h2>
-          <p className="section-subtitle mb-12 max-w-2xl mx-auto">
+          <p className="section-subtitle mb-8 sm:mb-12 max-w-2xl mx-auto">
             Join an exclusive network of verified professionals in your industry
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
             {[
               { step: '01', title: 'Apply & Schedule', desc: 'Complete your profile and book a vetting interview with your chapter admin.' },
               { step: '02', title: 'Get Vetted', desc: 'Meet with the chapter admin, pay the membership fee, and get approved.' },
               { step: '03', title: 'Network & Grow', desc: 'Appear in the directory, receive referrals, and grow your business through UCCI.' },
             ].map(item => (
-              <div key={item.step} className="glass-card p-8 text-center relative overflow-hidden">
+              <div key={item.step} className="glass-card p-5 sm:p-8 text-center relative overflow-hidden">
                 <div className="text-6xl font-display font-bold text-brand-gold/10 absolute top-4 right-4">{item.step}</div>
                 <div className="relative">
                   <div className="text-brand-gold font-display font-bold text-lg mb-2">{item.step}</div>

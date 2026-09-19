@@ -45,9 +45,9 @@ export function ChapterHeadForm({ chapters }: ChapterHeadFormProps) {
 
   if (done) {
     return (
-      <div className="glass-card p-10 text-center">
+      <div className="glass-card p-6 sm:p-10 text-center">
         <CheckCircle className="w-16 h-16 text-green-400 mx-auto mb-4" />
-        <h2 className="font-display text-2xl font-bold text-brand-white mb-3">Application Received!</h2>
+        <h2 className="font-display text-xl sm:text-2xl font-bold text-brand-white mb-3">Application Received!</h2>
         <p className="text-brand-silver leading-relaxed">
           Thank you for your interest in leading a UCCI chapter. Our admin team will review your application and reach out shortly.
         </p>
@@ -56,8 +56,8 @@ export function ChapterHeadForm({ chapters }: ChapterHeadFormProps) {
   }
 
   return (
-    <div className="glass-card p-8 space-y-5">
-      <h2 className="font-display text-2xl font-bold text-brand-white">Apply to become a Chapter Head</h2>
+    <div className="glass-card p-5 sm:p-8 space-y-5">
+      <h2 className="font-display text-xl sm:text-2xl font-bold text-brand-white break-words">Apply to become a Chapter Head</h2>
       {submitError && (
         <div className="flex items-center gap-2 text-red-400 bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-sm">
           <AlertCircle className="w-4 h-4 flex-shrink-0" /> {submitError}

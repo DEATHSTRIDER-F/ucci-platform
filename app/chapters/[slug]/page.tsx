@@ -110,7 +110,7 @@ export default async function ChapterPage({ params }: Props) {
       {(chapter.cover_image_url || chapter.info || highlightLines.length > 0) && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-5" aria-label="About this chapter">
           {chapter.cover_image_url && (
-            <div className="relative w-full aspect-[21/9] rounded-xl overflow-hidden border border-brand-gold/20 mb-6">
+            <div className="relative w-full aspect-[16/10] sm:aspect-[21/9] rounded-xl overflow-hidden border border-brand-gold/20 mb-6">
               <Image
                 src={chapter.cover_image_url}
                 alt={`${title} chapter cover`}

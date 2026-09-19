@@ -16,12 +16,12 @@ export default function ContactPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-10">
 
           {/* Contact Info */}
-          <div className="space-y-6">
-            <div className="glass-card p-8">
+          <div className="space-y-6 min-w-0">
+            <div className="glass-card p-5 sm:p-8">
               <h2 className="font-display text-2xl font-bold text-brand-white mb-6">Get in Touch</h2>
               <div className="space-y-5">
                 <div className="flex items-start gap-4">
@@ -122,8 +122,8 @@ export default function ContactPage() {
           </div>
 
           {/* Contact Form */}
-          <div className="glass-card p-8">
-            <h2 className="font-display text-2xl font-bold text-brand-white mb-6">Send a Message</h2>
+          <div className="glass-card p-5 sm:p-8 min-w-0">
+            <h2 className="font-display text-xl sm:text-2xl font-bold text-brand-white mb-4 sm:mb-6">Send a Message</h2>
             <ContactForm />
           </div>
         </div>

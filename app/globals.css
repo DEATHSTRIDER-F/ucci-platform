@@ -16,6 +16,19 @@
        Native CSS smoothing fights its per-frame control loop. Anchor links
        are animated by Lenis itself (anchors:true). */
     scroll-behavior: auto;
+    /* Guard against accidental horizontal scroll from decorative/absolute
+       elements. Individual overflow sources are fixed at the component level;
+       this is a safety net, not the primary fix. */
+    overflow-x: clip;
+  }
+
+  body {
+    overflow-x: clip;
+  }
+
+  /* Media should never force the page wider than the viewport */
+  img, video, iframe {
+    max-width: 100%;
   }
 
   body {
@@ -58,13 +71,15 @@
     @apply bg-brand-sapphire/80 backdrop-blur-sm border border-brand-gold/20 rounded-xl;
   }
 
-  /* Premium button */
+  /* Premium button — never exceed the viewport, wrap long labels */
   .btn-primary {
     @apply bg-brand-gold text-brand-navy font-display font-semibold px-6 py-3 rounded-lg
            hover:bg-brand-champagne transition-all duration-200
            focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 focus:ring-offset-brand-navy
            disabled:opacity-50 disabled:cursor-not-allowed
            min-h-[44px] min-w-[44px];
+    max-width: 100%;
+    overflow-wrap: break-word;
   }
 
   .btn-outline {
@@ -72,6 +87,21 @@
            hover:bg-brand-gold hover:text-brand-navy transition-all duration-200
            focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2 focus:ring-offset-brand-navy
            min-h-[44px] min-w-[44px];
+    max-width: 100%;
+    overflow-wrap: break-word;
+  }
+
+  /* On small phones, full-width stacked CTAs read better than squeezed rows */
+  @media (max-width: 480px) {
+    .btn-primary, .btn-outline {
+      @apply px-5 text-[0.95rem];
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .gold-shimmer {
+      animation: none;
+    }
   }
 
   .btn-ghost {
@@ -94,13 +124,25 @@
     cursor: pointer;
   }
 
-  /* Section headings */
+  /* Section headings — fluid scale so 320px never overflows */
   .section-title {
-    @apply text-3xl md:text-4xl font-display font-semibold tracking-tight text-brand-white;
+    @apply font-display font-semibold tracking-tight text-brand-white;
+    font-size: clamp(1.55rem, 5.2vw + 0.6rem, 2.25rem);
+    line-height: 1.18;
+    overflow-wrap: break-word;
+    text-wrap: balance;
+  }
+  @media (min-width: 768px) {
+    .section-title {
+      font-size: 2.25rem;
+    }
   }
 
   .section-subtitle {
-    @apply text-lg text-brand-silver mt-2;
+    @apply text-brand-silver mt-2;
+    font-size: clamp(0.95rem, 2.6vw + 0.55rem, 1.125rem);
+    line-height: 1.6;
+    overflow-wrap: break-word;
   }
 
   /* Member card */
@@ -109,9 +151,12 @@
            hover:shadow-lg hover:shadow-brand-gold/10 hover:-translate-y-1;
   }
 
-  /* Page hero */
+  /* Page hero — tighter on phones, full presence on desktop */
   .page-hero {
-    @apply bg-gradient-to-b from-brand-sapphire to-brand-navy py-16 md:py-24;
+    @apply bg-gradient-to-b from-brand-sapphire to-brand-navy;
+    padding-top: clamp(2.25rem, 7vw + 1rem, 6rem);
+    padding-bottom: clamp(2.25rem, 7vw + 1rem, 6rem);
+    overflow-x: clip;
   }
 
   /* Badge */

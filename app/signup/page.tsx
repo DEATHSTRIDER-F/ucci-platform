@@ -11,7 +11,7 @@ export default function SignupPage({ searchParams }: { searchParams: { redirectT
   const redirectTo = searchParams.redirectTo ? `?redirectTo=${encodeURIComponent(searchParams.redirectTo)}` : ''
 
   return (
-    <div className="min-h-screen bg-brand-navy flex items-center justify-center px-4 py-16">
+    <div className="min-h-screen bg-brand-navy flex items-center justify-center px-4 py-10 sm:py-16 relative overflow-x-clip">
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-brand-gold/5 rounded-full blur-3xl" />
@@ -30,7 +30,7 @@ export default function SignupPage({ searchParams }: { searchParams: { redirectT
           <p className="text-brand-silver mt-2">Sign up to apply and join UCCI</p>
         </div>
 
-        <div className="glass-card p-8">
+        <div className="glass-card p-5 sm:p-8">
           <SignupForm />
         </div>
 

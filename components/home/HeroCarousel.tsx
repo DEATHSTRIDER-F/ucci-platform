@@ -59,13 +59,13 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
 
   if (activeSlides.length === 0) {
     return (
-      <div className="relative h-[60vh] min-h-[400px] bg-gradient-to-br from-brand-sapphire via-brand-navy to-brand-navy flex items-center justify-center">
+      <div className="relative h-[70svh] min-h-[420px] max-h-[720px] bg-gradient-to-br from-brand-sapphire via-brand-navy to-brand-navy flex items-center justify-center overflow-x-clip">
         <div className="absolute inset-0 opacity-5" style={{ backgroundImage: 'radial-gradient(circle, #c9a84c 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
-        <div className="relative text-center px-4">
-          <h1 className="text-4xl md:text-6xl font-display font-bold text-brand-white mb-4">
+        <div className="relative text-center px-4 sm:px-6">
+          <h1 className="font-display font-bold text-brand-white mb-4 text-balance break-words" style={{ fontSize: 'clamp(1.9rem, 8vw, 3.75rem)', lineHeight: 1.12 }}>
             Welcome to <span className="text-gradient-gold">UCCI</span>
           </h1>
-          <p className="text-brand-silver text-xl max-w-2xl mx-auto">
+          <p className="text-brand-silver text-base sm:text-lg md:text-xl max-w-2xl mx-auto">
             United Chamber of Commerce India: Elite Business Networking
           </p>
         </div>
@@ -87,7 +87,7 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
 
   return (
     <div
-      className="relative h-[92vh] min-h-[500px] overflow-hidden group touch-pan-y"
+      className="relative h-[78svh] min-h-[440px] max-h-[840px] sm:h-[85vh] md:h-[92vh] md:min-h-[500px] overflow-hidden group touch-pan-y"
       aria-label="Hero image carousel"
       role="region"
       onTouchStart={onTouchStart}
@@ -128,20 +128,20 @@ export function HeroCarousel({ slides }: HeroCarouselProps) {
       {/* Slide Content: only when text/CTA exists */}
       {hasText && (
       <div className="relative h-full flex items-center">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pb-14 sm:pb-10">
           <div className={`max-w-2xl transition-all duration-500 ${isTransitioning ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}>
             {slide.title && (
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-brand-white mb-4 leading-tight">
+              <h1 className="font-display font-bold text-brand-white mb-3 sm:mb-4 text-balance break-words" style={{ fontSize: 'clamp(1.75rem, 7.2vw, 3.75rem)', lineHeight: 1.14 }}>
                 {slide.title}
               </h1>
             )}
             {slide.subtitle && (
-              <p className="text-brand-silver text-lg md:text-xl mb-8 leading-relaxed">
+              <p className="text-brand-silver text-base sm:text-lg md:text-xl mb-6 sm:mb-8 leading-relaxed max-w-xl">
                 {slide.subtitle}
               </p>
             )}
             {slide.cta_text && slide.cta_url && (
-              <Link href={slide.cta_url} className="btn-primary text-base inline-flex items-center gap-2">
+              <Link href={slide.cta_url} className="btn-primary text-sm sm:text-base inline-flex items-center justify-center gap-2 max-w-full text-center">
                 {slide.cta_text}
               </Link>
             )}

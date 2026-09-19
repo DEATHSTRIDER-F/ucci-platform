@@ -138,9 +138,9 @@ export function OnboardingForm({ areas, categories, initialChapterId, prefilledC
 
   if (step === 'success') {
     return (
-      <div className="glass-card p-10 text-center">
+      <div className="glass-card p-6 sm:p-10 text-center">
         <CheckCircle className="w-16 h-16 text-green-400 mx-auto mb-4" />
-        <h2 className="font-display text-2xl font-bold text-brand-white mb-3">Application Submitted!</h2>
+        <h2 className="font-display text-xl sm:text-2xl font-bold text-brand-white mb-3">Application Submitted!</h2>
         <p className="text-brand-silver leading-relaxed">
           Your application has been received. Your profile will be reviewed by the chapter admin after your scheduled interview.
         </p>
@@ -160,8 +160,8 @@ export function OnboardingForm({ areas, categories, initialChapterId, prefilledC
       </div>
 
       {step === 'form' && (
-        <div className="glass-card p-8 space-y-6">
-          <h2 className="font-display text-2xl font-bold text-brand-white">Business Information</h2>
+        <div className="glass-card p-5 sm:p-8 space-y-6">
+          <h2 className="font-display text-xl sm:text-2xl font-bold text-brand-white">Business Information</h2>
 
           {/* Logo Upload */}
           <div>
