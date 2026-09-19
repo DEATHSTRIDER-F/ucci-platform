@@ -94,7 +94,7 @@ export default async function ChapterPage({ params }: Props) {
   return (
     <div className="min-h-screen bg-brand-navy">
       {/* Page Hero */}
-      <div className="page-hero">
+      <div className="page-hero !pb-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <Link href="/" className="inline-flex items-center gap-2 text-brand-silver hover:text-brand-gold transition-colors mb-6 text-sm">
             <ArrowLeft className="w-4 h-4" /> Back to Home
@@ -108,7 +108,7 @@ export default async function ChapterPage({ params }: Props) {
 
       {/* Admin-curated content */}
       {(chapter.cover_image_url || chapter.info || highlightLines.length > 0) && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12" aria-label="About this chapter">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-5" aria-label="About this chapter">
           {chapter.cover_image_url && (
             <div className="relative w-full aspect-[21/9] rounded-xl overflow-hidden border border-brand-gold/20 mb-6">
               <Image
@@ -152,7 +152,6 @@ export default async function ChapterPage({ params }: Props) {
         <Link href={`/join?chapter=${chapter.id}`} className="btn-primary inline-flex text-base">
           Join {title} Chapter
         </Link>
-        <p className="text-brand-silver/60 text-sm mt-3">Your chapter is pre-filled in the application form.</p>
       </section>
 
       {/* Members Grid */}
