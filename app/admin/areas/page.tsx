@@ -16,7 +16,8 @@ export default async function AreasPage() {
   const { data: areas } = await supabase
     .from('areas')
     .select('*, chapters(*)')
-    .order('name')
+    .order('display_order')
+    .order('display_order', { referencedTable: 'chapters' })
 
   return (
     <div>

@@ -109,6 +109,7 @@ export function GlobalSearch() {
           .from('categories')
           .select('id, name, slug')
           .ilike('name', `%${escaped}%`)
+          .order('display_order')
           .limit(5),
 
         // Gallery posts by title or content

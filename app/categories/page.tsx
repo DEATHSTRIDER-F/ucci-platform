@@ -17,7 +17,7 @@ export default async function CategoriesPage() {
   const { data: categories } = await supabase
     .from('categories')
     .select('id, name, slug, is_featured, meta_description, icon_name, icon_color')
-    .order('name')
+    .order('display_order')
 
   // Single aggregated count query — eliminates N+1 (was 20 extra round-trips)
   const { data: countRows } = await supabase

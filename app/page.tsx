@@ -23,8 +23,8 @@ export default async function HomePage() {
   const heroQuery = supabase.from('hero_slides').select('id, title, subtitle, image_url, mobile_image_url, alt_text, cta_text, cta_url, display_order, is_active').eq('is_active', true).order('display_order')
   const [heroResRaw, featRes, areasRes, showcaseRes, countRes] = await Promise.all([
     heroQuery,
-    supabase.from('categories').select('id, name, slug, meta_description, icon_name, icon_color').eq('is_featured', true).order('name').limit(5),
-    supabase.from('areas').select('id, name, slug, chapters(id, name, slug)').order('name'),
+    supabase.from('categories').select('id, name, slug, meta_description, icon_name, icon_color').eq('is_featured', true).order('display_order').limit(5),
+    supabase.from('areas').select('id, name, slug, chapters(id, name, slug, display_order, is_active)').order('display_order').order('display_order', { referencedTable: 'chapters' }),
     supabase
       .from('profiles')
       .select(`id, full_name, business_name, logo_url, brand_tagline, category:categories(name, slug), chapter:chapters(name, area:areas(name))`)
@@ -145,20 +145,34 @@ export default async function HomePage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {(areas ?? []).map(area => {
-              const chapters = Array.isArray((area as { chapters?: unknown }).chapters) ? (area as { chapters?: Array<{ id: string; name: string; slug: string }> }).chapters! : []
+              const chapters = Array.isArray((area as { chapters?: unknown }).chapters) ? (area as { chapters?: Array<{ id: string; name: string; slug: string; is_active?: boolean }> }).chapters! : []
               return (
                 <div key={area.id} className="glass-card p-6">
                   <h3 className="font-display text-xl font-bold text-brand-gold mb-4">{area.name}</h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {chapters.map(chapter => (
-                      <Link
-                        key={chapter.id}
-                        href={`/chapters/${area.slug}-${chapter.slug}`}
-                        className="bg-brand-navy/50 rounded-lg px-4 py-3 text-sm text-brand-silver hover:text-brand-gold hover:bg-brand-navy transition-colors text-center border border-brand-sapphire hover:border-brand-gold/40"
-                      >
-                        {chapter.name}
-                      </Link>
-                    ))}
+                    {chapters.map(chapter => {
+                      const active = chapter.is_active !== false
+                      return active ? (
+                        <Link
+                          key={chapter.id}
+                          href={`/chapters/${area.slug}-${chapter.slug}`}
+                          className="bg-brand-navy/50 rounded-lg px-4 py-3 text-sm text-brand-silver hover:text-brand-gold hover:bg-brand-navy transition-colors text-center border border-brand-sapphire hover:border-brand-gold/40"
+                        >
+                          {chapter.name}
+                        </Link>
+                      ) : (
+                        <span
+                          key={chapter.id}
+                          className="relative bg-brand-navy/50 rounded-lg px-4 py-3 text-sm text-brand-silver/50 text-center border border-brand-sapphire/50 cursor-not-allowed"
+                          title="Coming soon"
+                        >
+                          {chapter.name}
+                          <span className="absolute -top-2 -right-2 text-[10px] px-2 py-0.5 rounded-full bg-brand-gold/20 text-brand-champagne border border-brand-gold/40 font-medium">
+                            Coming Soon
+                          </span>
+                        </span>
+                      )
+                    })}
                   </div>
                 </div>
               )

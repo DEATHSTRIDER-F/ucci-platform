@@ -4,9 +4,10 @@ import { useState, useCallback } from 'react'
 import Image from 'next/image'
 import { compressImage, validateImageFile } from '@/lib/utils/imageCompressor'
 import {
-  createSlide, updateSlide, deleteSlide, toggleSlideActive,
+  createSlide, updateSlide, deleteSlide, toggleSlideActive, reorderSlides,
 } from '@/app/actions/slides'
 import { Plus, Trash2, Loader2, Upload, Eye, EyeOff, GripVertical, Edit2, X, Check } from 'lucide-react'
+import { useDragSort, dragRowClass } from '@/components/admin/useDragSort'
 import type { HeroSlide } from '@/lib/types/database'
 
 interface SlidesManagerClientProps {
@@ -374,6 +375,14 @@ export function SlidesManagerClient({ slides: initial, adminId }: SlidesManagerC
     setErrors({})
   }
 
+  // Drag-and-drop ordering — persist display_order to match visual order
+  const handleReorder = useCallback(async (next: HeroSlide[]) => {
+    const ordered = next.map((s, i) => ({ ...s, display_order: i }))
+    setSlides(ordered)
+    await reorderSlides(ordered.map(s => ({ id: s.id, display_order: s.display_order })))
+  }, [])
+  const { rowProps, dragIdx, overIdx } = useDragSort(slides, handleReorder)
+
   return (
     <div className="space-y-6">
       {/* Add New Button */}
@@ -414,7 +423,7 @@ export function SlidesManagerClient({ slides: initial, adminId }: SlidesManagerC
           </div>
         )}
 
-        {slides.map(slide => (
+        {slides.map((slide, idx) => (
           <div key={slide.id}>
             {editingId === slide.id ? (
               <SlideForm
@@ -440,9 +449,13 @@ export function SlidesManagerClient({ slides: initial, adminId }: SlidesManagerC
                 onCancel={cancelForm}
               />
             ) : (
-              <div className="glass-card p-5 flex items-center gap-5">
+              <div
+                {...rowProps(idx)}
+                className={`glass-card p-5 flex items-center gap-5 transition-opacity ${dragRowClass(dragIdx === idx, overIdx === idx && dragIdx !== idx)}`}
+                title="Drag to reorder"
+              >
                 {/* Drag Handle */}
-                <GripVertical className="w-5 h-5 text-brand-silver/30 flex-shrink-0 cursor-grab" />
+                <GripVertical className="w-5 h-5 text-brand-silver/30 flex-shrink-0 cursor-grab active:cursor-grabbing" />
 
                 {/* Thumbnails: desktop + mobile */}
                 <div className="flex items-end gap-2 flex-shrink-0">

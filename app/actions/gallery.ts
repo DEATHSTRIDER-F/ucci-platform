@@ -2,6 +2,8 @@
 
 import { createAdminClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { extractYouTubeId, youTubeWatchUrl } from '@/lib/utils/youtube'
+import type { GalleryPostType } from '@/lib/types/database'
 
 const BUCKET = 'ucci-media'
 
@@ -24,16 +26,44 @@ async function uploadGalleryImage(b64: string, postId: string, imageId: string):
   return data.publicUrl
 }
 
+function resolveYouTube(input: string | null | undefined): { url: string; videoId: string } | null | { error: string } {
+  if (!input?.trim()) return null
+  const videoId = extractYouTubeId(input)
+  if (!videoId) return { error: 'Invalid YouTube link. Use a watch, shorts, youtu.be, or embed URL.' }
+  return { url: youTubeWatchUrl(videoId), videoId }
+}
+
 export async function createGalleryPost(data: {
   title: string
   content: string | null
+  post_type: GalleryPostType
+  youtube_url?: string | null
   area_id: string | null
   chapter_id: string | null
   created_by: string
   images: Array<{ b64: string; alt_text: string; display_order: number }>
 }): Promise<{ success: boolean; error?: string }> {
   if (!data.title?.trim()) return { success: false, error: 'Title is required.' }
-  if (!data.images?.length) return { success: false, error: 'At least one image is required.' }
+  const postType: GalleryPostType = data.post_type ?? 'event'
+  if (!['news', 'event', 'video'].includes(postType)) return { success: false, error: 'Invalid post type.' }
+
+  // Per-type validation
+  let youtubeUrl: string | null = null
+  let youtubeVideoId: string | null = null
+  if (postType === 'video') {
+    const yt = resolveYouTube(data.youtube_url)
+    if (yt && 'error' in yt) return { success: false, error: yt.error }
+    if (!yt) return { success: false, error: 'YouTube link is required for videos.' }
+    youtubeUrl = yt.url
+    youtubeVideoId = yt.videoId
+  } else if (postType === 'news') {
+    const yt = resolveYouTube(data.youtube_url)
+    if (yt && 'error' in yt) return { success: false, error: yt.error }
+    if (yt) { youtubeUrl = yt.url; youtubeVideoId = yt.videoId }
+    if (!data.images?.length && !yt) return { success: false, error: 'News needs at least one image or a YouTube link.' }
+  } else {
+    if (!data.images?.length) return { success: false, error: 'At least one image is required.' }
+  }
 
   const supabase = await createAdminClient()
 
@@ -43,6 +73,9 @@ export async function createGalleryPost(data: {
     .insert({
       title: data.title,
       content: data.content,
+      post_type: postType,
+      youtube_url: youtubeUrl,
+      youtube_video_id: youtubeVideoId,
       area_id: data.area_id,
       chapter_id: data.chapter_id,
       created_by: data.created_by,
@@ -51,6 +84,13 @@ export async function createGalleryPost(data: {
     .single()
 
   if (postError || !post) return { success: false, error: postError?.message ?? 'Failed to create post.' }
+
+  // Videos carry no images
+  if (postType === 'video') {
+    revalidatePath('/gallery')
+    revalidatePath('/admin/gallery')
+    return { success: true }
+  }
 
   // Upload images and create gallery_images records
   const imageInserts = []
@@ -85,6 +125,8 @@ export async function updateGalleryPost(
   data: {
     title: string
     content: string | null
+    post_type: GalleryPostType
+    youtube_url?: string | null
     area_id: string | null
     chapter_id: string | null
     images: Array<{
@@ -97,7 +139,25 @@ export async function updateGalleryPost(
   }
 ): Promise<{ success: boolean; error?: string }> {
   if (!data.title?.trim()) return { success: false, error: 'Title is required.' }
-  if (!data.images?.length) return { success: false, error: 'At least one image is required.' }
+  const postType: GalleryPostType = data.post_type ?? 'event'
+  if (!['news', 'event', 'video'].includes(postType)) return { success: false, error: 'Invalid post type.' }
+
+  let youtubeUrl: string | null = null
+  let youtubeVideoId: string | null = null
+  if (postType === 'video') {
+    const yt = resolveYouTube(data.youtube_url)
+    if (yt && 'error' in yt) return { success: false, error: yt.error }
+    if (!yt) return { success: false, error: 'YouTube link is required for videos.' }
+    youtubeUrl = yt.url
+    youtubeVideoId = yt.videoId
+  } else if (postType === 'news') {
+    const yt = resolveYouTube(data.youtube_url)
+    if (yt && 'error' in yt) return { success: false, error: yt.error }
+    if (yt) { youtubeUrl = yt.url; youtubeVideoId = yt.videoId }
+    if (!data.images?.length && !yt) return { success: false, error: 'News needs at least one image or a YouTube link.' }
+  } else {
+    if (!data.images?.length) return { success: false, error: 'At least one image is required.' }
+  }
 
   const supabase = await createAdminClient()
 
@@ -107,6 +167,9 @@ export async function updateGalleryPost(
     .update({
       title: data.title,
       content: data.content,
+      post_type: postType,
+      youtube_url: youtubeUrl,
+      youtube_video_id: youtubeVideoId,
       area_id: data.area_id,
       chapter_id: data.chapter_id,
       updated_at: new Date().toISOString()
@@ -122,6 +185,19 @@ export async function updateGalleryPost(
     .eq('post_id', postId)
 
   const existingImageIds = new Set((existingImages || []).map(img => img.id))
+
+  if (postType === 'video') {
+    // Videos carry no images — purge any leftovers
+    if (existingImageIds.size > 0) {
+      const paths = [...existingImageIds].map(id => `gallery/${postId}/${id}.webp`)
+      await supabase.storage.from(BUCKET).remove(paths)
+      await supabase.from('gallery_images').delete().eq('post_id', postId)
+    }
+    revalidatePath('/gallery')
+    revalidatePath('/admin/gallery')
+    return { success: true }
+  }
+
   const incomingIds = new Set(data.images.map(img => img.id).filter(Boolean))
 
   // Images to delete

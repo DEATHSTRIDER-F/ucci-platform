@@ -1,11 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { createArea, updateArea, createChapter, deleteChapter } from '@/app/actions/areas'
-import { Plus, Trash2, Loader2, ChevronDown, ChevronRight, Edit2 } from 'lucide-react'
+import { createArea, updateArea, createChapter, deleteChapter, reorderAreas, reorderChapters, toggleChapterActive } from '@/app/actions/areas'
+import { Plus, Trash2, Loader2, ChevronDown, ChevronRight, Edit2, GripVertical, Eye, EyeOff } from 'lucide-react'
+import { dragRowClass } from '@/components/admin/useDragSort'
 import type { Area, Chapter } from '@/lib/types/database'
 
 type AreaWithChapters = Area & { chapters: Chapter[] }
+
+interface DragPos { kind: 'area' | 'chapter'; areaId: string | null; index: number }
 
 export function AreasManagerClient({ areas: initial }: { areas: AreaWithChapters[] }) {
   const [areas, setAreas] = useState(initial)
@@ -14,6 +17,11 @@ export function AreasManagerClient({ areas: initial }: { areas: AreaWithChapters
   const [newArea, setNewArea] = useState({ name: '', slug: '' })
   const [newChapter, setNewChapter] = useState<Record<string, { name: string; slug: string }>>({})
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [dragPos, setDragPos] = useState<DragPos | null>(null)
+  const [overPos, setOverPos] = useState<DragPos | null>(null)
+
+  const samePos = (a: DragPos | null, b: DragPos | null) =>
+    !!a && !!b && a.kind === b.kind && a.areaId === b.areaId && a.index === b.index
 
   const autoSlug = (name: string) => name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w-]/g, '')
   const toggle = (id: string) => setExpanded(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n })
@@ -53,6 +61,58 @@ export function AreasManagerClient({ areas: initial }: { areas: AreaWithChapters
     setLoading(null)
   }
 
+  const handleToggleChapter = async (areaId: string, chapterId: string, current: boolean) => {
+    setLoading(`toggle-ch-${chapterId}`)
+    const result = await toggleChapterActive(chapterId, !current)
+    if (result.success) {
+      setAreas(as => as.map(a => a.id === areaId ? { ...a, chapters: a.chapters.map(c => c.id === chapterId ? { ...c, is_active: !current } : c) } : a))
+    }
+    setLoading(null)
+  }
+
+  // ─── Drag-and-drop ordering (native HTML5, no deps) ───
+  const dragStart = (pos: DragPos) => (e: React.DragEvent) => {
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', JSON.stringify(pos))
+    setDragPos(pos)
+  }
+  const dragOver = (pos: DragPos) => (e: React.DragEvent) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    if (!samePos(overPos, pos)) setOverPos(pos)
+  }
+  const dragEnd = () => { setDragPos(null); setOverPos(null) }
+
+  const dropArea = (toIndex: number) => async (e: React.DragEvent) => {
+    e.preventDefault()
+    const from = dragPos
+    setDragPos(null); setOverPos(null)
+    if (!from || from.kind !== 'area' || from.index === toIndex) return
+    const next = [...areas]
+    const [moved] = next.splice(from.index, 1)
+    next.splice(toIndex, 0, moved)
+    const ordered = next.map((a, i) => ({ ...a, display_order: i }))
+    setAreas(ordered)
+    await reorderAreas(ordered.map(a => ({ id: a.id, display_order: a.display_order })))
+  }
+
+  const dropChapter = (areaId: string, toIndex: number) => async (e: React.DragEvent) => {
+    e.preventDefault()
+    const from = dragPos
+    setDragPos(null); setOverPos(null)
+    if (!from || from.kind !== 'chapter' || from.areaId !== areaId || from.index === toIndex) return
+    setAreas(as => {
+      const area = as.find(a => a.id === areaId)
+      if (!area) return as
+      const next = [...area.chapters]
+      const [moved] = next.splice(from.index, 1)
+      next.splice(toIndex, 0, moved)
+      const ordered = next.map((c, i) => ({ ...c, display_order: i }))
+      void reorderChapters(ordered.map(c => ({ id: c.id, display_order: c.display_order })))
+      return as.map(a => a.id === areaId ? { ...a, chapters: ordered } : a)
+    })
+  }
+
   return (
     <div className="space-y-5">
       {/* Add Area */}
@@ -68,14 +128,26 @@ export function AreasManagerClient({ areas: initial }: { areas: AreaWithChapters
         {errors.area && <p className="text-red-400 text-xs mt-2">{errors.area}</p>}
       </div>
 
-      {/* Areas List */}
-      {areas.map(area => (
-        <div key={area.id} className="glass-card overflow-hidden">
+      {/* Areas List — drag to reorder */}
+      {areas.map((area, areaIdx) => (
+        <div
+          key={area.id}
+          className={`glass-card overflow-hidden transition-opacity ${dragRowClass(samePos(dragPos, { kind: 'area', areaId: null, index: areaIdx }), samePos(overPos, { kind: 'area', areaId: null, index: areaIdx }) && !samePos(dragPos, { kind: 'area', areaId: null, index: areaIdx }))}`}
+          draggable
+          onDragStart={dragStart({ kind: 'area', areaId: null, index: areaIdx })}
+          onDragOver={dragOver({ kind: 'area', areaId: null, index: areaIdx })}
+          onDrop={dropArea(areaIdx)}
+          onDragEnd={dragEnd}
+        >
           <button
             onClick={() => toggle(area.id)}
             className="w-full flex items-center justify-between px-6 py-4 text-brand-white font-medium hover:bg-brand-navy/30 transition-colors"
           >
             <div className="flex items-center gap-3">
+              <GripVertical
+                className="w-5 h-5 text-brand-silver/30 cursor-grab active:cursor-grabbing"
+                onClick={e => e.stopPropagation()}
+              />
               {expanded.has(area.id) ? <ChevronDown className="w-5 h-5 text-brand-gold" /> : <ChevronRight className="w-5 h-5 text-brand-gold" />}
               <span className="font-display text-lg">{area.name}</span>
               <span className="text-brand-silver/60 text-sm">({area.chapters.length} chapters)</span>
@@ -83,24 +155,51 @@ export function AreasManagerClient({ areas: initial }: { areas: AreaWithChapters
           </button>
 
           {expanded.has(area.id) && (
-            <div className="border-t border-brand-sapphire/50 p-5 space-y-3">
-              {/* Chapters */}
-              {area.chapters.map(ch => (
-                <div key={ch.id} className="flex items-center justify-between bg-brand-navy/40 rounded-lg px-4 py-3">
-                  <div>
-                    <span className="text-brand-white text-sm font-medium">{ch.name}</span>
-                    <span className="text-brand-silver/50 text-xs ml-2">/{ch.slug}</span>
+            <div className="border-t border-brand-sapphire/50 p-5 space-y-3" onClick={e => e.stopPropagation()}>
+              {/* Chapters — drag to reorder within area */}
+              {area.chapters.map((ch, chIdx) => {
+                const chActive = (ch as Chapter & { is_active?: boolean }).is_active !== false
+                return (
+                <div
+                  key={ch.id}
+                  draggable
+                  onDragStart={dragStart({ kind: 'chapter', areaId: area.id, index: chIdx })}
+                  onDragOver={dragOver({ kind: 'chapter', areaId: area.id, index: chIdx })}
+                  onDrop={dropChapter(area.id, chIdx)}
+                  onDragEnd={dragEnd}
+                  title="Drag to reorder"
+                  className={`flex items-center justify-between gap-3 bg-brand-navy/40 rounded-lg px-4 py-3 transition-opacity ${dragRowClass(samePos(dragPos, { kind: 'chapter', areaId: area.id, index: chIdx }), samePos(overPos, { kind: 'chapter', areaId: area.id, index: chIdx }) && !samePos(dragPos, { kind: 'chapter', areaId: area.id, index: chIdx }))}`}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <GripVertical className="w-4 h-4 text-brand-silver/30 cursor-grab active:cursor-grabbing flex-shrink-0" />
+                    <span className={`text-sm font-medium truncate ${chActive ? 'text-brand-white' : 'text-brand-silver/50'}`}>{ch.name}</span>
+                    <span className="text-brand-silver/50 text-xs ml-1">/{ch.slug}</span>
+                    <span className={`text-[11px] px-2 py-0.5 rounded-full border ${chActive ? 'bg-green-500/15 text-green-300 border-green-500/30' : 'bg-brand-gold/15 text-brand-champagne border-brand-gold/30'}`}>
+                      {chActive ? 'Active' : 'Coming Soon'}
+                    </span>
                   </div>
-                  <button
-                    onClick={() => handleDeleteChapter(area.id, ch.id, ch.name)}
-                    disabled={loading === `del-ch-${ch.id}`}
-                    className="text-red-400 hover:text-red-300 p-1 disabled:opacity-50"
-                    aria-label="Delete chapter"
-                  >
-                    {loading === `del-ch-${ch.id}` ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                  </button>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <button
+                      onClick={() => handleToggleChapter(area.id, ch.id, chActive)}
+                      disabled={loading === `toggle-ch-${ch.id}`}
+                      className="text-brand-silver hover:text-brand-gold p-1.5 disabled:opacity-50"
+                      title={chActive ? 'Set inactive (Coming Soon)' : 'Set active'}
+                      aria-label={chActive ? `Deactivate ${ch.name}` : `Activate ${ch.name}`}
+                    >
+                      {loading === `toggle-ch-${ch.id}` ? <Loader2 className="w-4 h-4 animate-spin" /> : chActive ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                    <button
+                      onClick={() => handleDeleteChapter(area.id, ch.id, ch.name)}
+                      disabled={loading === `del-ch-${ch.id}`}
+                      className="text-red-400 hover:text-red-300 p-1.5 disabled:opacity-50"
+                      aria-label="Delete chapter"
+                    >
+                      {loading === `del-ch-${ch.id}` ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                    </button>
+                  </div>
                 </div>
-              ))}
+                )
+              })}
 
               {/* Add Chapter */}
               <div className="flex gap-3 flex-wrap">

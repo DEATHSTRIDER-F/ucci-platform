@@ -22,7 +22,7 @@ export default async function AdminsPage() {
   const { data: chaptersRaw } = await supabase
     .from('chapters')
     .select('id, name, slug, area:areas(name)')
-    .order('name')
+    .order('display_order')
 
   // Flatten Supabase join shape: area can be array or object depending on version
   const chapters = (chaptersRaw ?? []).map(ch => ({

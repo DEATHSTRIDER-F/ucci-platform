@@ -1,15 +1,18 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { Suspense } from 'react'
 import { OnboardingForm } from '@/components/forms/OnboardingForm'
+import { ChapterHeadForm } from '@/components/forms/ChapterHeadForm'
+import { JoinTabs } from '@/components/forms/JoinTabs'
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Globe, Linkedin, Phone, MapPin, Building2, Tag, Users, User } from 'lucide-react'
+import { Globe, Linkedin, Phone, MapPin, Building2, Tag, Users, User, BadgeCheck, Crown } from 'lucide-react'
 import type { Profile } from '@/lib/types/database'
 
 export const metadata: Metadata = {
-  title: 'Join UCCI | Start a Chapter: Curated Onboarding',
-  description: 'Start a Chapter: inquiry goes to UCCI Admin (info@ucciindia.org) + schedule a call. Curated creation, vetted leads, Rs. 6k + 6k venue offline. Office 202 HM Royal, Kondhwa Pune.',
+  title: 'Join UCCI | Become a Member or Chapter Head',
+  description: 'Join UCCI: become a member with curated onboarding or apply to lead a chapter. Rs. 6k + 6k venue offline. Office 202 HM Royal, Kondhwa Pune.',
 }
 
 export default async function JoinPage() {
@@ -194,31 +197,37 @@ export default async function JoinPage() {
     redirect('/signup?redirectTo=/join')
   }
 
-  // Fetch chapters and categories for the form
-  const { data: areas } = await supabase
+  // Fetch chapters and categories for the form (active chapters only)
+  const { data: areasRaw } = await supabase
     .from('areas')
-    .select('id, name, slug, chapters(id, name, slug, profiles(id))')
-    .order('name')
+    .select('id, name, slug, chapters(id, name, slug, is_active, profiles(id))')
+    .order('display_order')
+    .order('display_order', { referencedTable: 'chapters' })
+
+  const areas = (areasRaw ?? []).map(a => ({
+    ...a,
+    chapters: ((a as { chapters?: Array<{ id: string; name: string; slug: string; is_active: boolean }> }).chapters ?? []).filter(ch => ch.is_active !== false),
+  }))
 
   const { data: categories } = await supabase
     .from('categories')
     .select('id, name, slug')
-    .order('name')
+    .order('display_order')
 
   return (
     <div className="min-h-screen bg-brand-navy">
       <div className="page-hero py-10">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="section-title">
-            Start a <span className="text-gradient-gold">Chapter</span>: Join UCCI
+            Join <span className="text-gradient-gold">UCCI</span>
           </h1>
           <p className="section-subtitle max-w-2xl mx-auto">
-            Curated onboarding: fill the inquiry, schedule a call with leadership, and Admin creates your profile. Leads go to Admin for vetting.
+            Two ways to grow with us — become a member of your local chapter, or step up to lead one.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <span className="badge">Rs. 6,000 Membership + Rs. 6,000 Venue</span>
             <span className="badge">Offline payments: no gateway</span>
-            <span className="badge">No Featured / Banner ads yet</span>
+            <span className="badge">Curated & vetted community</span>
           </div>
           <div className="mt-4 flex flex-wrap justify-center gap-3">
             <a href="https://wa.me/918600241900" target="_blank" rel="noopener noreferrer" className="btn-primary text-sm">WhatsApp +91-86002 41900</a>
@@ -227,27 +236,104 @@ export default async function JoinPage() {
         </div>
       </div>
 
-      {/* Curated flow explainer */}
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
-        <div className="glass-card p-6">
-          <h2 className="font-display font-bold text-brand-gold mb-3">How joining works (Form 1)</h2>
-          <ul className="space-y-2 text-brand-silver text-sm list-disc pl-5">
-            <li><strong className="text-brand-white">Inquiry to Admin:</strong> Your form is sent to UCCI Admin (info@ucciindia.org), not directly to a member.</li>
-            <li><strong className="text-brand-white">Call with Leadership:</strong> Admin schedules a call to confirm chapter/locality fit across 7 chapters.</li>
-            <li><strong className="text-brand-white">Admin creates profile:</strong> No self-service dashboard yet, curated manual creation.</li>
-            <li><strong className="text-brand-white">Fees offline:</strong> Rs. 6k + Rs. 6k venue, tracked manually. No revenue share.</li>
-          </ul>
-        </div>
-      </div>
-
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <OnboardingForm
-          areas={(areas as Array<{
-            id: string; name: string; slug: string;
-            chapters: Array<{ id: string; name: string; slug: string }>
-          }>) ?? []}
-          categories={categories ?? []}
+        <Suspense fallback={<div className="text-center text-brand-silver py-10">Loading...</div>}>
+        <JoinTabs
+          member={
+            <div className="space-y-8">
+              <div className="glass-card p-6">
+                <h2 className="font-display font-bold text-brand-gold mb-3 flex items-center gap-2">
+                  <BadgeCheck className="w-5 h-5" /> Become a Member
+                </h2>
+                <p className="text-brand-silver text-sm leading-relaxed">
+                  Join your local chapter, get listed in our exclusive business directory (one member per category
+                  per chapter), receive vetted referrals, and attend chapter meets. Fill the inquiry below, pick an
+                  interview date, and our admin team will review your application.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="glass-card p-6">
+                  <h3 className="font-display font-bold text-brand-white mb-2">Why join a chapter?</h3>
+                  <ul className="space-y-2 text-brand-silver text-sm list-disc pl-5">
+                    <li>Exclusive category ownership in your chapter — zero direct competition.</li>
+                    <li>Warm referrals and curated introductions from fellow members.</li>
+                    <li>Regular chapter meets, learning sessions, and business showcases.</li>
+                    <li>Public directory listing that builds trust with customers.</li>
+                  </ul>
+                </div>
+                <div className="glass-card p-6">
+                  <h3 className="font-display font-bold text-brand-white mb-2">Eligibility to join</h3>
+                  <ul className="space-y-2 text-brand-silver text-sm list-disc pl-5">
+                    <li>Own or represent a genuine business with a verifiable address.</li>
+                    <li>Your category must be vacant in your preferred chapter.</li>
+                    <li>Commit to attending chapter meets and the membership code of conduct.</li>
+                    <li>Membership fee (Rs. 6,000 + Rs. 6,000 venue) payable offline on approval.</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="glass-card p-6">
+                <h2 className="font-display font-bold text-brand-gold mb-3">How joining works</h2>
+                <ul className="space-y-2 text-brand-silver text-sm list-disc pl-5">
+                  <li><strong className="text-brand-white">Inquiry to Admin:</strong> Your form is sent to UCCI Admin (info@ucciindia.org), not directly to a member.</li>
+                  <li><strong className="text-brand-white">Call with Leadership:</strong> Admin schedules a call to confirm chapter/locality fit across 7 chapters.</li>
+                  <li><strong className="text-brand-white">Admin creates profile:</strong> No self-service dashboard yet, curated manual creation.</li>
+                  <li><strong className="text-brand-white">Fees offline:</strong> Rs. 6k + Rs. 6k venue, tracked manually. No revenue share.</li>
+                </ul>
+              </div>
+
+              <OnboardingForm
+                areas={(areas as Array<{
+                  id: string; name: string; slug: string;
+                  chapters: Array<{ id: string; name: string; slug: string }>
+                }>) ?? []}
+                categories={categories ?? []}
+              />
+            </div>
+          }
+          head={
+            <div className="space-y-8">
+              <div className="glass-card p-6">
+                <h2 className="font-display font-bold text-brand-gold mb-3 flex items-center gap-2">
+                  <Crown className="w-5 h-5" /> Become a Chapter Head
+                </h2>
+                <p className="text-brand-silver text-sm leading-relaxed">
+                  Chapter Heads lead a local UCCI chapter — onboarding members, hosting meets, and driving referrals.
+                  Tell us who you are and which chapter you&apos;d like to lead; our admin team reviews every application.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="glass-card p-6">
+                  <h3 className="font-display font-bold text-brand-white mb-2">Why lead a chapter?</h3>
+                  <ul className="space-y-2 text-brand-silver text-sm list-disc pl-5">
+                    <li>Position yourself as the business leader of your locality.</li>
+                    <li>Build the strongest referral network in your area.</li>
+                    <li>Shape chapter culture, meets, and growth with UCCI support.</li>
+                    <li>First access to cross-chapter and city-level opportunities.</li>
+                  </ul>
+                </div>
+                <div className="glass-card p-6">
+                  <h3 className="font-display font-bold text-brand-white mb-2">Eligibility to lead</h3>
+                  <ul className="space-y-2 text-brand-silver text-sm list-disc pl-5">
+                    <li>Established business owner with 2+ years of operations preferred.</li>
+                    <li>Strong local reputation and willingness to mentor members.</li>
+                    <li>Commitment to host regular meets and uphold UCCI values.</li>
+                    <li>Final appointment is at the discretion of UCCI admin.</li>
+                  </ul>
+                </div>
+              </div>
+
+              <ChapterHeadForm
+                chapters={(areas ?? []).flatMap(a =>
+                  (a.chapters ?? []).map((ch: { id: string; name: string }) => ({ id: ch.id, name: ch.name, areaName: a.name }))
+                )}
+              />
+            </div>
+          }
         />
+        </Suspense>
       </div>
     </div>
   )

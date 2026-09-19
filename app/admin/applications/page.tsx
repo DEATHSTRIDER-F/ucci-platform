@@ -1,6 +1,8 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { ApplicationReviewClient } from '@/components/admin/ApplicationReviewClient'
-import type { Profile } from '@/lib/types/database'
+import { ChapterHeadReviewClient } from '@/components/admin/ChapterHeadReviewClient'
+import { ApplicationsTabs } from '@/components/admin/ApplicationsTabs'
+import type { Profile, ChapterHeadApplication } from '@/lib/types/database'
 import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
@@ -47,15 +49,43 @@ export default async function ApplicationsPage() {
     }
   })
 
+  // Chapter head applications (pending)
+  let headQuery = supabase
+    .from('chapter_head_applications')
+    .select('*, chapter:chapters(id, name)')
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false })
+
+  if (!isSuperAdmin && adminProfile?.chapter_id) {
+    headQuery = headQuery.or(`chapter_id.eq.${adminProfile.chapter_id},chapter_id.is.null`)
+  }
+
+  const { data: headRaw } = await headQuery
+  const headApplications: ChapterHeadApplication[] = (headRaw ?? []).map((row: Record<string, unknown>) => {
+    const chapter = Array.isArray(row.chapter) ? row.chapter[0] : row.chapter
+    return { ...(row as unknown as ChapterHeadApplication), chapter: (chapter ?? null) as ChapterHeadApplication['chapter'] }
+  })
+
   return (
     <div>
-      <h1 className="font-display text-2xl font-bold text-brand-white mb-2">Pending Applications</h1>
-      <p className="text-brand-silver mb-6">Review and approve or reject membership applications.</p>
-      <ApplicationReviewClient
-        applications={applications}
-        adminId={adminProfile?.id ?? ''}
+      <h1 className="font-display text-2xl font-bold text-brand-white mb-2">Applications</h1>
+      <p className="text-brand-silver mb-6">Review and approve or reject membership and chapter head applications.</p>
+      <ApplicationsTabs
+        memberCount={applications.length}
+        headCount={headApplications.length}
+        member={
+          <ApplicationReviewClient
+            applications={applications}
+            adminId={adminProfile?.id ?? ''}
+          />
+        }
+        head={
+          <ChapterHeadReviewClient
+            applications={headApplications}
+            adminId={adminProfile?.id ?? ''}
+          />
+        }
       />
     </div>
   )
 }
-

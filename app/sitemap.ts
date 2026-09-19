@@ -20,14 +20,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: absoluteUrl('/join'), lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
   ]
 
-  // Areas + Chapters
+  // Areas + Chapters (active only — inactive show Coming Soon)
   const { data: areas } = await supabase
     .from('areas')
-    .select('slug, updated_at, chapters(slug, updated_at)')
+    .select('slug, updated_at, chapters(slug, updated_at, is_active)')
 
   const chapterPages: MetadataRoute.Sitemap = []
   for (const area of areas ?? []) {
-    for (const chapter of (area.chapters as Array<{ slug: string; updated_at: string }>) ?? []) {
+    for (const chapter of (area.chapters as Array<{ slug: string; updated_at: string; is_active: boolean }>) ?? []) {
+      if (chapter.is_active === false) continue
       chapterPages.push({
         url: absoluteUrl(`/chapters/${area.slug}-${chapter.slug}`),
         lastModified: chapter.updated_at,

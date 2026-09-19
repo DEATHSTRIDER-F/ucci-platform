@@ -2,14 +2,16 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import Image from 'next/image'
-import { ChevronLeft, ChevronRight, X, LayoutGrid } from 'lucide-react'
+import { ChevronLeft, ChevronRight, X, LayoutGrid, Play } from 'lucide-react'
 import { formatDate } from '@/lib/utils/utils'
+import { youTubeThumbnail, youTubeEmbedUrl } from '@/lib/utils/youtube'
 
 export interface GalleryPost {
   id: string
   title: string
   content: string | null
   created_at: string
+  youtube_video_id?: string | null
   images: Array<{
     id: string
     image_url: string
@@ -23,32 +25,45 @@ export interface GalleryPost {
 export function MasonryGallery({ posts }: { posts: GalleryPost[] }) {
   const [selectedPost, setSelectedPost] = useState<GalleryPost | null>(null)
   const [currentImageIdx, setCurrentImageIdx] = useState(0)
+  // 'video' shows the YouTube embed; a number shows that image index
+  const [mediaView, setMediaView] = useState<'video' | number>('video')
 
   const openModal = (post: GalleryPost) => {
     setSelectedPost(post)
     setCurrentImageIdx(0)
+    setMediaView(post.youtube_video_id ? 'video' : 0)
     document.body.style.overflow = 'hidden'
   }
 
   const closeModal = () => {
     setSelectedPost(null)
     setCurrentImageIdx(0)
+    setMediaView('video')
     document.body.style.overflow = 'auto'
   }
+
+  const goToImage = useCallback((idx: number) => {
+    setCurrentImageIdx(idx)
+    setMediaView(idx)
+  }, [])
 
   const nextImage = useCallback((e?: React.MouseEvent) => {
     e?.stopPropagation()
     if (!selectedPost) return
     const images = [...(selectedPost.images || [])].sort((a, b) => a.display_order - b.display_order)
-    setCurrentImageIdx((prev) => (prev + 1) % images.length)
-  }, [selectedPost])
+    const next = (currentImageIdx + 1) % images.length
+    setCurrentImageIdx(next)
+    setMediaView(next)
+  }, [selectedPost, currentImageIdx])
 
   const prevImage = useCallback((e?: React.MouseEvent) => {
     e?.stopPropagation()
     if (!selectedPost) return
     const images = [...(selectedPost.images || [])].sort((a, b) => a.display_order - b.display_order)
-    setCurrentImageIdx((prev) => (prev - 1 + images.length) % images.length)
-  }, [selectedPost])
+    const prev = (currentImageIdx - 1 + images.length) % images.length
+    setCurrentImageIdx(prev)
+    setMediaView(prev)
+  }, [selectedPost, currentImageIdx])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -94,6 +109,7 @@ export function MasonryGallery({ posts }: { posts: GalleryPost[] }) {
         {posts.map((post) => {
           const images = [...(post.images || [])].sort((a, b) => a.display_order - b.display_order)
           const primaryImage = images[0]
+          const hasVideo = !!post.youtube_video_id
           const chapter = Array.isArray(post.chapter) ? post.chapter[0] : post.chapter
           const area = Array.isArray(post.area) ? post.area[0] : post.area
 
@@ -103,7 +119,28 @@ export function MasonryGallery({ posts }: { posts: GalleryPost[] }) {
               className="break-inside-avoid glass-card overflow-hidden cursor-pointer group transform transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-gold/10"
               onClick={() => openModal(post)}
             >
-              {primaryImage && (
+              {hasVideo ? (
+                <div className="relative aspect-video w-full overflow-hidden bg-black">
+                  <Image
+                    src={youTubeThumbnail(post.youtube_video_id!)}
+                    alt={post.title}
+                    fill
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  />
+                  <span className="absolute inset-0 flex items-center justify-center">
+                    <span className="w-12 h-12 rounded-full bg-brand-gold flex items-center justify-center shadow-lg shadow-black/40 group-hover:scale-110 transition-transform">
+                      <Play className="w-5 h-5 text-brand-navy fill-brand-navy ml-0.5" />
+                    </span>
+                  </span>
+                  {images.length > 0 && (
+                    <div className="absolute top-3 right-3 bg-brand-navy/80 backdrop-blur-sm text-brand-gold px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1">
+                      <LayoutGrid className="w-3 h-3" />
+                      <span>{images.length}</span>
+                    </div>
+                  )}
+                </div>
+              ) : primaryImage ? (
                 <div className="relative aspect-video w-full overflow-hidden bg-brand-navy/50">
                   <Image
                     src={primaryImage.image_url}
@@ -119,7 +156,7 @@ export function MasonryGallery({ posts }: { posts: GalleryPost[] }) {
                     </div>
                   )}
                 </div>
-              )}
+              ) : null}
               <div className="p-5">
                 <h2 className="font-display text-lg font-bold text-brand-white group-hover:text-brand-gold transition-colors">{post.title}</h2>
                 <div className="flex items-center gap-2 mt-2 text-xs text-brand-silver/60 flex-wrap">
@@ -174,6 +211,19 @@ export function MasonryGallery({ posts }: { posts: GalleryPost[] }) {
             >
               {(() => {
                 const images = [...(selectedPost.images || [])].sort((a, b) => a.display_order - b.display_order)
+                if (mediaView === 'video' && selectedPost.youtube_video_id) {
+                  return (
+                    <div className="relative w-full max-w-5xl aspect-video">
+                      <iframe
+                        src={youTubeEmbedUrl(selectedPost.youtube_video_id) + '?autoplay=1'}
+                        title={selectedPost.title}
+                        className="absolute inset-0 w-full h-full rounded-lg"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    </div>
+                  )
+                }
                 if (images.length === 0) return null
                 const currentImg = images[currentImageIdx]
 
@@ -190,8 +240,8 @@ export function MasonryGallery({ posts }: { posts: GalleryPost[] }) {
                 )
               })()}
 
-              {/* Arrows */}
-              {selectedPost.images && selectedPost.images.length > 1 && (
+              {/* Arrows (images only) */}
+              {mediaView !== 'video' && selectedPost.images && selectedPost.images.length > 1 && (
                 <>
                   <button
                     onClick={prevImage}
@@ -212,17 +262,31 @@ export function MasonryGallery({ posts }: { posts: GalleryPost[] }) {
             </div>
 
             {/* Thumbnails */}
-            {selectedPost.images && selectedPost.images.length > 1 && (
+            {(selectedPost.youtube_video_id || (selectedPost.images && selectedPost.images.length > 1)) && (
               <div className="h-24 p-4 bg-gradient-to-t from-brand-navy to-transparent flex items-center justify-center gap-2 overflow-x-auto">
+                {selectedPost.youtube_video_id && (
+                  <button
+                    onClick={() => setMediaView('video')}
+                    className={'relative flex-shrink-0 h-16 w-24 rounded-md overflow-hidden transition-all duration-200 ' + (mediaView === 'video'
+                      ? 'ring-2 ring-brand-gold ring-offset-2 ring-offset-brand-navy scale-105'
+                      : 'opacity-50 hover:opacity-100')}
+                  >
+                    <img
+                      src={youTubeThumbnail(selectedPost.youtube_video_id)}
+                      alt="Video thumbnail"
+                      className="object-cover w-full h-full"
+                    />
+                  </button>
+                )}
                 {(() => {
                   const images = [...selectedPost.images].sort((a, b) => a.display_order - b.display_order)
                   return images.map((img, idx) => (
                     <button
                       key={img.id}
-                      onClick={() => setCurrentImageIdx(idx)}
+                      onClick={() => goToImage(idx)}
                       className={`relative flex-shrink-0 h-16 w-24 rounded-md overflow-hidden transition-all duration-200 ${
-                        idx === currentImageIdx 
-                          ? 'ring-2 ring-brand-gold ring-offset-2 ring-offset-brand-navy scale-105' 
+                        mediaView !== 'video' && idx === currentImageIdx
+                          ? 'ring-2 ring-brand-gold ring-offset-2 ring-offset-brand-navy scale-105'
                           : 'opacity-50 hover:opacity-100'
                       }`}
                     >

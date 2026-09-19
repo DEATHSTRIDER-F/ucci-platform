@@ -27,7 +27,7 @@ export default async function SlidesPage() {
     <div>
       <h1 className="font-display text-2xl font-bold text-brand-white mb-2">Hero Carousel Slides</h1>
       <p className="text-brand-silver mb-6">
-        Manage the homepage hero carousel. Images are automatically compressed to WebP and stored via upsert.
+        Manage the homepage hero carousel. Drag slides to reorder — order saves automatically.
       </p>
       <SlidesManagerClient slides={slides ?? []} adminId={adminProfile.id} />
     </div>

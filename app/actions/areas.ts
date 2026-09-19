@@ -8,9 +8,10 @@ import type { Area, Chapter } from '@/lib/types/database'
 export async function createArea(data: { name: string; slug: string }): Promise<{ success: boolean; data?: Area; error?: string }> {
   if (!data.name?.trim()) return { success: false, error: 'Area name is required.' }
   const supabase = await createAdminClient()
+  const { data: maxRow } = await supabase.from('areas').select('display_order').order('display_order', { ascending: false }).limit(1).maybeSingle()
   const { data: area, error } = await supabase
     .from('areas')
-    .insert({ name: data.name.trim(), slug: data.slug || slugify(data.name) })
+    .insert({ name: data.name.trim(), slug: data.slug || slugify(data.name), display_order: ((maxRow?.display_order as number | undefined) ?? -1) + 1 })
     .select().single()
   if (error) return { success: false, error: error.code === '23505' ? 'Area slug already exists.' : error.message }
   revalidatePath('/'); revalidatePath('/admin/areas')
@@ -29,9 +30,10 @@ export async function createChapter(data: { name: string; slug: string; area_id:
   if (!data.name?.trim()) return { success: false, error: 'Chapter name is required.' }
   if (!data.area_id) return { success: false, error: 'Area is required.' }
   const supabase = await createAdminClient()
+  const { data: maxRow } = await supabase.from('chapters').select('display_order').eq('area_id', data.area_id).order('display_order', { ascending: false }).limit(1).maybeSingle()
   const { data: chapter, error } = await supabase
     .from('chapters')
-    .insert({ name: data.name.trim(), slug: data.slug || slugify(data.name), area_id: data.area_id })
+    .insert({ name: data.name.trim(), slug: data.slug || slugify(data.name), area_id: data.area_id, display_order: ((maxRow?.display_order as number | undefined) ?? -1) + 1 })
     .select().single()
   if (error) return { success: false, error: error.code === '23505' ? 'Chapter slug already exists in this area.' : error.message }
   revalidatePath('/'); revalidatePath('/admin/areas')
@@ -43,5 +45,27 @@ export async function deleteChapter(id: string): Promise<{ success: boolean; err
   const { error } = await supabase.from('chapters').delete().eq('id', id)
   if (error) return { success: false, error: error.code === '23503' ? 'Cannot delete chapter: members or admins are assigned to it.' : error.message }
   revalidatePath('/'); revalidatePath('/admin/areas')
+  return { success: true }
+}
+
+export async function reorderAreas(updates: Array<{ id: string; display_order: number }>): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createAdminClient()
+  await Promise.all(updates.map(u => supabase.from('areas').update({ display_order: u.display_order }).eq('id', u.id)))
+  revalidatePath('/'); revalidatePath('/admin/areas')
+  return { success: true }
+}
+
+export async function reorderChapters(updates: Array<{ id: string; display_order: number }>): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createAdminClient()
+  await Promise.all(updates.map(u => supabase.from('chapters').update({ display_order: u.display_order }).eq('id', u.id)))
+  revalidatePath('/'); revalidatePath('/admin/areas')
+  return { success: true }
+}
+
+export async function toggleChapterActive(id: string, isActive: boolean): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createAdminClient()
+  const { error } = await supabase.from('chapters').update({ is_active: isActive }).eq('id', id)
+  if (error) return { success: false, error: error.message }
+  revalidatePath('/'); revalidatePath('/admin/areas'); revalidatePath('/join')
   return { success: true }
 }

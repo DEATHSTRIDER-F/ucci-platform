@@ -13,7 +13,7 @@ interface AreaWithChapters {
   id: string
   name: string
   slug: string
-  chapters: Array<{ id: string; name: string; slug: string }>
+  chapters: Array<{ id: string; name: string; slug: string; is_active?: boolean }>
 }
 
 interface FeaturedCategory {
@@ -197,13 +197,26 @@ export function Header({ profile, featuredCategories, areasWithChapters }: Heade
                           >
                             <div className="glass-card py-2 animate-fade-in">
                               {area.chapters.map(chapter => (
-                                <Link
-                                  key={chapter.id}
-                                  href={`/chapters/${area.slug}-${chapter.slug}`}
-                                  className="block px-4 py-2 text-sm text-brand-silver hover:text-brand-gold hover:bg-brand-navy/50 transition-colors"
-                                >
-                                  {chapter.name}
-                                </Link>
+                                chapter.is_active === false ? (
+                                  <span
+                                    key={chapter.id}
+                                    className="flex items-center justify-between px-4 py-2 text-sm text-brand-silver/40 cursor-not-allowed"
+                                    title="Coming soon"
+                                  >
+                                    {chapter.name}
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-brand-gold/15 text-brand-champagne/70 border border-brand-gold/30">
+                                      Coming Soon
+                                    </span>
+                                  </span>
+                                ) : (
+                                  <Link
+                                    key={chapter.id}
+                                    href={`/chapters/${area.slug}-${chapter.slug}`}
+                                    className="block px-4 py-2 text-sm text-brand-silver hover:text-brand-gold hover:bg-brand-navy/50 transition-colors"
+                                  >
+                                    {chapter.name}
+                                  </Link>
+                                )
                               ))}
                             </div>
                           </div>
@@ -253,16 +266,65 @@ export function Header({ profile, featuredCategories, areasWithChapters }: Heade
               )}
             </div>
 
-            {/* Start a Chapter */}
-            <Link href="/join" className={navLinkClass('/join')}>
-              Start a Chapter
-            </Link>
+            {/* Join UCCI */}
+            <div
+              className="relative"
+              onMouseEnter={() => openDropdown('join')}
+              onMouseLeave={closeDropdown}
+            >
+              <button
+                className={`btn-ghost text-sm font-medium flex items-center gap-1 ${isActive('/join') ? 'text-brand-gold' : 'text-brand-silver hover:text-brand-white'
+                  }`}
+                aria-expanded={activeDropdown === 'join'}
+              >
+                Join UCCI <ChevronDown className="w-4 h-4" />
+              </button>
+              {activeDropdown === 'join' && (
+                <div className="absolute top-full left-0 pt-1 w-56">
+                  <div className="glass-card py-2 animate-fade-in">
+                    <Link href="/join" className="block px-4 py-2 text-sm text-brand-silver hover:text-brand-gold hover:bg-brand-navy/50 transition-colors">
+                      Become a Member
+                    </Link>
+                    <Link href="/join?tab=head" className="block px-4 py-2 text-sm text-brand-silver hover:text-brand-gold hover:bg-brand-navy/50 transition-colors">
+                      Become a Chapter Head
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Contact */}
             <Link href="/contact" className={navLinkClass('/contact')}>Contact Us</Link>
 
             {/* Gallery */}
-            <Link href="/gallery" className={navLinkClass('/gallery')}>Gallery</Link>
+            <div
+              className="relative"
+              onMouseEnter={() => openDropdown('gallery')}
+              onMouseLeave={closeDropdown}
+            >
+              <button
+                className={`btn-ghost text-sm font-medium flex items-center gap-1 ${isActive('/gallery') ? 'text-brand-gold' : 'text-brand-silver hover:text-brand-white'
+                  }`}
+                aria-expanded={activeDropdown === 'gallery'}
+              >
+                Gallery <ChevronDown className="w-4 h-4" />
+              </button>
+              {activeDropdown === 'gallery' && (
+                <div className="absolute top-full left-0 pt-1 w-48">
+                  <div className="glass-card py-2 animate-fade-in">
+                    <Link href="/gallery" className="block px-4 py-2 text-sm text-brand-silver hover:text-brand-gold hover:bg-brand-navy/50 transition-colors">
+                      News
+                    </Link>
+                    <Link href="/gallery?tab=events" className="block px-4 py-2 text-sm text-brand-silver hover:text-brand-gold hover:bg-brand-navy/50 transition-colors">
+                      Events
+                    </Link>
+                    <Link href="/gallery?tab=videos" className="block px-4 py-2 text-sm text-brand-silver hover:text-brand-gold hover:bg-brand-navy/50 transition-colors">
+                      Videos
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Admin link for admins */}
             {profile && (profile.role === 'super_admin' || profile.role === 'chapter_admin') && (
@@ -349,13 +411,25 @@ export function Header({ profile, featuredCategories, areasWithChapters }: Heade
                 <div key={area.id}>
                   <div className="px-6 py-1 text-xs text-brand-silver/60 font-medium">{area.name}</div>
                   {area.chapters.map(chapter => (
-                    <Link
-                      key={chapter.id}
-                      href={`/chapters/${area.slug}-${chapter.slug}`}
-                      className="block py-2 px-8 text-sm text-brand-silver hover:text-brand-gold hover:bg-brand-navy/50 rounded transition-colors"
-                    >
-                      {chapter.name}
-                    </Link>
+                    chapter.is_active === false ? (
+                      <span
+                        key={chapter.id}
+                        className="flex items-center justify-between py-2 px-8 text-sm text-brand-silver/40"
+                      >
+                        {chapter.name}
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-brand-gold/15 text-brand-champagne/70 border border-brand-gold/30">
+                          Coming Soon
+                        </span>
+                      </span>
+                    ) : (
+                      <Link
+                        key={chapter.id}
+                        href={`/chapters/${area.slug}-${chapter.slug}`}
+                        className="block py-2 px-8 text-sm text-brand-silver hover:text-brand-gold hover:bg-brand-navy/50 rounded transition-colors"
+                      >
+                        {chapter.name}
+                      </Link>
+                    )
                   ))}
                 </div>
               ))}
@@ -363,10 +437,16 @@ export function Header({ profile, featuredCategories, areasWithChapters }: Heade
 
             <Link href="/categories" className="block py-3 px-3 text-brand-silver hover:text-brand-gold rounded-lg hover:bg-brand-navy/50 transition-colors">Categories</Link>
 
-            <Link href="/join" className="block py-3 px-3 text-brand-silver hover:text-brand-gold rounded-lg hover:bg-brand-navy/50 transition-colors">Start a Chapter</Link>
+            <Link href="/join" className="block py-3 px-3 text-brand-silver hover:text-brand-gold rounded-lg hover:bg-brand-navy/50 transition-colors">Become a Member</Link>
+            <Link href="/join?tab=head" className="block py-3 px-3 text-brand-silver hover:text-brand-gold rounded-lg hover:bg-brand-navy/50 transition-colors">Become a Chapter Head</Link>
 
             <Link href="/contact" className="block py-3 px-3 text-brand-silver hover:text-brand-gold rounded-lg hover:bg-brand-navy/50 transition-colors">Contact Us</Link>
-            <Link href="/gallery" className="block py-3 px-3 text-brand-silver hover:text-brand-gold rounded-lg hover:bg-brand-navy/50 transition-colors">Gallery</Link>
+            <div className="py-2">
+              <div className="px-3 py-1 text-xs text-brand-champagne font-semibold uppercase tracking-wider">Gallery</div>
+              <Link href="/gallery" className="block py-2 px-6 text-sm text-brand-silver hover:text-brand-gold hover:bg-brand-navy/50 rounded transition-colors">News</Link>
+              <Link href="/gallery?tab=events" className="block py-2 px-6 text-sm text-brand-silver hover:text-brand-gold hover:bg-brand-navy/50 rounded transition-colors">Events</Link>
+              <Link href="/gallery?tab=videos" className="block py-2 px-6 text-sm text-brand-silver hover:text-brand-gold hover:bg-brand-navy/50 rounded transition-colors">Videos</Link>
+            </div>
 
             {profile && (profile.role === 'super_admin' || profile.role === 'chapter_admin') && (
               <Link href="/admin" className="block py-3 px-3 text-brand-gold font-semibold rounded-lg hover:bg-brand-navy/50 transition-colors">Admin Dashboard</Link>

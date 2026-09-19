@@ -9,6 +9,7 @@ export interface Area {
   id: string
   name: string
   slug: string
+  display_order: number
   created_at: string
   updated_at: string
 }
@@ -19,6 +20,8 @@ export interface Chapter {
   slug: string
   area_id: string
   description: string | null
+  display_order: number
+  is_active: boolean
   area?: Area
   created_at: string
   updated_at: string
@@ -29,6 +32,7 @@ export interface Category {
   name: string
   slug: string
   is_featured: boolean
+  display_order: number
   meta_description: string | null
   alt_text: string | null
   icon_name: string | null
@@ -94,10 +98,30 @@ export interface ContactInquiry {
   created_at: string
 }
 
+export type ChapterHeadApplicationStatus = 'pending' | 'approved' | 'rejected'
+
+export interface ChapterHeadApplication {
+  id: string
+  name: string
+  email: string
+  phone: string
+  chapter_id: string | null
+  message: string | null
+  status: ChapterHeadApplicationStatus
+  reviewed_by: string | null
+  reviewed_at: string | null
+  created_at: string
+  updated_at: string
+  chapter?: { id?: string; name: string } | null
+}
+
 export interface GalleryPost {
   id: string
   title: string
   content: string | null
+  post_type: GalleryPostType
+  youtube_url: string | null
+  youtube_video_id: string | null
   area_id: string | null
   chapter_id: string | null
   created_by: string
@@ -108,6 +132,8 @@ export interface GalleryPost {
   area?: Area
   chapter?: Chapter
 }
+
+export type GalleryPostType = 'news' | 'event' | 'video'
 
 export interface GalleryImage {
   id: string

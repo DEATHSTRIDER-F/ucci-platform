@@ -4,7 +4,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { getCurrentProfile } from '@/lib/auth/getCurrentProfile'
 import Link from 'next/link'
-import { Building2, Tag, ChevronRight } from 'lucide-react'
+import { Building2, Tag, ChevronRight, Plus } from 'lucide-react'
 
 export const metadata = {
   title: 'Members | Admin',
@@ -64,6 +64,9 @@ export default async function AdminMembersPage() {
         <div className="bg-brand-sapphire px-4 py-2 rounded-lg border border-brand-gold/20 text-brand-gold font-medium">
           {count ?? members.length} Total Members {count !== null && count > pageSize ? `· showing ${members.length}` : ''}
         </div>
+        <Link href="/admin/members/new" className="btn-primary flex items-center gap-2 text-sm">
+          <Plus className="w-4 h-4" /> Add Member (Offline)
+        </Link>
       </div>
 
       <div className="glass-card overflow-hidden">

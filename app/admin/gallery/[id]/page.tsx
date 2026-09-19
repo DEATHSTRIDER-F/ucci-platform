@@ -26,7 +26,7 @@ export default async function EditGalleryPostPage({ params }: { params: { id: st
     redirect('/unauthorized')
   }
 
-  const { data: areas } = await supabase.from('areas').select('id, name, chapters(id, name)').order('name')
+  const { data: areas } = await supabase.from('areas').select('id, name, chapters(id, name)').order('display_order').order('display_order', { referencedTable: 'chapters' })
 
   return (
     <div>

@@ -3,7 +3,10 @@
 import { useState, useCallback } from 'react'
 import Image from 'next/image'
 import { compressImage, validateImageFile } from '@/lib/utils/imageCompressor'
+import { extractYouTubeId } from '@/lib/utils/youtube'
 import { createGalleryPost } from '@/app/actions/gallery'
+import { GalleryYouTubeField } from '@/components/admin/GalleryYouTubeField'
+import type { GalleryPostType } from '@/lib/types/database'
 import { useRouter } from 'next/navigation'
 import { Upload, X, Loader2, CheckCircle, Plus } from 'lucide-react'
 
@@ -22,6 +25,8 @@ export function GalleryFormClient({ areas, adminProfile }: GalleryFormClientProp
   const router = useRouter()
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
+  const [postType, setPostType] = useState<GalleryPostType>('event')
+  const [youtubeUrl, setYoutubeUrl] = useState('')
   const [areaId, setAreaId] = useState('')
   const [chapterId, setChapterId] = useState(adminProfile.chapter_id ?? '')
   const [images, setImages] = useState<ImageItem[]>([])
@@ -55,7 +60,16 @@ export function GalleryFormClient({ areas, adminProfile }: GalleryFormClientProp
   const handleSubmit = async () => {
     const e: Record<string, string> = {}
     if (!title.trim()) e.title = 'Title is required'
-    if (images.length === 0) e.images = 'At least one image is required'
+    const ytId = extractYouTubeId(youtubeUrl)
+    if (postType === 'video') {
+      if (!youtubeUrl.trim()) e.youtube = 'YouTube link is required for videos'
+      else if (!ytId) e.youtube = 'Invalid YouTube link'
+    } else if (postType === 'news') {
+      if (youtubeUrl.trim() && !ytId) e.youtube = 'Invalid YouTube link'
+      if (images.length === 0 && !ytId) e.images = 'News needs at least one image or a YouTube link'
+    } else {
+      if (images.length === 0) e.images = 'At least one image is required'
+    }
     if (images.some(img => !img.alt_text.trim())) e.images = 'All images must have alt text'
     if (Object.keys(e).length) { setErrors(e); return }
     setErrors({})
@@ -78,6 +92,8 @@ export function GalleryFormClient({ areas, adminProfile }: GalleryFormClientProp
       const result = await createGalleryPost({
         title: title.trim(),
         content: content.trim() || null,
+        post_type: postType,
+        youtube_url: youtubeUrl.trim() || null,
         area_id: areaId || null,
         chapter_id: chapterId || null,
         created_by: adminProfile.id,
@@ -86,7 +102,7 @@ export function GalleryFormClient({ areas, adminProfile }: GalleryFormClientProp
 
       if (result.success) {
         setSuccess(true)
-        setTimeout(() => router.push('/gallery'), 2000)
+        setTimeout(() => router.push('/admin/gallery'), 2000)
       } else {
         setErrors({ submit: result.error ?? 'Failed to create post.' })
       }
@@ -102,13 +118,40 @@ export function GalleryFormClient({ areas, adminProfile }: GalleryFormClientProp
       <div className="glass-card p-10 text-center">
         <CheckCircle className="w-12 h-12 text-green-400 mx-auto mb-3" />
         <h2 className="font-display text-xl font-bold text-brand-white">Gallery Post Created!</h2>
-        <p className="text-brand-silver mt-2">Redirecting to gallery...</p>
+        <p className="text-brand-silver mt-2">Redirecting to gallery manager...</p>
       </div>
     )
   }
 
   return (
     <div className="glass-card p-8 space-y-6 max-w-3xl">
+      <div>
+        <label className="block text-brand-silver text-sm font-medium mb-2">Post Type *</label>
+        <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Post type">
+          {([
+            { key: 'news', label: 'News', hint: 'Images +/or YouTube' },
+            { key: 'event', label: 'Event', hint: 'Image gallery' },
+            { key: 'video', label: 'Video', hint: 'YouTube embed' },
+          ] as Array<{ key: GalleryPostType; label: string; hint: string }>).map(t => (
+            <button
+              key={t.key}
+              type="button"
+              role="radio"
+              aria-checked={postType === t.key}
+              onClick={() => setPostType(t.key)}
+              className={`px-4 py-3 rounded-lg text-sm font-medium border transition-all min-h-[44px] ${
+                postType === t.key
+                  ? 'bg-brand-gold text-brand-navy border-brand-gold'
+                  : 'bg-brand-navy/50 text-brand-silver border-brand-sapphire hover:border-brand-gold/50 hover:text-brand-white'
+              }`}
+            >
+              <span className="block font-display font-semibold">{t.label}</span>
+              <span className={`block text-xs mt-0.5 ${postType === t.key ? 'text-brand-navy/70' : 'text-brand-silver/50'}`}>{t.hint}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div>
         <label htmlFor="gallery_title" className="block text-brand-silver text-sm font-medium mb-1">Post Title *</label>
         <input id="gallery_title" type="text" value={title} onChange={e => setTitle(e.target.value)} className="input-field" placeholder="UCCI Pune East Chapter Monthly Meeting, June 2026" />
@@ -119,6 +162,16 @@ export function GalleryFormClient({ areas, adminProfile }: GalleryFormClientProp
         <label htmlFor="gallery_content" className="block text-brand-silver text-sm font-medium mb-1">Description <span className="text-brand-silver/50">(optional)</span></label>
         <textarea id="gallery_content" value={content} onChange={e => setContent(e.target.value)} className="input-field min-h-[100px] resize-none" placeholder="Monthly chapter meeting where members exchanged referrals and updates..." />
       </div>
+
+      {postType !== 'event' && (
+        <div>
+          <GalleryYouTubeField value={youtubeUrl} onChange={setYoutubeUrl} required={postType === 'video'} />
+          {errors.youtube && <p className="text-red-400 text-xs mt-1">{errors.youtube}</p>}
+          {postType === 'news' && (
+            <p className="text-brand-silver/50 text-xs mt-1">News supports a YouTube link, image posts, or both.</p>
+          )}
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-4">
         <div>
@@ -139,9 +192,10 @@ export function GalleryFormClient({ areas, adminProfile }: GalleryFormClientProp
         </div>
       </div>
 
-      {/* Image Upload */}
+      {/* Image Upload (not for videos) */}
+      {postType !== 'video' && (
       <div>
-        <label className="block text-brand-silver text-sm font-medium mb-2">Images * <span className="text-brand-silver/50">(auto-compressed to WebP/500KB)</span></label>
+        <label className="block text-brand-silver text-sm font-medium mb-2">Images {postType === 'event' ? '*' : <span className="text-brand-silver/50">(optional for news with YouTube link)</span>} <span className="text-brand-silver/50">(auto-compressed to WebP/500KB)</span></label>
         <label htmlFor="gallery_images" className="btn-outline text-sm py-2 px-4 cursor-pointer inline-flex items-center gap-2">
           <Plus className="w-4 h-4" /> Add Images
         </label>
@@ -174,6 +228,7 @@ export function GalleryFormClient({ areas, adminProfile }: GalleryFormClientProp
           </div>
         )}
       </div>
+      )}
 
       {errors.submit && <p className="text-red-400 text-sm">{errors.submit}</p>}
 

@@ -24,12 +24,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const { data } = await supabase
     .from('chapters')
-    .select('id, name, slug, description, area:areas(id, name, slug)')
+    .select('id, name, slug, description, is_active, area:areas(id, name, slug)')
     .eq('slug', chapterSlug)
     .eq('areas.slug', areaSlug)
     .single()
 
   if (!data) return { title: 'Chapter Not Found' }
+  if ((data as { is_active?: boolean }).is_active === false) {
+    return {
+      title: `UCCI ${(data as { name: string }).name} — Coming Soon`,
+      robots: { index: false, follow: true },
+    }
+  }
 
   const { count } = await supabase
     .from('profiles')
@@ -60,12 +66,38 @@ export default async function ChapterPage({ params }: Props) {
 
   const { data: chapter } = await supabase
     .from('chapters')
-    .select('id, name, slug, description')
+    .select('id, name, slug, description, is_active')
     .eq('slug', chapterSlug)
     .eq('area_id', areas.id)
     .single()
 
   if (!chapter) notFound()
+
+  // Inactive chapters: no member listing — show Coming Soon instead
+  if ((chapter as { is_active?: boolean }).is_active === false) {
+    return (
+      <div className="min-h-screen bg-brand-navy">
+        <div className="page-hero">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <Link href="/" className="inline-flex items-center gap-2 text-brand-silver hover:text-brand-gold transition-colors mb-6 text-sm">
+              <ArrowLeft className="w-4 h-4" /> Back to Home
+            </Link>
+            <h1 className="section-title">
+              UCCI <span className="text-gradient-gold">{chapter.name}</span> Chapter
+            </h1>
+            <p className="section-subtitle">{areas.name} Region</p>
+            <div className="mt-6">
+              <span className="badge text-sm px-4 py-2">Coming Soon</span>
+            </div>
+            <p className="text-brand-silver/70 mt-4 max-w-xl mx-auto">
+              We&apos;re setting up this chapter. Join the waitlist and we&apos;ll notify you when it launches.
+            </p>
+            <Link href="/join" className="btn-primary mt-6 inline-flex">Notify Me — Join UCCI</Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   // Fetch approved members in this chapter
   const { data: members } = await supabase

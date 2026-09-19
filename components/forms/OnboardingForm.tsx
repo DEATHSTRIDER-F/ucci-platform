@@ -163,7 +163,7 @@ export function OnboardingForm({ areas, categories }: OnboardingFormProps) {
 
           {/* Logo Upload */}
           <div>
-            <label className="block text-brand-silver text-sm font-medium mb-2">Company Logo</label>
+            <label className="block text-brand-silver text-sm font-medium mb-2">Company Logo <span className="text-brand-silver/50">(optional)</span></label>
             <div className="flex items-center gap-4">
               {logoPreview ? (
                 <div className="relative">

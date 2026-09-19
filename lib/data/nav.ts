@@ -12,8 +12,8 @@ export const getNavData = unstable_cache(
   async () => {
     const supabase = getPublicSupabase()
     const [featuredRes, areasRes] = await Promise.all([
-      supabase.from('categories').select('id, name, slug').eq('is_featured', true).order('name').limit(5),
-      supabase.from('areas').select('id, name, slug, chapters(id, name, slug)').order('name'),
+      supabase.from('categories').select('id, name, slug').eq('is_featured', true).order('display_order').limit(5),
+      supabase.from('areas').select('id, name, slug, chapters(id, name, slug, display_order, is_active)').order('display_order').order('display_order', { referencedTable: 'chapters' }),
     ])
     return {
       featuredCategories: (featuredRes.data ?? []) as { id: string; name: string; slug: string }[],
