@@ -10,12 +10,7 @@ const TABS = [
   { key: 'videos', label: 'Videos', icon: PlayCircle },
 ] as const
 
-export type GalleryTab = (typeof TABS)[number]['key']
-
-export function parseGalleryTab(value: string | null): GalleryTab {
-  if (value === 'events' || value === 'videos') return value
-  return 'news'
-}
+import { parseGalleryTab, type GalleryTab } from '@/lib/utils/galleryTab'
 
 export function GalleryTabs({ counts }: { counts: Record<GalleryTab, number> }) {
   const searchParams = useSearchParams()
@@ -24,7 +19,7 @@ export function GalleryTabs({ counts }: { counts: Record<GalleryTab, number> }) 
   const href = (t: GalleryTab) => (t === 'news' ? '/gallery' : `/gallery?tab=${t}`)
 
   return (
-    <div className="flex justify-center mb-10" role="tablist" aria-label="Gallery sections">
+    <div className="flex justify-center mb-8" role="tablist" aria-label="Gallery sections">
       <div className="inline-flex bg-brand-sapphire/80 border border-brand-gold/20 rounded-xl p-1 gap-1">
         {TABS.map(({ key, label, icon: Icon }) => (
           <Link

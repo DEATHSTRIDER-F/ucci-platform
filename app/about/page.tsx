@@ -1,6 +1,10 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import { Icon } from '@iconify/react'
+import founder1 from '@/public/founder-1.png'
+import founder2 from '@/public/founder-2.png'
+import founder3 from '@/public/founder-3.png'
+import founder4 from '@/public/founder-4.png'
 
 export const metadata: Metadata = {
   title: 'About UCCI | Our Story, Mission & Vision',
@@ -10,32 +14,32 @@ export const metadata: Metadata = {
 
 const FOUNDERS = [
   {
-    image: '/1.png',
+    image: founder1,
     quote: 'UCCI is more than a business networking platform. It is a movement to empower, connect, and strengthen the Muslim business community.',
     name: 'MOHAMMED PASHA',
-    title: 'Founder & President, UCCI',
-    position: '50% 8%',
+    title: 'Founder President, UCCI',
+    position: '50% 0%',
   },
   {
-    image: '/2.png',
+    image: founder2,
     quote: 'At UCCI, we strengthen bonds and empower success. Fostering unity, trust, and growth within the Muslim business community. Together, we build stronger businesses and a brighter future.',
     name: 'SAYEED INAMDAR',
     title: 'Founder Vice President',
-    position: '50% 20%',
+    position: '50% 0%',
   },
   {
-    image: '/3.png',
+    image: founder3,
     quote: 'At UCCI, we believe in growing together, not just individual success, but community success. ‘Together, We Grow.’ Success is better when shared.',
     name: 'HAMEED SHAIKH',
     title: 'Founder Vice President',
-    position: '50% 8%',
+    position: '50% 0%',
   },
   {
-    image: '/4.png',
+    image: founder4,
     quote: 'UCCI brings Muslim entrepreneurs and professionals together to create meaningful business relationships, exchange referrals, and foster collaborations.',
     name: 'ABOOBAKAR MEMON',
     title: 'Founder Vice President',
-    position: '50% 12%',
+    position: '50% 0%',
   },
 ]
 
@@ -84,12 +88,14 @@ export default function AboutPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {FOUNDERS.map(founder => (
             <div key={founder.name} className="glass-card p-6 text-center flex flex-col items-center">
-              <div className="relative w-40 h-40 mb-5 rounded-full overflow-hidden border-2 border-brand-gold/40 shrink-0 aspect-square">
-                <Image src={founder.image} alt={`${founder.name}, ${founder.title}`} fill className="object-cover" style={{ objectPosition: founder.position }} sizes="160px" />
+              <div className="relative w-40 h-40 mb-5 rounded-full overflow-hidden border-2 border-brand-gold/40 shrink-0 aspect-square bg-brand-navy/40">
+                <Image src={founder.image} alt={`${founder.name}, ${founder.title}`} fill className="object-contain" sizes="160px" />
               </div>
               <p className="text-brand-silver text-sm leading-relaxed italic mb-4">&ldquo;{founder.quote}&rdquo;</p>
-              <h3 className="font-display text-base font-bold text-brand-white tracking-wide">{founder.name}</h3>
-              <p className="text-brand-gold text-xs font-medium mt-1">{founder.title}</p>
+              <div className="mt-auto">
+                <h3 className="font-display text-base font-bold text-brand-white tracking-wide">{founder.name}</h3>
+                <p className="text-brand-gold text-xs font-medium mt-1">{founder.title}</p>
+              </div>
             </div>
           ))}
         </div>

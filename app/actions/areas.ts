@@ -69,3 +69,43 @@ export async function toggleChapterActive(id: string, isActive: boolean): Promis
   revalidatePath('/'); revalidatePath('/admin/areas'); revalidatePath('/join')
   return { success: true }
 }
+
+export async function updateChapterContent(
+  id: string,
+  data: { info: string | null; highlights: string | null; cover_b64: string | null; remove_cover?: boolean }
+): Promise<{ success: boolean; data?: Chapter; error?: string }> {
+  const supabase = await createAdminClient()
+
+  const updates: { info: string | null; highlights: string | null; cover_image_url?: string | null } = {
+    info: data.info?.trim() || null,
+    highlights: data.highlights?.trim() || null,
+  }
+
+  if (data.cover_b64) {
+    const base64Data = data.cover_b64.split(',')[1]
+    if (!base64Data) return { success: false, error: 'Invalid image data.' }
+    const buffer = Buffer.from(base64Data, 'base64')
+    const blob = new Blob([buffer], { type: 'image/webp' })
+    const path = `chapters/${id}.webp`
+    const { error: uploadError } = await supabase.storage
+      .from('ucci-media')
+      .upload(path, blob, { contentType: 'image/webp', upsert: true })
+    if (uploadError) return { success: false, error: uploadError.message }
+    const { data: urlData } = supabase.storage.from('ucci-media').getPublicUrl(path)
+    updates.cover_image_url = `${urlData.publicUrl}?t=${Date.now()}`
+  } else if (data.remove_cover) {
+    await supabase.storage.from('ucci-media').remove([`chapters/${id}.webp`])
+    updates.cover_image_url = null
+  }
+
+  const { data: chapter, error } = await supabase
+    .from('chapters')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) return { success: false, error: error.message }
+  revalidatePath('/'); revalidatePath('/admin/areas')
+  return { success: true, data: chapter }
+}

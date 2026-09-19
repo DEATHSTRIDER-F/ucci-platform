@@ -15,7 +15,12 @@ export const metadata: Metadata = {
   description: 'Join UCCI: become a member with curated onboarding or apply to lead a chapter. Rs. 6k + 6k venue offline. Office 202 HM Royal, Kondhwa Pune.',
 }
 
-export default async function JoinPage() {
+export default async function JoinPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ chapter?: string }>
+}) {
+  const { chapter: chapterParam } = await searchParams
   const supabase = await createServerSupabaseClient()
 
   // If already authenticated, check status
@@ -214,6 +219,22 @@ export default async function JoinPage() {
     .select('id, name, slug')
     .order('display_order')
 
+  // Prefilled chapter from chapter page CTA (?chapter=<id>) — validated active
+  let prefilledChapterId: string | null = null
+  let prefilledChapterName: string | null = null
+  if (chapterParam) {
+    const { data: pre } = await supabase
+      .from('chapters')
+      .select('id, name, is_active, area:areas(name)')
+      .eq('id', chapterParam)
+      .maybeSingle()
+    if (pre && (pre as { is_active?: boolean }).is_active !== false) {
+      prefilledChapterId = pre.id as string
+      const rawArea = Array.isArray(pre.area) ? pre.area[0] : pre.area
+      prefilledChapterName = `${(rawArea as { name: string } | null)?.name ?? ''} ${pre.name as string}`.trim()
+    }
+  }
+
   return (
     <div className="min-h-screen bg-brand-navy">
       <div className="page-hero py-10">
@@ -221,18 +242,6 @@ export default async function JoinPage() {
           <h1 className="section-title">
             Join <span className="text-gradient-gold">UCCI</span>
           </h1>
-          <p className="section-subtitle max-w-2xl mx-auto">
-            Two ways to grow with us — become a member of your local chapter, or step up to lead one.
-          </p>
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <span className="badge">Rs. 6,000 Membership + Rs. 6,000 Venue</span>
-            <span className="badge">Offline payments: no gateway</span>
-            <span className="badge">Curated & vetted community</span>
-          </div>
-          <div className="mt-4 flex flex-wrap justify-center gap-3">
-            <a href="https://wa.me/918600241900" target="_blank" rel="noopener noreferrer" className="btn-primary text-sm">WhatsApp +91-86002 41900</a>
-            <a href="mailto:info@ucciindia.org" className="btn-outline text-sm">info@ucciindia.org</a>
-          </div>
         </div>
       </div>
 
@@ -289,6 +298,8 @@ export default async function JoinPage() {
                   chapters: Array<{ id: string; name: string; slug: string }>
                 }>) ?? []}
                 categories={categories ?? []}
+                initialChapterId={prefilledChapterId}
+                prefilledChapterName={prefilledChapterName}
               />
             </div>
           }

@@ -24,9 +24,11 @@ interface Category {
 interface OnboardingFormProps {
   areas: Area[]
   categories: Category[]
+  initialChapterId?: string | null
+  prefilledChapterName?: string | null
 }
 
-export function OnboardingForm({ areas, categories }: OnboardingFormProps) {
+export function OnboardingForm({ areas, categories, initialChapterId, prefilledChapterName }: OnboardingFormProps) {
   const [step, setStep] = useState<'form' | 'calendar' | 'submitting' | 'success'>('form')
   const [advancedOpen, setAdvancedOpen] = useState(false)
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
@@ -47,7 +49,7 @@ export function OnboardingForm({ areas, categories }: OnboardingFormProps) {
     business_address: '',
     ideal_referral_target: '',
     referral_triggers: '',
-    chapter_id: '',
+    chapter_id: initialChapterId ?? '',
     category_id: '',
   })
 
@@ -241,6 +243,9 @@ export function OnboardingForm({ areas, categories }: OnboardingFormProps) {
           {/* Chapter Selection */}
           <div>
             <label htmlFor="chapter_id" className="block text-brand-silver text-sm font-medium mb-1">Select Chapter *</label>
+            {prefilledChapterName && (
+              <p className="text-brand-champagne text-xs mb-1.5">Pre-filled from {prefilledChapterName} — you can change it below.</p>
+            )}
             <select id="chapter_id" value={form.chapter_id} onChange={e => setForm(f => ({ ...f, chapter_id: e.target.value }))} className="input-field">
               <option value="">-- Select your preferred chapter --</option>
               {areas.map(area => (

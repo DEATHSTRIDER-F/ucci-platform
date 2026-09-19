@@ -2,7 +2,8 @@ import { Suspense } from 'react'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { buildGalleryMetadata } from '@/lib/seo/metadata'
 import { MasonryGallery } from '@/components/gallery/MasonryGallery'
-import { GalleryTabs, parseGalleryTab } from '@/components/gallery/GalleryTabs'
+import { GalleryTabs } from '@/components/gallery/GalleryTabs'
+import { parseGalleryTab } from '@/lib/utils/galleryTab'
 import { VideoGrid } from '@/components/gallery/VideoGrid'
 import { Camera, Newspaper, CalendarDays, PlayCircle } from 'lucide-react'
 import type { Metadata } from 'next'
@@ -59,7 +60,7 @@ export default async function GalleryPage({
         </div>
       </div>
 
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12" aria-label="Gallery sections">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12" aria-label="Gallery sections">
         <Suspense fallback={<div className="text-center text-brand-silver py-6">Loading...</div>}>
           <GalleryTabs counts={counts} />
         </Suspense>

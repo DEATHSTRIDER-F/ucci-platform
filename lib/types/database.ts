@@ -22,6 +22,9 @@ export interface Chapter {
   description: string | null
   display_order: number
   is_active: boolean
+  cover_image_url: string | null
+  info: string | null
+  highlights: string | null
   area?: Area
   created_at: string
   updated_at: string

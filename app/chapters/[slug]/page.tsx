@@ -1,9 +1,10 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { buildChapterMetadata } from '@/lib/seo/metadata'
+import { resolveChapterSlug } from '@/lib/data/chapters'
 import Link from 'next/link'
 import Image from 'next/image'
-import { User, ArrowLeft, Tag } from 'lucide-react'
+import { ArrowLeft, Tag, CheckCircle } from 'lucide-react'
 import type { Chapter, Area } from '@/lib/types/database'
 import type { Metadata } from 'next'
 
@@ -16,23 +17,12 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
   const supabase = await createServerSupabaseClient()
+  const resolved = await resolveChapterSlug(supabase, slug)
 
-  // slug format: {areaSlug}-{chapterSlug}
-  const parts = slug.split('-')
-  const areaSlug = parts[0]
-  const chapterSlug = parts.slice(1).join('-')
-
-  const { data } = await supabase
-    .from('chapters')
-    .select('id, name, slug, description, is_active, area:areas(id, name, slug)')
-    .eq('slug', chapterSlug)
-    .eq('areas.slug', areaSlug)
-    .single()
-
-  if (!data) return { title: 'Chapter Not Found' }
-  if ((data as { is_active?: boolean }).is_active === false) {
+  if (!resolved) return { title: 'Chapter Not Found' }
+  if (!resolved.chapter.is_active) {
     return {
-      title: `UCCI ${(data as { name: string }).name} — Coming Soon`,
+      title: `UCCI ${resolved.area.name} ${resolved.chapter.name} — Coming Soon`,
       robots: { index: false, follow: true },
     }
   }
@@ -40,41 +30,30 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { count } = await supabase
     .from('profiles')
     .select('id', { count: 'exact', head: true })
-    .eq('chapter_id', data.id)
+    .eq('chapter_id', resolved.chapter.id)
     .eq('status', 'approved')
 
-  const rawArea = Array.isArray(data.area) ? data.area[0] : data.area
-  return buildChapterMetadata({ ...(data as unknown as Chapter), area: rawArea as Area }, count ?? 0)
+  return buildChapterMetadata(
+    {
+      ...(resolved.chapter as unknown as Chapter),
+      area: resolved.area as Area,
+    },
+    count ?? 0
+  )
 }
 
 export default async function ChapterPage({ params }: Props) {
   const { slug } = await params
   const supabase = await createServerSupabaseClient()
+  const resolved = await resolveChapterSlug(supabase, slug)
 
-  const parts = slug.split('-')
-  const areaSlug = parts[0]
-  const chapterSlug = parts.slice(1).join('-')
+  if (!resolved) notFound()
 
-  // Find chapter by slug and area slug
-  const { data: areas } = await supabase
-    .from('areas')
-    .select('id, name, slug')
-    .eq('slug', areaSlug)
-    .single()
-
-  if (!areas) notFound()
-
-  const { data: chapter } = await supabase
-    .from('chapters')
-    .select('id, name, slug, description, is_active')
-    .eq('slug', chapterSlug)
-    .eq('area_id', areas.id)
-    .single()
-
-  if (!chapter) notFound()
+  const { area, chapter } = resolved
+  const title = `${area.name} ${chapter.name}`
 
   // Inactive chapters: no member listing — show Coming Soon instead
-  if ((chapter as { is_active?: boolean }).is_active === false) {
+  if (!chapter.is_active) {
     return (
       <div className="min-h-screen bg-brand-navy">
         <div className="page-hero">
@@ -83,9 +62,9 @@ export default async function ChapterPage({ params }: Props) {
               <ArrowLeft className="w-4 h-4" /> Back to Home
             </Link>
             <h1 className="section-title">
-              UCCI <span className="text-gradient-gold">{chapter.name}</span> Chapter
+              UCCI <span className="text-gradient-gold">{title}</span> Chapter
             </h1>
-            <p className="section-subtitle">{areas.name} Region</p>
+            <p className="section-subtitle">{area.name} Region</p>
             <div className="mt-6">
               <span className="badge text-sm px-4 py-2">Coming Soon</span>
             </div>
@@ -107,6 +86,11 @@ export default async function ChapterPage({ params }: Props) {
     .eq('status', 'approved')
     .order('business_name')
 
+  const highlightLines = (chapter.highlights ?? '')
+    .split('\n')
+    .map(s => s.trim())
+    .filter(Boolean)
+
   return (
     <div className="min-h-screen bg-brand-navy">
       {/* Page Hero */}
@@ -116,22 +100,64 @@ export default async function ChapterPage({ params }: Props) {
             <ArrowLeft className="w-4 h-4" /> Back to Home
           </Link>
           <h1 className="section-title">
-            UCCI <span className="text-gradient-gold">{chapter.name}</span> Chapter
+            {area.name} <span className="text-gradient-gold">{chapter.name}</span>
           </h1>
-          <p className="section-subtitle">{areas.name} Region · {members?.length ?? 0} Verified Members</p>
+          <p className="section-subtitle">UCCI Chapter · {area.name} Region · {members?.length ?? 0} Verified Members</p>
         </div>
       </div>
 
+      {/* Admin-curated content */}
+      {(chapter.cover_image_url || chapter.info || highlightLines.length > 0) && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12" aria-label="About this chapter">
+          {chapter.cover_image_url && (
+            <div className="relative w-full aspect-[21/9] rounded-xl overflow-hidden border border-brand-gold/20 mb-6">
+              <Image
+                src={chapter.cover_image_url}
+                alt={`${title} chapter cover`}
+                fill
+                className="object-cover"
+                priority
+                sizes="(max-width: 1280px) 100vw, 1280px"
+              />
+            </div>
+          )}
+          {(chapter.info || highlightLines.length > 0) && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {chapter.info && (
+                <div className="glass-card p-6">
+                  <h2 className="font-display text-lg font-bold text-brand-gold mb-3">About {title}</h2>
+                  <p className="text-brand-silver leading-relaxed whitespace-pre-line">{chapter.info}</p>
+                </div>
+              )}
+              {highlightLines.length > 0 && (
+                <div className="glass-card p-6">
+                  <h2 className="font-display text-lg font-bold text-brand-gold mb-3">Chapter Highlights</h2>
+                  <ul className="space-y-2.5">
+                    {highlightLines.map((h, i) => (
+                      <li key={i} className="flex items-start gap-2.5 text-brand-silver text-sm">
+                        <CheckCircle className="w-4 h-4 text-brand-gold flex-shrink-0 mt-0.5" />
+                        <span>{h}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* Join CTA */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 text-center" aria-label="Join this chapter">
+        <Link href={`/join?chapter=${chapter.id}`} className="btn-primary inline-flex text-base">
+          Join {title} Chapter
+        </Link>
+        <p className="text-brand-silver/60 text-sm mt-3">Your chapter is pre-filled in the application form.</p>
+      </section>
+
       {/* Members Grid */}
+      {(members ?? []).length > 0 && (
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12" aria-label="Chapter members">
-        {!members || members.length === 0 ? (
-          <div className="text-center py-20">
-            <User className="w-16 h-16 text-brand-silver/20 mx-auto mb-4" />
-            <h2 className="text-brand-silver text-xl font-display">No members yet in this chapter</h2>
-            <p className="text-brand-silver/60 mt-2">Be the first to join!</p>
-            <Link href="/join" className="btn-primary mt-6 inline-flex">Apply Now</Link>
-          </div>
-        ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {(members ?? []).map(member => {
               const category = Array.isArray(member.category) ? member.category[0] : member.category
@@ -167,8 +193,8 @@ export default async function ChapterPage({ params }: Props) {
               )
             })}
           </div>
-        )}
       </section>
+      )}
     </div>
   )
 }
