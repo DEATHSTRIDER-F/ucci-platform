@@ -9,7 +9,7 @@ export function buildOrganizationSchema() {
     '@type': 'Organization',
     name: 'UCCI - United Chamber of Commerce India',
     url: absoluteUrl('/'),
-    logo: absoluteUrl('/images/ucci-logo.png'),
+    logo: absoluteUrl('/ucci.webp'),
     address: {
       '@type': 'PostalAddress',
       streetAddress: 'Office No 202, Commercial Building 4 HM Royal, Next To Talab Masjid',
@@ -78,6 +78,40 @@ export function buildMemberSchema(profile: MemberSchemaProfile) {
     areaServed: profile.chapter
       ? `${profile.chapter.name}, ${profile.chapter.area?.name ?? ''}, India`
       : 'India',
+  }
+}
+
+// ─── FAQPage Schema (AEO — answer engines) ───────────────────────────────────
+
+export interface FaqItem {
+  question: string
+  answer: string
+}
+
+export function buildFaqSchema(faqs: FaqItem[]) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map(f => ({
+      '@type': 'Question',
+      name: f.question,
+      acceptedAnswer: { '@type': 'Answer', text: f.answer },
+    })),
+  }
+}
+
+// ─── BreadcrumbList Schema ───────────────────────────────────────────────────
+
+export function buildBreadcrumbSchema(crumbs: Array<{ name: string; path: string }>) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: crumbs.map((c, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: c.name,
+      item: absoluteUrl(c.path),
+    })),
   }
 }
 

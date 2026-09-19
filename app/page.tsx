@@ -1,7 +1,9 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { HeroCarousel } from '@/components/home/HeroCarousel'
 import { GlobalSearch } from '@/components/search/GlobalSearch'
-import { JsonLd, buildOrganizationSchema, buildWebSiteSchema } from '@/lib/seo/structured-data'
+import { JsonLd, buildOrganizationSchema, buildWebSiteSchema, buildFaqSchema } from '@/lib/seo/structured-data'
+import { HOME_FAQS } from '@/lib/data/faq'
+import { HomeFaq } from '@/components/home/HomeFaq'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowRight, Users, MapPin, Star, TrendingUp } from 'lucide-react'
@@ -47,7 +49,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <JsonLd data={[buildOrganizationSchema(), buildWebSiteSchema()]} />
+      <JsonLd data={[buildOrganizationSchema(), buildWebSiteSchema(), buildFaqSchema(HOME_FAQS)]} />
 
       {/* Hero + Search */}
       <section aria-label="Hero section" className="relative">
@@ -274,6 +276,8 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      <HomeFaq />
     </>
   )
 }

@@ -10,6 +10,7 @@ const SITE_TAGLINE = 'Connect | Collaborate | Grow'
 // ─── Site-level Metadata ──────────────────────────────────────────────────────
 
 export function buildSiteMetadata(): Metadata {
+  const ogImage = absoluteUrl('/ucci.webp')
   return {
     title: {
       default: SITE_NAME,
@@ -21,9 +22,11 @@ export function buildSiteMetadata(): Metadata {
       type: 'website',
       siteName: SITE_NAME,
       description: DEFAULT_DESCRIPTION,
+      images: [{ url: ogImage, alt: SITE_NAME }],
     },
     twitter: {
       card: 'summary_large_image',
+      images: [ogImage],
     },
     robots: {
       index: true,
@@ -92,7 +95,8 @@ export function buildMemberMetadata(profile: MemberMetaProfile): Metadata {
 export function buildChapterMetadata(chapter: Chapter & { area: Area }, memberCount: number): Metadata {
   const title = `UCCI ${chapter.name} Chapter | ${chapter.area.name}`
   const description = `Browse ${memberCount} approved business professionals in the UCCI ${chapter.name} Chapter, ${chapter.area.name}. Find exclusive category-specific members for referrals and networking.`
-  const url = absoluteUrl(`/chapters/${chapter.slug}`)
+  // Canonical must match the real URL format: /chapters/{areaSlug}-{chapterSlug}
+  const url = absoluteUrl(`/chapters/${chapter.area.slug}-${chapter.slug}`)
 
   return {
     title,

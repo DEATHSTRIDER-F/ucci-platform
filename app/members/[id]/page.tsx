@@ -1,7 +1,7 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { buildMemberMetadata } from '@/lib/seo/metadata'
-import { buildMemberSchema, JsonLd } from '@/lib/seo/structured-data'
+import { buildMemberSchema, buildBreadcrumbSchema, JsonLd } from '@/lib/seo/structured-data'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Globe, Linkedin, Phone, MapPin, Building2, Tag, Users, User } from 'lucide-react'
@@ -76,7 +76,14 @@ export default async function MemberProfilePage({ params }: Props) {
 
   return (
     <>
-      <JsonLd data={buildMemberSchema(p)} />
+      <JsonLd data={[
+        buildMemberSchema(p),
+        buildBreadcrumbSchema([
+          { name: 'Home', path: '/' },
+          ...(p.category ? [{ name: p.category.name, path: `/categories/${p.category.slug}` }] : []),
+          { name: p.business_name ?? p.full_name, path: `/members/${p.id}` },
+        ]),
+      ]} />
 
       <div className="min-h-screen bg-brand-navy">
         {/* Breadcrumb */}

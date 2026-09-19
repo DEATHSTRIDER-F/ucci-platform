@@ -1,6 +1,7 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { buildChapterMetadata } from '@/lib/seo/metadata'
+import { buildBreadcrumbSchema, JsonLd } from '@/lib/seo/structured-data'
 import { resolveChapterSlug } from '@/lib/data/chapters'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -93,6 +94,10 @@ export default async function ChapterPage({ params }: Props) {
 
   return (
     <div className="min-h-screen bg-brand-navy">
+      <JsonLd data={buildBreadcrumbSchema([
+        { name: 'Home', path: '/' },
+        { name: `${area.name} ${chapter.name} Chapter`, path: `/chapters/${area.slug}-${chapter.slug}` },
+      ])} />
       {/* Page Hero */}
       <div className="page-hero !pb-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
