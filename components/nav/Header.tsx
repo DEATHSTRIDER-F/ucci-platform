@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
+import type { ReactNode } from 'react'
 import Link from 'next/link'
 import Image from 'next/image';
 import { usePathname } from 'next/navigation'
-import { Menu, X, ChevronDown, ChevronRight, LogOut, User, Search } from 'lucide-react'
+import { Menu, X, ChevronDown, ChevronRight, LogOut, User, Search, ArrowRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { GlobalSearch } from '@/components/search/GlobalSearch'
@@ -39,9 +40,113 @@ interface HeaderProps {
 
 const CLOSE_DELAY = 120 // ms — enough to cross a small gap, not noticeable to user
 
+/* ---------- Mobile menu building blocks (floating-card accordion style) ---------- */
+
+function MobileMenuLink({ href, label, active }: { href: string; label: string; active: boolean }) {
+  return (
+    <Link
+      href={href}
+      aria-current={active ? 'page' : undefined}
+      className={`block px-4 py-3 rounded-xl text-[15px] font-medium transition-colors min-h-[48px] flex items-center ${
+        active
+          ? 'bg-brand-sapphire text-brand-gold'
+          : 'text-brand-white/90 hover:bg-brand-sapphire/60 hover:text-brand-white'
+      }`}
+    >
+      {label}
+    </Link>
+  )
+}
+
+function MobileSubLink({ href, label, active }: { href: string; label: string; active: boolean }) {
+  return (
+    <Link
+      href={href}
+      aria-current={active ? 'page' : undefined}
+      className={`block px-4 py-2.5 rounded-lg text-sm transition-colors min-h-[44px] flex items-center ${
+        active
+          ? 'bg-brand-sapphire text-brand-gold font-medium'
+          : 'text-brand-silver hover:text-brand-white hover:bg-brand-sapphire/50'
+      }`}
+    >
+      {label}
+    </Link>
+  )
+}
+
+function MobileMenuGroup({
+  label,
+  expanded,
+  active,
+  onToggle,
+  children,
+  nested = false,
+}: {
+  label: string
+  expanded: boolean
+  active: boolean
+  onToggle: () => void
+  children: ReactNode
+  nested?: boolean
+}) {
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={expanded}
+        className={`w-full flex items-center justify-between gap-2 rounded-xl font-medium transition-colors min-h-[48px] ${
+          nested ? 'px-4 py-2.5 text-sm' : 'px-4 py-3 text-[15px]'
+        } ${
+          expanded
+            ? 'bg-brand-sapphire/60 text-brand-gold'
+            : active
+              ? 'text-brand-gold'
+              : 'text-brand-white/90 hover:bg-brand-sapphire/60'
+        }`}
+      >
+        <span className="truncate">{label}</span>
+        <ChevronDown
+          className={`w-4 h-4 flex-shrink-0 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${
+            expanded ? 'rotate-180 text-brand-gold' : 'text-brand-silver/70'
+          }`}
+        />
+      </button>
+      {/* Height animation via grid-rows 0fr→1fr with cubic-bezier easing.
+          Expanding eases out (fast start, soft landing); collapsing uses a
+          standard ease curve. Content stays mounted so the height can
+          interpolate; `invisible` + `inert` keep it hidden from sight,
+          assistive tech, and keyboard tab order while collapsed. */}
+      <div
+        className={`grid transition-[grid-template-rows] motion-reduce:transition-none ${
+          expanded
+            ? 'grid-rows-[1fr] duration-[350ms] ease-[cubic-bezier(0.22,1,0.36,1)]'
+            : 'grid-rows-[0fr] duration-[250ms] ease-[cubic-bezier(0.4,0,0.2,1)]'
+        }`}
+      >
+        <div className="overflow-hidden min-h-0">
+          <div
+            inert={!expanded}
+            className={`pl-3 pb-1 flex flex-col gap-0.5 transition-opacity motion-reduce:transition-none ${
+              expanded
+                ? 'opacity-100 duration-[300ms] ease-[cubic-bezier(0.22,1,0.36,1)]'
+                : 'opacity-0 invisible duration-[200ms] ease-[cubic-bezier(0.4,0,0.2,1)]'
+            }`}
+          >
+            {children}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function Header({ profile, featuredCategories, areasWithChapters }: HeaderProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
+  // Accordion state for the mobile card menu (single-open per level)
+  const [mobileExpanded, setMobileExpanded] = useState<string | null>(null)
+  const [mobileExpandedArea, setMobileExpandedArea] = useState<string | null>(null)
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
   const [activeChapterArea, setActiveChapterArea] = useState<string | null>(null)
   const pathname = usePathname()
@@ -89,7 +194,17 @@ export function Header({ profile, featuredCategories, areasWithChapters }: Heade
     setMobileSearchOpen(false)
     setActiveDropdown(null)
     setActiveChapterArea(null)
+    setMobileExpanded(null)
+    setMobileExpandedArea(null)
   }, [pathname])
+
+  const toggleMobileSection = useCallback((key: string) => {
+    setMobileExpanded(prev => (prev === key ? null : key))
+  }, [])
+
+  const toggleMobileArea = useCallback((id: string) => {
+    setMobileExpandedArea(prev => (prev === id ? null : id))
+  }, [])
 
   // Lock background scroll while the mobile menu/search is open so the page
   // behind never scrolls "invisibly" and the menu owns the gesture.
@@ -434,86 +549,131 @@ export function Header({ profile, featuredCategories, areasWithChapters }: Heade
         </div>
       )}
 
-      {/* Mobile Menu — the nav itself is the single scroll container.
-          max-h keeps it inside the viewport (header is h-20 = 5rem);
-          overscroll-contain stops the page behind from scrolling. */}
+      {/* Mobile Menu — floating card with collapsible sub-menus.
+          The nav is the single scroll container (max-h keeps it inside the
+          viewport; overscroll-contain stops the page behind from scrolling). */}
       {mobileOpen && (
         <div className="lg:hidden bg-brand-sapphire border-t border-brand-gold/20 animate-fade-in">
           <nav
-            className="max-w-7xl mx-auto px-4 py-4 flex flex-col gap-1 max-h-[calc(100dvh-5rem)] overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]"
+            className="px-4 pt-3 pb-5 max-h-[calc(100dvh-5rem)] overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]"
             aria-label="Mobile navigation"
           >
-            <Link href="/" className="block py-3 px-3 text-brand-silver hover:text-brand-gold rounded-lg hover:bg-brand-navy/50 transition-colors">Home</Link>
-            <Link href="/about" className="block py-3 px-3 text-brand-silver hover:text-brand-gold rounded-lg hover:bg-brand-navy/50 transition-colors">Our Story</Link>
-            <Link href="/about#why-ucci" className="block py-3 px-3 text-brand-silver hover:text-brand-gold rounded-lg hover:bg-brand-navy/50 transition-colors">Why UCCI</Link>
-            <Link href="/about#how-it-works" className="block py-3 px-3 text-brand-silver hover:text-brand-gold rounded-lg hover:bg-brand-navy/50 transition-colors">How It Works</Link>
+            <div className="rounded-2xl border border-brand-gold/20 bg-brand-navy shadow-2xl shadow-black/40 p-2 flex flex-col gap-0.5">
+              <MobileMenuLink href="/" label="Home" active={pathname === '/'} />
 
-            {/* Mobile Chapters */}
-            <div className="py-2">
-              <div className="px-3 py-1 text-xs text-brand-champagne font-semibold uppercase tracking-wider">Chapters</div>
-              {areasWithChapters.map(area => (
-                <div key={area.id}>
-                  <div className="px-6 py-1 text-xs text-brand-silver/60 font-medium">{area.name}</div>
-                  {area.chapters.map(chapter => (
-                    chapter.is_active === false ? (
-                      <span
-                        key={chapter.id}
-                        className="flex items-center justify-between py-2 px-8 text-sm text-brand-silver/40"
-                      >
-                        {chapter.name}
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-brand-gold/15 text-brand-champagne/70 border border-brand-gold/30">
-                          Coming Soon
-                        </span>
-                      </span>
-                    ) : (
-                      <Link
-                        key={chapter.id}
-                        href={`/chapters/${area.slug}-${chapter.slug}`}
-                        className="block py-2 px-8 text-sm text-brand-silver hover:text-brand-gold hover:bg-brand-navy/50 rounded transition-colors"
-                      >
-                        {chapter.name}
-                      </Link>
-                    )
-                  ))}
-                </div>
-              ))}
-            </div>
+              <MobileMenuGroup
+                label="About UCCI"
+                expanded={mobileExpanded === 'about'}
+                active={isActive('/about')}
+                onToggle={() => toggleMobileSection('about')}
+              >
+                <MobileSubLink href="/about" label="Our Story" active={pathname === '/about'} />
+                <MobileSubLink href="/about#why-ucci" label="Why UCCI" active={false} />
+                <MobileSubLink href="/about#how-it-works" label="How It Works" active={false} />
+              </MobileMenuGroup>
 
-            <Link href="/categories" className="block py-3 px-3 text-brand-silver hover:text-brand-gold rounded-lg hover:bg-brand-navy/50 transition-colors">Categories</Link>
-
-            <Link href="/join" className="block py-3 px-3 text-brand-silver hover:text-brand-gold rounded-lg hover:bg-brand-navy/50 transition-colors">Become a Member</Link>
-            <Link href="/join?tab=head" className="block py-3 px-3 text-brand-silver hover:text-brand-gold rounded-lg hover:bg-brand-navy/50 transition-colors">Become a Chapter Head</Link>
-
-            <Link href="/contact" className="block py-3 px-3 text-brand-silver hover:text-brand-gold rounded-lg hover:bg-brand-navy/50 transition-colors">Contact Us</Link>
-            <div className="py-2">
-              <div className="px-3 py-1 text-xs text-brand-champagne font-semibold uppercase tracking-wider">Gallery</div>
-              <Link href="/gallery" className="block py-2 px-6 text-sm text-brand-silver hover:text-brand-gold hover:bg-brand-navy/50 rounded transition-colors">News</Link>
-              <Link href="/gallery?tab=events" className="block py-2 px-6 text-sm text-brand-silver hover:text-brand-gold hover:bg-brand-navy/50 rounded transition-colors">Events</Link>
-              <Link href="/gallery?tab=videos" className="block py-2 px-6 text-sm text-brand-silver hover:text-brand-gold hover:bg-brand-navy/50 rounded transition-colors">Videos</Link>
-            </div>
-
-            {profile && (profile.role === 'super_admin' || profile.role === 'chapter_admin') && (
-              <Link href="/admin" className="block py-3 px-3 text-brand-gold font-semibold rounded-lg hover:bg-brand-navy/50 transition-colors">Admin Dashboard</Link>
-            )}
-
-            {/* Mobile Auth */}
-            <div className="border-t border-brand-gold/20 mt-2 pt-3">
-              {profile ? (
-                <div className="flex items-center justify-between gap-3 px-3 py-2">
-                  <div className="min-w-0 flex-1">
-                    <div className="text-sm font-medium text-brand-white truncate">{profile.full_name}</div>
-                    <div className="text-xs text-brand-silver truncate">{profile.email}</div>
-                  </div>
-                  <button
-                    onClick={handleLogout}
-                    className="flex items-center gap-2 text-sm text-red-400 hover:text-red-300 py-2 px-3"
+              <MobileMenuGroup
+                label="Chapters"
+                expanded={mobileExpanded === 'chapters'}
+                active={isActive('/chapters')}
+                onToggle={() => toggleMobileSection('chapters')}
+              >
+                {areasWithChapters.map(area => (
+                  <MobileMenuGroup
+                    key={area.id}
+                    nested
+                    label={area.name}
+                    expanded={mobileExpandedArea === area.id}
+                    active={false}
+                    onToggle={() => toggleMobileArea(area.id)}
                   >
-                    <LogOut className="w-4 h-4" /> Sign Out
-                  </button>
-                </div>
-              ) : (
-                <Link href="/login" className="btn-primary block text-center mx-3 !py-3 flex items-center justify-center leading-none">Sign In</Link>
+                    {area.chapters.map(chapter => {
+                      const href = `/chapters/${area.slug}-${chapter.slug}`
+                      return chapter.is_active === false ? (
+                        <span
+                          key={chapter.id}
+                          className="flex items-center justify-between gap-2 px-4 py-2.5 text-sm text-brand-silver/40 min-h-[44px]"
+                          title="Coming soon"
+                        >
+                          <span className="truncate">{chapter.name}</span>
+                          <span className="flex-shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-brand-gold/15 text-brand-champagne/70 border border-brand-gold/30">
+                            Coming Soon
+                          </span>
+                        </span>
+                      ) : (
+                        <MobileSubLink key={chapter.id} href={href} label={chapter.name} active={pathname === href} />
+                      )
+                    })}
+                  </MobileMenuGroup>
+                ))}
+              </MobileMenuGroup>
+
+              <MobileMenuGroup
+                label="Categories"
+                expanded={mobileExpanded === 'categories'}
+                active={isActive('/categories')}
+                onToggle={() => toggleMobileSection('categories')}
+              >
+                {featuredCategories.map(cat => {
+                  const href = `/categories/${cat.slug}`
+                  return (
+                    <MobileSubLink key={cat.id} href={href} label={cat.name} active={pathname === href} />
+                  )
+                })}
+                <MobileSubLink href="/categories" label="View All Categories →" active={pathname === '/categories'} />
+              </MobileMenuGroup>
+
+              <MobileMenuGroup
+                label="Join UCCI"
+                expanded={mobileExpanded === 'join'}
+                active={isActive('/join')}
+                onToggle={() => toggleMobileSection('join')}
+              >
+                <MobileSubLink href="/join" label="Become a Member" active={pathname === '/join'} />
+                <MobileSubLink href="/join?tab=head" label="Become a Chapter Head" active={false} />
+              </MobileMenuGroup>
+
+              <MobileMenuLink href="/contact" label="Contact Us" active={isActive('/contact')} />
+
+              <MobileMenuGroup
+                label="Gallery"
+                expanded={mobileExpanded === 'gallery'}
+                active={isActive('/gallery')}
+                onToggle={() => toggleMobileSection('gallery')}
+              >
+                <MobileSubLink href="/gallery" label="News" active={pathname === '/gallery'} />
+                <MobileSubLink href="/gallery?tab=events" label="Events" active={false} />
+                <MobileSubLink href="/gallery?tab=videos" label="Videos" active={false} />
+              </MobileMenuGroup>
+
+              {profile && (profile.role === 'super_admin' || profile.role === 'chapter_admin') && (
+                <MobileMenuLink href="/admin" label="Admin Dashboard" active={isActive('/admin')} />
               )}
+
+              {/* CTA / auth footer inside the card */}
+              <div className="p-1 pt-2 mt-1 border-t border-brand-gold/15">
+                {profile ? (
+                  <div className="flex items-center justify-between gap-3 px-3 py-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-medium text-brand-white truncate">{profile.full_name}</div>
+                      <div className="text-xs text-brand-silver truncate">{profile.email}</div>
+                    </div>
+                    <button
+                      onClick={handleLogout}
+                      className="flex-shrink-0 flex items-center gap-2 text-sm text-red-400 hover:text-red-300 py-2 px-3 min-h-[44px]"
+                    >
+                      <LogOut className="w-4 h-4" /> Sign Out
+                    </button>
+                  </div>
+                ) : (
+                  <Link
+                    href="/login"
+                    className="btn-primary w-full !py-3.5 flex items-center justify-center gap-2 text-[15px] leading-none"
+                  >
+                    Sign In <ArrowRight className="w-4 h-4" />
+                  </Link>
+                )}
+              </div>
             </div>
           </nav>
         </div>
