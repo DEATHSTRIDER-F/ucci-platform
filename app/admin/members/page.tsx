@@ -13,7 +13,7 @@ export const metadata = {
 export default async function AdminMembersPage() {
   const profile = await getCurrentProfile()
   if (!profile) redirect('/login')
-  if (profile.role !== 'super_admin' && profile.role !== 'chapter_admin') redirect('/unauthorized')
+  if (profile.role !== 'super_admin' && profile.role !== 'chapter_head') redirect('/unauthorized')
   const supabase = await createServerSupabaseClient()
   const isSuperAdmin = profile.role === 'super_admin'
 
@@ -33,7 +33,7 @@ export default async function AdminMembersPage() {
     `, { count: 'exact' })
     .eq('status', 'approved')
     .neq('role', 'super_admin')
-    .neq('role', 'chapter_admin')
+    .neq('role', 'chapter_head')
     .order('created_at', { ascending: false })
     .range((page - 1) * pageSize, page * pageSize - 1)
 

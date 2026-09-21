@@ -35,7 +35,7 @@ export function JoinTabs({ member, head }: { member: ReactNode; head: ReactNode 
               tab === 'head' ? 'bg-brand-gold text-brand-navy' : 'text-brand-silver hover:text-brand-white'
             }`}
           >
-            Become a Chapter Head
+            Start a Chapter
           </Link>
         </div>
       </div>

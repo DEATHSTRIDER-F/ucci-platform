@@ -39,7 +39,7 @@ export function Footer() {
                 { href: '/about#how-it-works', label: 'How It Works' },
                 { href: '/categories', label: 'Categories' },
                 { href: '/join', label: 'Become a Member' },
-                { href: '/join?tab=head', label: 'Become a Chapter Head' },
+                { href: '/join?tab=head', label: 'Start a Chapter' },
                 { href: '/gallery', label: 'Gallery' },
                 { href: '/contact', label: 'Contact Us' },
               ].map(link => (

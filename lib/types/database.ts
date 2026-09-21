@@ -1,5 +1,5 @@
 // Database enumerated types
-export type UserRole = 'super_admin' | 'chapter_admin' | 'member'
+export type UserRole = 'super_admin' | 'chapter_head' | 'member'
 export type ProfileStatus = 'pending' | 'approved' | 'rejected'
 export type InquiryStatus = 'pending' | 'approved' | 'rejected'
 

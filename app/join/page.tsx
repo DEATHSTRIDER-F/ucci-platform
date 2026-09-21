@@ -1,14 +1,11 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
 import { Suspense } from 'react'
 import { OnboardingForm } from '@/components/forms/OnboardingForm'
-import { ChapterHeadForm } from '@/components/forms/ChapterHeadForm'
+import { StartChapterApply, type HeadApplyState } from '@/components/forms/StartChapterApply'
 import { JoinTabs } from '@/components/forms/JoinTabs'
 import type { Metadata } from 'next'
-import Image from 'next/image'
 import Link from 'next/link'
-import { Globe, Linkedin, Phone, MapPin, Building2, Tag, Users, User, BadgeCheck, Crown } from 'lucide-react'
-import type { Profile } from '@/lib/types/database'
+import { BadgeCheck, Crown } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Join UCCI | Become a Member or Chapter Head',
@@ -25,167 +22,50 @@ export default async function JoinPage({
 
   // If already authenticated, check status
   const { data: { user } } = await supabase.auth.getUser()
+  type MeProfile = {
+    id: string; status: string | null; role: string; full_name: string; email: string; phone: string | null
+    chapter_id: string | null
+    chapter?: { id: string; name: string; slug: string; area?: { id: string; name: string; slug: string } } | null
+  }
+  let me: MeProfile | null = null
   if (user) {
     const { data: profile } = await supabase
       .from('profiles')
       .select(`
-        id, status, logo_url, business_name, full_name, brand_tagline, bio, phone,
-        website_url, linkedin_url, business_address, ideal_referral_target, referral_triggers,
-        chapter:chapters(id, name, slug, area:areas(id, name, slug)),
-        category:categories(id, name, slug)
+        id, status, role, full_name, email, phone, chapter_id,
+        chapter:chapters(id, name, slug, area:areas(id, name, slug))
       `)
       .eq('id', user.id)
       .single()
-
-    if (profile?.status === 'approved') {
+    if (profile) {
       const rawChapter = Array.isArray(profile.chapter) ? profile.chapter[0] : profile.chapter
-      const rawCategory = Array.isArray(profile.category) ? profile.category[0] : profile.category
-      const rawArea = rawChapter && (Array.isArray((rawChapter as any).area) ? (rawChapter as any).area![0] : (rawChapter as any).area)
+      const rawArea = rawChapter && (Array.isArray((rawChapter as { area?: unknown }).area) ? (rawChapter as { area?: unknown[] }).area![0] : (rawChapter as { area?: unknown }).area)
+      me = {
+        id: profile.id as string,
+        status: profile.status as string | null,
+        role: profile.role as string,
+        full_name: profile.full_name as string,
+        email: profile.email as string,
+        phone: profile.phone as string | null,
+        chapter_id: profile.chapter_id as string | null,
+        chapter: rawChapter ? { ...(rawChapter as { id: string; name: string; slug: string }), area: (rawArea ?? undefined) as { id: string; name: string; slug: string } | undefined } : null,
+      }
+    }
 
-      type ChapterShape = { id: string; name: string; slug: string; area?: { id: string; name: string; slug: string } }
-      type CategoryShape = { id: string; name: string; slug: string }
-
-      const chapter = rawChapter ? { ...rawChapter, area: rawArea ?? undefined } as ChapterShape : undefined
-      const category = rawCategory as CategoryShape | undefined
-
-      const p = {
-        ...(profile as unknown as Profile),
-        chapter,
-        category,
-      } as Profile & { chapter?: ChapterShape; category?: CategoryShape }
-
+    if (me?.status === 'approved') {
       return (
-        <div className="min-h-screen bg-brand-navy py-10">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-8">
-              <h1 className="font-display text-3xl font-bold text-brand-white">Already a member</h1>
-              <p className="text-brand-silver mt-2">Here are your business details.</p>
-            </div>
-            
-            {/* Main Profile */}
-            <article itemScope itemType="https://schema.org/ProfessionalService">
-              {/* Profile Header */}
-              <div className="glass-card p-8 mb-6">
-                <div className="flex flex-col sm:flex-row items-start gap-6">
-                  {/* Logo */}
-                  <div className="relative w-24 h-24 rounded-xl overflow-hidden border-2 border-brand-gold/40 flex-shrink-0">
-                    {p.logo_url ? (
-                      <Image
-                        src={p.logo_url}
-                        alt={`${p.business_name ?? p.full_name} logo`}
-                        fill
-                        className="object-cover"
-                        priority
-                        sizes="96px"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-brand-gold/20 flex items-center justify-center">
-                        <User className="w-10 h-10 text-brand-gold" />
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex-1">
-                    <h1 className="font-display text-2xl sm:text-3xl font-bold text-brand-white" itemProp="name">
-                      {p.business_name ?? p.full_name}
-                    </h1>
-                    {p.brand_tagline && (
-                      <p className="text-brand-champagne text-lg mt-1 italic" itemProp="description">
-                        {p.brand_tagline}
-                      </p>
-                    )}
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      {p.category && (
-                        <Link href={`/categories/${p.category.slug}`} className="badge flex items-center gap-1">
-                          <Tag className="w-3 h-3" /> {p.category.name}
-                        </Link>
-                      )}
-                      {p.chapter && (
-                        <Link
-                          href={`/chapters/${p.chapter.area?.slug}-${p.chapter.slug}`}
-                          className="badge flex items-center gap-1"
-                        >
-                          <Users className="w-3 h-3" /> UCCI {p.chapter.name}, {p.chapter.area?.name}
-                        </Link>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* About / Bio */}
-              {p.bio && (
-                <section className="glass-card p-8 mb-6" aria-labelledby="about-heading">
-                  <h2 id="about-heading" className="font-display text-xl font-bold text-brand-gold mb-4">About</h2>
-                  <p className="text-brand-silver leading-relaxed" itemProp="description">{p.bio}</p>
-                </section>
-              )}
-
-              {/* Contact Details */}
-              <section className="glass-card p-8 mb-6" aria-labelledby="contact-heading">
-                <h2 id="contact-heading" className="font-display text-xl font-bold text-brand-gold mb-4">Contact & Location</h2>
-                <div className="space-y-3">
-                  {p.phone && (
-                    <a href={`tel:${p.phone}`} className="flex items-center gap-3 text-brand-silver hover:text-brand-gold transition-colors group">
-                      <Phone className="w-5 h-5 text-brand-gold/60 group-hover:text-brand-gold" />
-                      <span itemProp="telephone">{p.phone}</span>
-                    </a>
-                  )}
-                  {p.website_url && (
-                    <a href={p.website_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-brand-silver hover:text-brand-gold transition-colors group">
-                      <Globe className="w-5 h-5 text-brand-gold/60 group-hover:text-brand-gold" />
-                      <span itemProp="url" className="truncate">{p.website_url}</span>
-                    </a>
-                  )}
-                  {p.linkedin_url && (
-                    <a href={p.linkedin_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-brand-silver hover:text-brand-gold transition-colors group">
-                      <Linkedin className="w-5 h-5 text-brand-gold/60 group-hover:text-brand-gold" />
-                      <span>LinkedIn Profile</span>
-                    </a>
-                  )}
-                  {p.business_address && (
-                    <div className="flex items-start gap-3 text-brand-silver">
-                      <MapPin className="w-5 h-5 text-brand-gold/60 mt-0.5 flex-shrink-0" />
-                      <span itemProp="address" itemScope itemType="https://schema.org/PostalAddress">
-                        <span itemProp="streetAddress">{p.business_address}</span>
-                      </span>
-                    </div>
-                  )}
-                  {p.chapter && (
-                    <div className="flex items-center gap-3 text-brand-silver">
-                      <Building2 className="w-5 h-5 text-brand-gold/60" />
-                      <span>UCCI {p.chapter.name} Chapter, {p.chapter.area?.name}</span>
-                    </div>
-                  )}
-                </div>
-              </section>
-
-              {/* Networking Profile */}
-              {(p.ideal_referral_target || p.referral_triggers) && (
-                <section className="glass-card p-8" aria-labelledby="networking-heading">
-                  <h2 id="networking-heading" className="font-display text-xl font-bold text-brand-gold mb-4">Networking Profile</h2>
-                  <div className="space-y-4">
-                    {p.ideal_referral_target && (
-                      <div>
-                        <h3 className="text-brand-champagne font-semibold text-sm uppercase tracking-wide mb-2">Ideal Referral Target</h3>
-                        <p className="text-brand-silver">{p.ideal_referral_target}</p>
-                      </div>
-                    )}
-                    {p.referral_triggers && (
-                      <div>
-                        <h3 className="text-brand-champagne font-semibold text-sm uppercase tracking-wide mb-2">Referral Triggers</h3>
-                        <p className="text-brand-silver">{p.referral_triggers}</p>
-                      </div>
-                    )}
-                  </div>
-                </section>
-              )}
-            </article>
+        <div className="min-h-screen bg-brand-navy flex items-center justify-center px-4">
+          <div className="glass-card p-10 max-w-lg w-full text-center">
+            <h1 className="font-display text-2xl font-bold text-brand-white mb-3">You are already a part of our family</h1>
+            <p className="text-brand-silver mb-6">
+              Your membership is active. Manage your details from your profile page.
+            </p>
+            <a href="/profile" className="btn-primary text-sm">Go to My Profile</a>
           </div>
         </div>
       )
     }
-    if (profile?.status === 'pending') {
+    if (me?.status === 'pending') {
       return (
         <div className="min-h-screen bg-brand-navy flex items-center justify-center px-4">
           <div className="glass-card p-10 max-w-lg w-full text-center">
@@ -198,8 +78,6 @@ export default async function JoinPage({
         </div>
       )
     }
-  } else {
-    redirect('/signup?redirectTo=/join')
   }
 
   // Fetch chapters and categories for the form (active chapters only)
@@ -232,6 +110,53 @@ export default async function JoinPage({
       prefilledChapterId = pre.id as string
       const rawArea = Array.isArray(pre.area) ? pre.area[0] : pre.area
       prefilledChapterName = `${(rawArea as { name: string } | null)?.name ?? ''} ${pre.name as string}`.trim()
+    }
+  }
+
+  // Start-a-Chapter eligibility (checked before the form is ever shown):
+  // same chapter only, active (approved) members, vacant head seat.
+  let headState: HeadApplyState = { kind: 'login' }
+  let headApplicant: { name: string; email: string; phone: string; chapterId: string; chapterLabel: string } | undefined
+  if (me) {
+    if (me.role === 'chapter_head') {
+      headState = { kind: 'already-head' }
+    } else if (me.role === 'super_admin') {
+      headState = { kind: 'admin' }
+    } else if (me.role !== 'member' || me.status !== 'approved' || !me.chapter_id) {
+      headState = { kind: 'not-member', status: me.status }
+    } else {
+      const chapterLabel = `${me.chapter?.area?.name ?? ''} ${me.chapter?.name ?? ''}`.trim()
+      const { data: existingHead } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .eq('chapter_id', me.chapter_id)
+        .eq('role', 'chapter_head')
+        .limit(1)
+        .maybeSingle()
+      if (existingHead) {
+        headState = { kind: 'occupied', headName: (existingHead.full_name as string) ?? 'another member' }
+      } else {
+        const { data: pendingApp } = await supabase
+          .from('chapter_head_applications')
+          .select('id, status')
+          .eq('email', me.email.toLowerCase())
+          .eq('status', 'pending')
+          .limit(1)
+          .maybeSingle()
+        if (pendingApp) {
+          headState = { kind: 'pending' }
+        } else {
+          const { data: rejectedApp } = await supabase
+            .from('chapter_head_applications')
+            .select('id')
+            .eq('email', me.email.toLowerCase())
+            .eq('status', 'rejected')
+            .limit(1)
+            .maybeSingle()
+          headState = rejectedApp ? { kind: 'rejected' } : { kind: 'eligible' }
+          headApplicant = { name: me.full_name, email: me.email, phone: me.phone ?? '', chapterId: me.chapter_id, chapterLabel }
+        }
+      }
     }
   }
 
@@ -300,6 +225,9 @@ export default async function JoinPage({
                 categories={categories ?? []}
                 initialChapterId={prefilledChapterId}
                 prefilledChapterName={prefilledChapterName}
+                isLoggedIn={!!user}
+                initialName={me?.full_name ?? null}
+                initialEmail={me?.email ?? null}
               />
             </div>
           }
@@ -307,7 +235,7 @@ export default async function JoinPage({
             <div className="space-y-8">
               <div className="glass-card p-6">
                 <h2 className="font-display font-bold text-brand-gold mb-3 flex items-center gap-2">
-                  <Crown className="w-5 h-5" /> Become a Chapter Head
+                  <Crown className="w-5 h-5" /> Start a Chapter
                 </h2>
                 <p className="text-brand-silver text-sm leading-relaxed">
                   Chapter Heads lead a local UCCI chapter — onboarding members, hosting meets, and driving referrals.
@@ -328,19 +256,16 @@ export default async function JoinPage({
                 <div className="glass-card p-6">
                   <h3 className="font-display font-bold text-brand-white mb-2">Eligibility to lead</h3>
                   <ul className="space-y-2 text-brand-silver text-sm list-disc pl-5">
-                    <li>Established business owner with 2+ years of operations preferred.</li>
-                    <li>Strong local reputation and willingness to mentor members.</li>
+                    <li>You must be an <strong className="text-brand-white">approved (active) member</strong> of the chapter.</li>
+                    <li>The <strong className="text-brand-white">head position for your chapter must be vacant</strong> — one head per chapter.</li>
+                    <li>You can only lead your own chapter, not another one.</li>
                     <li>Commitment to host regular meets and uphold UCCI values.</li>
                     <li>Final appointment is at the discretion of UCCI admin.</li>
                   </ul>
                 </div>
               </div>
 
-              <ChapterHeadForm
-                chapters={(areas ?? []).flatMap(a =>
-                  (a.chapters ?? []).map((ch: { id: string; name: string }) => ({ id: ch.id, name: ch.name, areaName: a.name }))
-                )}
-              />
+              <StartChapterApply state={headState} applicant={headApplicant} />
             </div>
           }
         />

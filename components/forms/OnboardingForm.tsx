@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { compressImage, validateImageFile } from '@/lib/utils/imageCompressor'
-import { submitOnboarding } from '@/app/actions/onboarding'
+import { submitOnboarding, signupAndApply } from '@/app/actions/onboarding'
 import { createClient } from '@/lib/supabase/client'
 import { AppointmentCalendar } from '@/components/calendar/AppointmentCalendar'
-import { ChevronDown, ChevronUp, Loader2, CheckCircle, AlertCircle, Upload, X } from 'lucide-react'
+import { ChevronDown, ChevronUp, Loader2, CheckCircle, AlertCircle, Upload, X, Eye, EyeOff } from 'lucide-react'
 import Image from 'next/image'
 
 interface Area {
@@ -26,9 +26,12 @@ interface OnboardingFormProps {
   categories: Category[]
   initialChapterId?: string | null
   prefilledChapterName?: string | null
+  isLoggedIn?: boolean
+  initialName?: string | null
+  initialEmail?: string | null
 }
 
-export function OnboardingForm({ areas, categories, initialChapterId, prefilledChapterName }: OnboardingFormProps) {
+export function OnboardingForm({ areas, categories, initialChapterId, prefilledChapterName, isLoggedIn, initialName, initialEmail }: OnboardingFormProps) {
   const [step, setStep] = useState<'form' | 'calendar' | 'submitting' | 'success'>('form')
   const [advancedOpen, setAdvancedOpen] = useState(false)
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
@@ -38,6 +41,9 @@ export function OnboardingForm({ areas, categories, initialChapterId, prefilledC
   const [exclusivityWarning, setExclusivityWarning] = useState('')
   const [submitError, setSubmitError] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [showPass, setShowPass] = useState(false)
+
+  const [account, setAccount] = useState({ full_name: '', email: '', password: '' })
 
   const [form, setForm] = useState({
     company_full_name: '',
@@ -85,7 +91,7 @@ export function OnboardingForm({ areas, categories, initialChapterId, prefilledC
     if (!validation.valid) { setLogoError(validation.error!); return }
     setLogoError('')
     try {
-      const compressed = await compressImage(file, { maxSizeKB: 500 })
+      const compressed = await compressImage(file, { maxSizeKB: 100 })
       setLogoFile(compressed)
       setLogoPreview(URL.createObjectURL(compressed))
     } catch {
@@ -95,6 +101,11 @@ export function OnboardingForm({ areas, categories, initialChapterId, prefilledC
 
   const validate = () => {
     const e: Record<string, string> = {}
+    if (!isLoggedIn) {
+      if (!account.full_name.trim()) e.full_name = 'Full name is required'
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(account.email)) e.email = 'Valid email is required'
+      if (!account.password || account.password.length < 8) e.password = 'Minimum 8 characters'
+    }
     if (!form.company_full_name.trim()) e.company_full_name = 'Company name is required'
     if (!form.bio.trim()) e.bio = 'Professional biography is required'
     if (!form.phone.trim()) e.phone = 'Phone number is required'
@@ -118,13 +129,21 @@ export function OnboardingForm({ areas, categories, initialChapterId, prefilledC
     setStep('submitting')
     setSubmitError('')
     try {
-      const result = await submitOnboarding({
+      const base = {
         ...form,
         logo_file: logoFile ? await fileToBase64(logoFile) : null,
         logo_filename: logoFile?.name ?? null,
         appointment_date: selectedDate,
-      })
+      }
+      const result = isLoggedIn
+        ? await submitOnboarding(base)
+        : await signupAndApply({ ...base, full_name: account.full_name, email: account.email, password: account.password })
       if (result.success) {
+        if (!isLoggedIn) {
+          // Sign the fresh account in so the pending state shows immediately
+          const supabase = createClient()
+          await supabase.auth.signInWithPassword({ email: account.email, password: account.password })
+        }
         setStep('success')
       } else {
         setSubmitError(result.error ?? 'Submission failed. Please try again.')
@@ -186,11 +205,30 @@ export function OnboardingForm({ areas, categories, initialChapterId, prefilledC
                   {logoFile ? 'Change Logo' : 'Upload Logo'}
                 </label>
                 <input id="logo_upload" type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
-                <p className="text-brand-silver/60 text-xs mt-1">WebP · Max 500KB · Auto-optimized</p>
+                <p className="text-brand-silver/60 text-xs mt-1">WebP · Max 100KB · Auto-optimized</p>
                 {logoError && <p className="text-red-400 text-xs mt-1">{logoError}</p>}
               </div>
             </div>
           </div>
+
+          {/* Account (auto-filled when logged in) */}
+          {isLoggedIn ? (
+            <div className="bg-brand-navy/40 border border-brand-silver/20 rounded-lg px-4 py-3 text-sm">
+              <span className="text-brand-silver/60">Applying as </span>
+              <span className="text-brand-white font-medium">{initialName ?? ''}</span>
+              <span className="text-brand-silver/60"> · </span>
+              <span className="text-brand-white">{initialEmail ?? ''}</span>
+            </div>
+          ) : (
+            <>
+              {/* Full Name */}
+              <div>
+                <label htmlFor="full_name" className="block text-brand-silver text-sm font-medium mb-1">Full Name *</label>
+                <input id="full_name" type="text" value={account.full_name} onChange={e => setAccount(a => ({ ...a, full_name: e.target.value }))} className="input-field" placeholder="Enter your name" />
+                {errors.full_name && <p className="text-red-400 text-xs mt-1">{errors.full_name}</p>}
+              </div>
+            </>
+          )}
 
           {/* Company Name */}
           <div>
@@ -198,6 +236,27 @@ export function OnboardingForm({ areas, categories, initialChapterId, prefilledC
             <input id="company_full_name" type="text" value={form.company_full_name} onChange={e => setForm(f => ({ ...f, company_full_name: e.target.value }))} className="input-field" placeholder="Sharma & Associates Consulting Pvt. Ltd." />
             {errors.company_full_name && <p className="text-red-400 text-xs mt-1">{errors.company_full_name}</p>}
           </div>
+
+          {/* Email + Password (new account) */}
+          {!isLoggedIn && (
+            <>
+              <div>
+                <label htmlFor="email" className="block text-brand-silver text-sm font-medium mb-1">Email *</label>
+                <input id="email" type="email" value={account.email} onChange={e => setAccount(a => ({ ...a, email: e.target.value }))} className="input-field" placeholder="email@example.com" />
+                {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email}</p>}
+              </div>
+              <div>
+                <label htmlFor="password" className="block text-brand-silver text-sm font-medium mb-1">Create Password *</label>
+                <div className="relative">
+                  <input id="password" type={showPass ? 'text' : 'password'} value={account.password} onChange={e => setAccount(a => ({ ...a, password: e.target.value }))} className="input-field pr-12" placeholder="Min. 8 characters — you will log in with this" />
+                  <button type="button" onClick={() => setShowPass(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-silver hover:text-brand-gold" aria-label={showPass ? 'Hide password' : 'Show password'}>
+                    {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                {errors.password && <p className="text-red-400 text-xs mt-1">{errors.password}</p>}
+              </div>
+            </>
+          )}
 
           {/* Brand Tagline */}
           <div>

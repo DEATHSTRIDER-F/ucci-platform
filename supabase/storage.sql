@@ -43,14 +43,14 @@ CREATE POLICY "storage_super_admin_all"
   );
 
 -- Chapter admin: upload to gallery folder only
-CREATE POLICY "storage_chapter_admin_gallery"
+CREATE POLICY "storage_chapter_head_gallery"
   ON storage.objects FOR ALL
   USING (
     bucket_id = 'ucci-media'
     AND name LIKE 'gallery/%'
     AND EXISTS (
       SELECT 1 FROM profiles
-      WHERE id = auth.uid() AND role IN ('chapter_admin', 'super_admin')
+      WHERE id = auth.uid() AND role IN ('chapter_head', 'super_admin')
     )
   );
 

@@ -24,6 +24,51 @@ interface OnboardingInput {
 export async function submitOnboarding(
   data: OnboardingInput
 ): Promise<{ success: boolean; error?: string }> {
+  // ── Get Authenticated User ────────────────────────────────
+  const supabase = await createAdminClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { success: false, error: 'You must be logged in to submit an application.' }
+  }
+  return applyForUser(user.id, user.email ?? null, data)
+}
+
+// ── Sign Up + Apply (logged-out users: one submit creates login + application)
+export async function signupAndApply(
+  data: OnboardingInput & { full_name: string; email: string; password: string }
+): Promise<{ success: boolean; error?: string }> {
+  const fullName = data.full_name?.trim()
+  const email = data.email?.trim().toLowerCase()
+  if (!fullName) return { success: false, error: 'Full name is required.' }
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { success: false, error: 'Valid email is required.' }
+  if (!data.password || data.password.length < 8) return { success: false, error: 'Password must be at least 8 characters.' }
+
+  const supabase = await createAdminClient()
+
+  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+    email,
+    password: data.password,
+    email_confirm: true,
+    user_metadata: { full_name: fullName },
+  })
+  if (authError || !authData.user) {
+    return { success: false, error: authError?.message ?? 'Failed to create account. Try logging in instead.' }
+  }
+
+  const result = await applyForUser(authData.user.id, email, data, fullName)
+  if (!result.success) {
+    // Roll back the login if the application failed — avoids orphan accounts
+    await supabase.auth.admin.deleteUser(authData.user.id)
+  }
+  return result
+}
+
+async function applyForUser(
+  userId: string,
+  email: string | null,
+  data: OnboardingInput,
+  fullName?: string
+): Promise<{ success: boolean; error?: string }> {
   // ── Validation ────────────────────────────────────────────
   if (!data.company_full_name?.trim()) return { success: false, error: 'Company name is required.' }
   if (!data.bio?.trim()) return { success: false, error: 'Biography is required.' }
@@ -36,14 +81,14 @@ export async function submitOnboarding(
   const supabase = await createAdminClient()
 
   // ── Resolve responsible admin + verify date is still open ────────────
-  const { data: chapterAdmin } = await supabase
+  const { data: chapterHead } = await supabase
     .from('profiles')
     .select('id')
     .eq('chapter_id', data.chapter_id)
-    .eq('role', 'chapter_admin')
+    .eq('role', 'chapter_head')
     .maybeSingle()
 
-  let adminId: string | null = chapterAdmin?.id ?? null
+  let adminId: string | null = chapterHead?.id ?? null
   if (!adminId) {
     const { data: superAdmin } = await supabase
       .from('profiles')
@@ -83,12 +128,7 @@ export async function submitOnboarding(
     return { success: false, error: 'The selected date is no longer available. Please choose another date.' }
   }
 
-  // ── Get Authenticated User ────────────────────────────────
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return { success: false, error: 'You must be logged in to submit an application.' }
-  }
-  const userId = user.id
+  // userId / email passed in by the caller (session or freshly created account)
 
   // ── Upload Logo (if provided) ─────────────────────────────
   let logoUrl: string | null = null
@@ -124,6 +164,8 @@ export async function submitOnboarding(
   const { error: profileError } = await supabase
     .from('profiles')
     .update({
+      ...(fullName ? { full_name: fullName } : {}),
+      ...(email ? { email } : {}),
       business_name: data.company_full_name.trim(),
       brand_tagline: data.brand_tagline?.trim() || null,
       bio: data.bio.trim(),

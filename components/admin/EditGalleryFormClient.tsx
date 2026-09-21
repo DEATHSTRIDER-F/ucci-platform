@@ -72,7 +72,7 @@ export function EditGalleryFormClient({ post, areas, adminProfile }: EditGallery
       const validation = validateImageFile(file)
       if (!validation.valid) { setErrors(er => ({ ...er, images: validation.error! })); continue }
       try {
-        const compressed = await compressImage(file, { maxSizeKB: 500 })
+        const compressed = await compressImage(file, { maxSizeKB: 350 })
         const preview = URL.createObjectURL(compressed)
         currentMaxOrder++
         setImages(imgs => [...imgs, { file: compressed, preview, alt_text: '', display_order: currentMaxOrder }])
@@ -226,7 +226,7 @@ export function EditGalleryFormClient({ post, areas, adminProfile }: EditGallery
         </div>
         <div>
           <label htmlFor="gallery_chapter" className="block text-brand-silver text-sm font-medium mb-1">Chapter <span className="text-brand-silver/50">(optional)</span></label>
-          <select id="gallery_chapter" value={chapterId} onChange={e => setChapterId(e.target.value)} className="input-field" disabled={adminProfile.role === 'chapter_admin'}>
+          <select id="gallery_chapter" value={chapterId} onChange={e => setChapterId(e.target.value)} className="input-field" disabled={adminProfile.role === 'chapter_head'}>
             <option value="">All Chapters</option>
             {(selectedArea?.chapters ?? areas.flatMap(a => a.chapters)).map(ch => (
               <option key={ch.id} value={ch.id}>{ch.name}</option>

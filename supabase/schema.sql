@@ -7,7 +7,7 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ─── Enumerated Types ─────────────────────────────────────────────────────────
-CREATE TYPE user_role AS ENUM ('super_admin', 'chapter_admin', 'member');
+CREATE TYPE user_role AS ENUM ('super_admin', 'chapter_head', 'member');
 CREATE TYPE profile_status AS ENUM ('pending', 'approved', 'rejected');
 CREATE TYPE inquiry_status AS ENUM ('pending', 'approved', 'rejected');
 
@@ -253,8 +253,8 @@ CREATE POLICY "profiles_all_super_admin" ON profiles FOR ALL USING (
   get_my_role() = 'super_admin'
 );
 -- Chapter admins: access profiles in their chapter
-CREATE POLICY "profiles_all_chapter_admin" ON profiles FOR ALL USING (
-  get_my_role() = 'chapter_admin'
+CREATE POLICY "profiles_all_chapter_head" ON profiles FOR ALL USING (
+  get_my_role() = 'chapter_head'
   AND get_my_chapter_id() = profiles.chapter_id
 );
 
@@ -266,8 +266,8 @@ CREATE POLICY "member_inquiries_select_member" ON member_inquiries FOR SELECT US
   target_member_id = auth.uid() AND status = 'approved'
 );
 -- Chapter admins: all operations in their chapter
-CREATE POLICY "member_inquiries_all_chapter_admin" ON member_inquiries FOR ALL USING (
-  get_my_role() = 'chapter_admin'
+CREATE POLICY "member_inquiries_all_chapter_head" ON member_inquiries FOR ALL USING (
+  get_my_role() = 'chapter_head'
   AND get_my_chapter_id() = member_inquiries.chapter_id
 );
 -- Super admins: full access
@@ -288,16 +288,16 @@ CREATE POLICY "gallery_posts_select_public" ON gallery_posts FOR SELECT USING (t
 CREATE POLICY "gallery_posts_all_super_admin" ON gallery_posts FOR ALL USING (
   get_my_role() = 'super_admin'
 );
-CREATE POLICY "gallery_posts_all_chapter_admin" ON gallery_posts FOR ALL USING (
-  get_my_role() = 'chapter_admin'
+CREATE POLICY "gallery_posts_all_chapter_head" ON gallery_posts FOR ALL USING (
+  get_my_role() = 'chapter_head'
   AND get_my_chapter_id() = gallery_posts.chapter_id
 );
 
 -- ─── Gallery Images ───────────────────────────────────────────────────────────
 CREATE POLICY "gallery_images_select_public" ON gallery_images FOR SELECT USING (true);
 -- Chapter admins: only images for their chapter's posts
-CREATE POLICY "gallery_images_all_chapter_admin" ON gallery_images FOR ALL USING (
-  get_my_role() = 'chapter_admin'
+CREATE POLICY "gallery_images_all_chapter_head" ON gallery_images FOR ALL USING (
+  get_my_role() = 'chapter_head'
   AND EXISTS (
     SELECT 1 FROM gallery_posts gp
     WHERE gp.id = gallery_images.post_id

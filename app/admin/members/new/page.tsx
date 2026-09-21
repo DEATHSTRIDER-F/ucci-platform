@@ -16,7 +16,7 @@ export default async function NewMemberPage() {
     .eq('id', user!.id)
     .single()
 
-  if (!profile || (profile.role !== 'super_admin' && profile.role !== 'chapter_admin')) redirect('/unauthorized')
+  if (!profile || (profile.role !== 'super_admin' && profile.role !== 'chapter_head')) redirect('/unauthorized')
 
   // Chapter admins only see their own chapter; super admins see active chapters
   let areasQuery = supabase
@@ -25,7 +25,7 @@ export default async function NewMemberPage() {
     .order('display_order')
     .order('display_order', { referencedTable: 'chapters' })
 
-  if (profile.role === 'chapter_admin' && profile.chapter_id) {
+  if (profile.role === 'chapter_head' && profile.chapter_id) {
     const { data: own } = await supabase
       .from('chapters')
       .select('id, name, area:areas(id, name)')

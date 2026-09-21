@@ -31,17 +31,17 @@ export function AppointmentCalendar({ chapterId, onDateSelect, selectedDate }: A
     const fetchAvailability = async () => {
       const supabase = createClient()
 
-      // 1. Find the chapter_admin for this chapter, or fall back to super_admin
-      const { data: chapterAdmin } = await supabase
+      // 1. Find the chapter_head for this chapter, or fall back to super_admin
+      const { data: chapterHead } = await supabase
         .from('profiles')
         .select('id')
         .eq('chapter_id', chapterId)
-        .eq('role', 'chapter_admin')
+        .eq('role', 'chapter_head')
         .maybeSingle()
 
       let adminId: string | null = null
-      if (chapterAdmin) {
-        adminId = chapterAdmin.id
+      if (chapterHead) {
+        adminId = chapterHead.id
       } else {
         const { data: superAdmin } = await supabase
           .from('profiles')

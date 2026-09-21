@@ -28,7 +28,7 @@ export function ApplicationsTabs({
           Member Applications ({memberCount})
         </button>
         <button role="tab" aria-selected={tab === 'head'} onClick={() => setTab('head')} className={btn(tab === 'head')}>
-          Chapter Head Applications ({headCount})
+          Start a Chapter Applications ({headCount})
         </button>
       </div>
       {tab === 'member' ? member : head}

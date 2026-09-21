@@ -22,7 +22,7 @@ export default async function EditGalleryPostPage({ params }: { params: { id: st
   if (!post) notFound()
 
   // Ensure chapter admin can only edit their own chapter's posts
-  if (profile.role === 'chapter_admin' && profile.chapter_id !== post.chapter_id) {
+  if (profile.role === 'chapter_head' && profile.chapter_id !== post.chapter_id) {
     redirect('/unauthorized')
   }
 

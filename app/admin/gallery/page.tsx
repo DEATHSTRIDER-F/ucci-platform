@@ -38,7 +38,7 @@ export default async function ManageGalleryPage({
     .select('*, images:gallery_images(id, image_url, display_order), chapter:chapters(name), area:areas(name)')
     .order('created_at', { ascending: false })
 
-  if (profile.role === 'chapter_admin' && profile.chapter_id) {
+  if (profile.role === 'chapter_head' && profile.chapter_id) {
     query = query.eq('chapter_id', profile.chapter_id)
   }
   if (filter !== 'all') {

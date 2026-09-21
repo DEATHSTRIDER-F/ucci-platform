@@ -66,10 +66,26 @@ export default async function ApplicationsPage() {
     return { ...(row as unknown as ChapterHeadApplication), chapter: (chapter ?? null) as ChapterHeadApplication['chapter'] }
   })
 
+  // Chapters for the assign-on-approve picker (scoped for chapter admins)
+  const { data: areasForPick } = await supabase
+    .from('areas')
+    .select('id, name, chapters(id, name)')
+    .order('display_order')
+    .order('display_order', { referencedTable: 'chapters' })
+
+  const pickChapters = (areasForPick ?? []).flatMap(a => {
+    if (!isSuperAdmin && adminProfile?.chapter_id) {
+      const own = ((a as { chapters?: Array<{ id: string; name: string }> }).chapters ?? []).filter(ch => ch.id === adminProfile.chapter_id)
+      if (own.length === 0) return []
+      return own.map(ch => ({ id: ch.id, name: ch.name, areaName: a.name as string }))
+    }
+    return ((a as { chapters?: Array<{ id: string; name: string }> }).chapters ?? []).map(ch => ({ id: ch.id, name: ch.name, areaName: a.name as string }))
+  })
+
   return (
     <div>
       <h1 className="font-display text-2xl font-bold text-brand-white mb-2">Applications</h1>
-      <p className="text-brand-silver mb-6">Review and approve or reject membership and chapter head applications.</p>
+      <p className="text-brand-silver mb-6">Review and approve or reject membership and Start a Chapter applications.</p>
       <ApplicationsTabs
         memberCount={applications.length}
         headCount={headApplications.length}
@@ -83,6 +99,7 @@ export default async function ApplicationsPage() {
           <ChapterHeadReviewClient
             applications={headApplications}
             adminId={adminProfile?.id ?? ''}
+            chapters={pickChapters}
           />
         }
       />

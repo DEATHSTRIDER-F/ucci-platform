@@ -438,7 +438,7 @@ export function Header({ profile, featuredCategories, areasWithChapters }: Heade
                       Become a Member
                     </Link>
                     <Link href="/join?tab=head" className="block px-4 py-2 text-sm text-brand-silver hover:text-brand-gold hover:bg-brand-navy/50 transition-colors">
-                      Become a Chapter Head
+                      Start a Chapter
                     </Link>
                   </div>
                 </div>
@@ -479,7 +479,7 @@ export function Header({ profile, featuredCategories, areasWithChapters }: Heade
             </div>
 
             {/* Admin link for admins */}
-            {profile && (profile.role === 'super_admin' || profile.role === 'chapter_admin') && (
+            {profile && (profile.role === 'super_admin' || profile.role === 'chapter_head') && (
               <Link href="/admin" className={`${navLinkClass('/admin')} text-brand-gold`}>
                 Admin
               </Link>
@@ -494,9 +494,14 @@ export function Header({ profile, featuredCategories, areasWithChapters }: Heade
                   <div className="text-sm font-medium text-brand-white">{profile.full_name}</div>
                   <div className="text-xs text-brand-silver truncate max-w-32">{profile.email}</div>
                 </div>
-                <div className="w-9 h-9 rounded-full bg-brand-gold/20 border border-brand-gold/40 flex items-center justify-center">
+                <Link
+                  href="/profile"
+                  className="w-9 h-9 rounded-full bg-brand-gold/20 border border-brand-gold/40 flex items-center justify-center hover:bg-brand-gold/30 transition-colors"
+                  aria-label="My profile"
+                  title="My profile"
+                >
                   <User className="w-4 h-4 text-brand-gold" />
-                </div>
+                </Link>
                 <button
                   onClick={handleLogout}
                   className="btn-ghost text-sm text-brand-silver hover:text-red-400 flex items-center gap-1"
@@ -525,6 +530,11 @@ export function Header({ profile, featuredCategories, areasWithChapters }: Heade
             >
               {mobileSearchOpen ? <X className="w-6 h-6 text-brand-white" /> : <Search className="w-6 h-6 text-brand-white" />}
             </button>
+            {profile && (
+              <Link href="/profile" className="btn-ghost p-2" aria-label="My profile">
+                <User className="w-6 h-6 text-brand-white" />
+              </Link>
+            )}
             <button
               className="btn-ghost p-2"
               onClick={() => {
@@ -630,7 +640,7 @@ export function Header({ profile, featuredCategories, areasWithChapters }: Heade
                 onToggle={() => toggleMobileSection('join')}
               >
                 <MobileSubLink href="/join" label="Become a Member" active={pathname === '/join'} />
-                <MobileSubLink href="/join?tab=head" label="Become a Chapter Head" active={false} />
+                <MobileSubLink href="/join?tab=head" label="Start a Chapter" active={false} />
               </MobileMenuGroup>
 
               <MobileMenuLink href="/contact" label="Contact Us" active={isActive('/contact')} />
@@ -646,7 +656,7 @@ export function Header({ profile, featuredCategories, areasWithChapters }: Heade
                 <MobileSubLink href="/gallery?tab=videos" label="Videos" active={false} />
               </MobileMenuGroup>
 
-              {profile && (profile.role === 'super_admin' || profile.role === 'chapter_admin') && (
+              {profile && (profile.role === 'super_admin' || profile.role === 'chapter_head') && (
                 <MobileMenuLink href="/admin" label="Admin Dashboard" active={isActive('/admin')} />
               )}
 

@@ -4,6 +4,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
+import { MemberLogoUploader } from '@/components/admin/MemberLogoUploader'
 import { Globe, Linkedin, Phone, MapPin, Building2, Tag, Users, User, ArrowLeft } from 'lucide-react'
 import type { Profile } from '@/lib/types/database'
 
@@ -29,7 +30,7 @@ export default async function AdminMemberProfilePage({ params }: Props) {
     .eq('id', user.id)
     .single()
 
-  if (!adminProfile || (adminProfile.role !== 'super_admin' && adminProfile.role !== 'chapter_admin')) {
+  if (!adminProfile || (adminProfile.role !== 'super_admin' && adminProfile.role !== 'chapter_head')) {
     redirect('/unauthorized')
   }
 
@@ -45,7 +46,7 @@ export default async function AdminMemberProfilePage({ params }: Props) {
     .eq('status', 'approved')
 
   // Apply scope: chapter admins can only view members in their chapter
-  if (adminProfile.role === 'chapter_admin' && adminProfile.chapter_id) {
+  if (adminProfile.role === 'chapter_head' && adminProfile.chapter_id) {
     query = query.eq('chapter_id', adminProfile.chapter_id)
   }
 
@@ -90,25 +91,9 @@ export default async function AdminMemberProfilePage({ params }: Props) {
       <article itemScope itemType="https://schema.org/ProfessionalService">
         {/* Profile Header */}
         <div className="glass-card p-8 mb-6">
-          <div className="flex flex-col sm:flex-row items-start gap-6">
-            {/* Logo */}
-            <div className="relative w-24 h-24 rounded-xl overflow-hidden border-2 border-brand-gold/40 flex-shrink-0">
-              {p.logo_url ? (
-                <Image
-                  src={p.logo_url}
-                  alt={`${p.business_name ?? p.full_name} logo`}
-                  fill
-                  className="object-cover"
-                  priority
-                  sizes="96px"
-                />
-              ) : (
-                <div className="w-full h-full bg-brand-gold/20 flex items-center justify-center">
-                  <User className="w-10 h-10 text-brand-gold" />
-                </div>
-              )}
-            </div>
+          <MemberLogoUploader profileId={p.id} logoUrl={p.logo_url} />
 
+          <div className="flex flex-col sm:flex-row items-start gap-6 mt-6">
             <div className="flex-1">
               <h1 className="font-display text-2xl sm:text-3xl font-bold text-brand-white" itemProp="name">
                 {p.business_name ?? p.full_name}

@@ -33,13 +33,13 @@ DROP POLICY IF EXISTS "areas_all_super_admin" ON areas;
 DROP POLICY IF EXISTS "chapters_all_super_admin" ON chapters;
 DROP POLICY IF EXISTS "categories_all_super_admin" ON categories;
 DROP POLICY IF EXISTS "profiles_all_super_admin" ON profiles;
-DROP POLICY IF EXISTS "profiles_all_chapter_admin" ON profiles;
-DROP POLICY IF EXISTS "member_inquiries_all_chapter_admin" ON member_inquiries;
+DROP POLICY IF EXISTS "profiles_all_chapter_head" ON profiles;
+DROP POLICY IF EXISTS "member_inquiries_all_chapter_head" ON member_inquiries;
 DROP POLICY IF EXISTS "member_inquiries_all_super_admin" ON member_inquiries;
 DROP POLICY IF EXISTS "contact_inquiries_select_super_admin" ON contact_inquiries;
 DROP POLICY IF EXISTS "gallery_posts_all_super_admin" ON gallery_posts;
-DROP POLICY IF EXISTS "gallery_posts_all_chapter_admin" ON gallery_posts;
-DROP POLICY IF EXISTS "gallery_images_all_chapter_admin" ON gallery_images;
+DROP POLICY IF EXISTS "gallery_posts_all_chapter_head" ON gallery_posts;
+DROP POLICY IF EXISTS "gallery_images_all_chapter_head" ON gallery_images;
 DROP POLICY IF EXISTS "gallery_images_all_super_admin" ON gallery_images;
 DROP POLICY IF EXISTS "availability_all_super_admin" ON admin_availability;
 DROP POLICY IF EXISTS "slots_all_super_admin" ON appointment_slots;
@@ -66,14 +66,14 @@ CREATE POLICY "categories_all_super_admin" ON categories FOR ALL USING (
 CREATE POLICY "profiles_all_super_admin" ON profiles FOR ALL USING (
   get_my_role() = 'super_admin'
 );
-CREATE POLICY "profiles_all_chapter_admin" ON profiles FOR ALL USING (
-  get_my_role() = 'chapter_admin'
+CREATE POLICY "profiles_all_chapter_head" ON profiles FOR ALL USING (
+  get_my_role() = 'chapter_head'
   AND get_my_chapter_id() = profiles.chapter_id
 );
 
 -- Member Inquiries
-CREATE POLICY "member_inquiries_all_chapter_admin" ON member_inquiries FOR ALL USING (
-  get_my_role() = 'chapter_admin'
+CREATE POLICY "member_inquiries_all_chapter_head" ON member_inquiries FOR ALL USING (
+  get_my_role() = 'chapter_head'
   AND get_my_chapter_id() = member_inquiries.chapter_id
 );
 CREATE POLICY "member_inquiries_all_super_admin" ON member_inquiries FOR ALL USING (
@@ -89,14 +89,14 @@ CREATE POLICY "contact_inquiries_select_super_admin" ON contact_inquiries FOR SE
 CREATE POLICY "gallery_posts_all_super_admin" ON gallery_posts FOR ALL USING (
   get_my_role() = 'super_admin'
 );
-CREATE POLICY "gallery_posts_all_chapter_admin" ON gallery_posts FOR ALL USING (
-  get_my_role() = 'chapter_admin'
+CREATE POLICY "gallery_posts_all_chapter_head" ON gallery_posts FOR ALL USING (
+  get_my_role() = 'chapter_head'
   AND get_my_chapter_id() = gallery_posts.chapter_id
 );
 
 -- Gallery Images
-CREATE POLICY "gallery_images_all_chapter_admin" ON gallery_images FOR ALL USING (
-  get_my_role() = 'chapter_admin'
+CREATE POLICY "gallery_images_all_chapter_head" ON gallery_images FOR ALL USING (
+  get_my_role() = 'chapter_head'
   AND EXISTS (
     SELECT 1 FROM gallery_posts gp
     WHERE gp.id = gallery_images.post_id

@@ -1,14 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
+import { compressImage, validateImageFile } from '@/lib/utils/imageCompressor'
 import { createMemberOffline } from '@/app/actions/admin'
-import { Loader2, CheckCircle, AlertCircle, Eye, EyeOff } from 'lucide-react'
+import { Loader2, CheckCircle, AlertCircle, Eye, EyeOff, Upload, X } from 'lucide-react'
 
 interface AddMemberFormProps {
   areas: Array<{ id: string; name: string; chapters: Array<{ id: string; name: string }> }>
   categories: Array<{ id: string; name: string }>
-  adminChapterId: string | null // set when added by a chapter_admin (locks chapter)
+  adminChapterId: string | null // set when added by a chapter_head (locks chapter)
 }
 
 export function AddMemberForm({ areas, categories, adminChapterId }: AddMemberFormProps) {
@@ -29,6 +31,9 @@ export function AddMemberForm({ areas, categories, adminChapterId }: AddMemberFo
   })
   const [feePaid, setFeePaid] = useState(true)
   const [showPass, setShowPass] = useState(false)
+  const [logoPreview, setLogoPreview] = useState<string | null>(null)
+  const [logoFile, setLogoFile] = useState<File | null>(null)
+  const [logoError, setLogoError] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [submitError, setSubmitError] = useState('')
   const [pending, setPending] = useState(false)
@@ -36,6 +41,29 @@ export function AddMemberForm({ areas, categories, adminChapterId }: AddMemberFo
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setForm(f => ({ ...f, [k]: e.target.value }))
+
+  const handleLogoUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const validation = validateImageFile(file)
+    if (!validation.valid) { setLogoError(validation.error!); return }
+    setLogoError('')
+    try {
+      const compressed = await compressImage(file, { maxSizeKB: 100 })
+      setLogoFile(compressed)
+      setLogoPreview(URL.createObjectURL(compressed))
+    } catch {
+      setLogoError('Failed to process image. Please try a different file.')
+    }
+  }, [])
+
+  const fileToBase64 = (file: File): Promise<string> =>
+    new Promise((res, rej) => {
+      const reader = new FileReader()
+      reader.onload = () => res(reader.result as string)
+      reader.onerror = rej
+      reader.readAsDataURL(file)
+    })
 
   const validate = () => {
     const e: Record<string, string> = {}
@@ -71,6 +99,7 @@ export function AddMemberForm({ areas, categories, adminChapterId }: AddMemberFo
       category_id: form.category_id,
       membership_fee_paid: feePaid,
       admin_chapter_id: adminChapterId,
+      logo_file: logoFile ? await fileToBase64(logoFile) : null,
     })
     setPending(false)
     if (result.success) {
@@ -104,6 +133,35 @@ export function AddMemberForm({ areas, categories, adminChapterId }: AddMemberFo
           <AlertCircle className="w-4 h-4 flex-shrink-0" /> {submitError}
         </div>
       )}
+
+      {/* Logo Upload */}
+      <div>
+        <label className="block text-brand-silver text-sm font-medium mb-2">Member Photo / Logo <span className="text-brand-silver/50">(optional)</span></label>
+        <div className="flex items-center gap-4">
+          {logoPreview ? (
+            <div className="relative">
+              <div className="relative w-20 h-20 rounded-xl overflow-hidden border-2 border-brand-gold/40">
+                <Image src={logoPreview} alt="Logo preview" fill className="object-cover" />
+              </div>
+              <button type="button" onClick={() => { setLogoPreview(null); setLogoFile(null) }} className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center" aria-label="Remove logo">
+                <X className="w-3 h-3 text-white" />
+              </button>
+            </div>
+          ) : (
+            <div className="w-20 h-20 rounded-xl border-2 border-dashed border-brand-silver/30 flex items-center justify-center">
+              <Upload className="w-6 h-6 text-brand-silver/40" />
+            </div>
+          )}
+          <div>
+            <label htmlFor="m_logo" className="btn-outline text-sm py-2 px-4 cursor-pointer">
+              {logoFile ? 'Change Photo' : 'Upload Photo'}
+            </label>
+            <input id="m_logo" type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+            <p className="text-brand-silver/60 text-xs mt-1">WebP · Max 100KB · Auto-optimized</p>
+            {logoError && <p className="text-red-400 text-xs mt-1">{logoError}</p>}
+          </div>
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>

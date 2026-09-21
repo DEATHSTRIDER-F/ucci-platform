@@ -89,49 +89,6 @@ export async function rejectApplication(
   return { success: true }
 }
 
-// ─── Create Chapter Admin ──────────────────────────────────────────────────────
-export async function createChapterAdmin(data: {
-  email: string
-  full_name: string
-  chapter_id: string
-  password: string
-}): Promise<{ success: boolean; error?: string }> {
-  if (!data.email || !data.full_name || !data.chapter_id || !data.password) {
-    return { success: false, error: 'All fields are required.' }
-  }
-
-  const supabase = await createAdminClient()
-
-  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-    email: data.email,
-    password: data.password,
-    email_confirm: true,
-  })
-
-  if (authError || !authData.user) {
-    return { success: false, error: authError?.message ?? 'Failed to create user.' }
-  }
-
-  const { error: profileError } = await supabase
-    .from('profiles')
-    .update({
-      full_name: data.full_name,
-      role: 'chapter_admin',
-      status: 'approved',
-      chapter_id: data.chapter_id,
-      membership_fee_paid: true,
-    })
-    .eq('id', authData.user.id)
-
-  if (profileError) {
-    await supabase.auth.admin.deleteUser(authData.user.id)
-    return { success: false, error: profileError.message }
-  }
-
-  revalidatePath('/admin/admins')
-  return { success: true }
-}
-
 // ─── Add Member (Off-site / Offline Application) ─────────────────────────────
 // Admin manually adds a member who applied offline. Creates a login account
 // and an immediately-approved profile — no interview slot needed.
@@ -149,7 +106,8 @@ export async function createMemberOffline(data: {
   chapter_id: string
   category_id: string
   membership_fee_paid: boolean
-  admin_chapter_id?: string | null // chapter scope when added by a chapter_admin
+  admin_chapter_id?: string | null // chapter scope when added by a chapter_head
+  logo_file?: string | null // base64 data URL (optional)
 }): Promise<{ success: boolean; error?: string }> {
   const email = data.email?.trim().toLowerCase()
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { success: false, error: 'Valid email is required.' }
@@ -185,6 +143,27 @@ export async function createMemberOffline(data: {
     return { success: false, error: authError?.message ?? 'Failed to create user.' }
   }
 
+  // Upload logo (optional — graceful degradation like onboarding)
+  let logoUrl: string | null = null
+  if (data.logo_file) {
+    try {
+      const base64Data = data.logo_file.split(',')[1]
+      if (base64Data) {
+        const buffer = Buffer.from(base64Data, 'base64')
+        const blob = new Blob([buffer], { type: 'image/webp' })
+        const storagePath = `logos/${authData.user.id}.webp`
+        const { error: uploadError } = await supabase.storage
+          .from('ucci-media')
+          .upload(storagePath, blob, { contentType: 'image/webp', upsert: true })
+        if (!uploadError) {
+          logoUrl = supabase.storage.from('ucci-media').getPublicUrl(storagePath).data.publicUrl
+        }
+      }
+    } catch (e) {
+      console.error('Member logo upload failed:', e)
+    }
+  }
+
   const { error: profileError } = await supabase
     .from('profiles')
     .update({
@@ -201,6 +180,7 @@ export async function createMemberOffline(data: {
       chapter_id: data.chapter_id,
       category_id: data.category_id,
       membership_fee_paid: data.membership_fee_paid,
+      ...(logoUrl ? { logo_url: logoUrl } : {}),
     })
     .eq('id', authData.user.id)
 
@@ -215,11 +195,91 @@ export async function createMemberOffline(data: {
   return { success: true }
 }
 
-// ─── Delete Chapter Admin ──────────────────────────────────────────────────────
-export async function deleteChapterAdmin(profileId: string): Promise<{ success: boolean; error?: string }> {
+// ─── Update Member Logo ──────────────────────────────────────────────────────
+// Lets an admin set/replace the photo for any approved member.
+export async function updateMemberLogo(
+  profileId: string,
+  logoFile: string | null
+): Promise<{ success: boolean; data?: string; error?: string }> {
   const supabase = await createAdminClient()
-  const { error } = await supabase.auth.admin.deleteUser(profileId)
+
+  if (!logoFile) {
+    const { error } = await supabase.from('profiles').update({ logo_url: null }).eq('id', profileId)
+    if (error) return { success: false, error: error.message }
+    await supabase.storage.from('ucci-media').remove([`logos/${profileId}.webp`])
+    revalidatePath(`/admin/members/${profileId}`)
+    revalidatePath(`/members/${profileId}`)
+    return { success: true, data: '' }
+  }
+
+  const base64Data = logoFile.split(',')[1]
+  if (!base64Data) return { success: false, error: 'Invalid image data.' }
+  const buffer = Buffer.from(base64Data, 'base64')
+  const blob = new Blob([buffer], { type: 'image/webp' })
+  const storagePath = `logos/${profileId}.webp`
+
+  const { error: uploadError } = await supabase.storage
+    .from('ucci-media')
+    .upload(storagePath, blob, { contentType: 'image/webp', upsert: true })
+  if (uploadError) return { success: false, error: uploadError.message }
+
+  const logoUrl = supabase.storage.from('ucci-media').getPublicUrl(storagePath).data.publicUrl
+  const { error } = await supabase.from('profiles').update({ logo_url: logoUrl }).eq('id', profileId)
   if (error) return { success: false, error: error.message }
-  revalidatePath('/admin/admins')
+
+  revalidatePath(`/admin/members/${profileId}`)
+  revalidatePath(`/members/${profileId}`)
+  revalidatePath('/')
+  return { success: true, data: logoUrl }
+}
+
+// ─── Assign Chapter Head (promote an approved member of that chapter) ────────
+export async function assignChapterHead(
+  chapterId: string,
+  profileId: string
+): Promise<{ success: boolean; error?: string }> {
+  if (!chapterId || !profileId) return { success: false, error: 'Chapter and member are required.' }
+  const supabase = await createAdminClient()
+
+  const { data: member } = await supabase
+    .from('profiles')
+    .select('id, role, status, chapter_id')
+    .eq('id', profileId)
+    .single()
+  if (!member) return { success: false, error: 'Member not found.' }
+  if (member.status !== 'approved' || member.role !== 'member') {
+    return { success: false, error: 'Only approved members can be promoted to chapter head.' }
+  }
+  if (member.chapter_id !== chapterId) {
+    return { success: false, error: 'Member must belong to this chapter.' }
+  }
+
+  // Demote any existing head of this chapter back to member (keeps listing)
+  await supabase
+    .from('profiles')
+    .update({ role: 'member' })
+    .eq('chapter_id', chapterId)
+    .eq('role', 'chapter_head')
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ role: 'chapter_head' })
+    .eq('id', profileId)
+  if (error) return { success: false, error: error.message }
+
+  revalidatePath('/admin/chapter-heads')
+  return { success: true }
+}
+
+// ─── Remove Chapter Head (demote to member — listing and login kept) ─────────
+export async function demoteChapterHead(profileId: string): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createAdminClient()
+  const { error } = await supabase
+    .from('profiles')
+    .update({ role: 'member' })
+    .eq('id', profileId)
+    .eq('role', 'chapter_head')
+  if (error) return { success: false, error: error.message }
+  revalidatePath('/admin/chapter-heads')
   return { success: true }
 }

@@ -106,7 +106,7 @@ export function AreasManagerClient({ areas: initial }: { areas: AreaWithChapters
     if (!validation.valid) { setErrors(er => ({ ...er, cover: validation.error! })); return }
     setErrors(er => { const n = { ...er }; delete n.cover; return n })
     try {
-      const compressed = await compressImage(file, { maxSizeKB: 500 })
+      const compressed = await compressImage(file, { maxSizeKB: 350 })
       setCoverFile(compressed)
       setCoverPreview(URL.createObjectURL(compressed))
       setCoverRemoved(false)

@@ -1,13 +1,13 @@
 /**
  * Image optimization utility — converts uploaded images to WebP format,
- * compresses to sub-500KB, and constrains dimensions to 1200px bounding box.
+ * compresses to sub-100KB, and constrains dimensions to 1200px bounding box.
  *
  * Runs client-side using HTML5 Canvas before Supabase Storage upload.
  * All image upload/update operations should use upsert to avoid storage clutter.
  */
 
 export interface CompressOptions {
-  maxSizeKB?: number     // default: 500
+  maxSizeKB?: number     // default: 100
   maxDimension?: number  // default: 1200
   quality?: number       // 0–1, default: 0.85 (auto-reduced if size exceeded)
 }
@@ -21,9 +21,11 @@ export async function compressImage(
   options: CompressOptions = {}
 ): Promise<File> {
   const {
-    maxSizeKB = 500,
+    maxSizeKB = 100,
     maxDimension = 1200,
   } = options
+
+  const limit = maxSizeKB * 1024
 
   return new Promise((resolve, reject) => {
     const img = new Image()
@@ -33,37 +35,45 @@ export async function compressImage(
       URL.revokeObjectURL(objectUrl)
 
       // Compute scaled dimensions preserving aspect ratio
-      let { width, height } = img
-      if (width > maxDimension || height > maxDimension) {
-        if (width > height) {
-          height = Math.round((height * maxDimension) / width)
-          width = maxDimension
-        } else {
-          width = Math.round((width * maxDimension) / height)
-          height = maxDimension
+      const scaleTo = (bound: number): { width: number; height: number } => {
+        let { width, height } = img
+        if (width > bound || height > bound) {
+          if (width > height) {
+            height = Math.round((height * bound) / width)
+            width = bound
+          } else {
+            width = Math.round((width * bound) / height)
+            height = bound
+          }
         }
+        return { width, height }
       }
 
       const canvas = document.createElement('canvas')
-      canvas.width = width
-      canvas.height = height
-
       const ctx = canvas.getContext('2d')
       if (!ctx) {
         reject(new Error('Canvas context unavailable'))
         return
       }
 
-      ctx.drawImage(img, 0, 0, width, height)
-
-      // Iteratively reduce quality until size is within limit
-      let quality = 0.85
+      // Reduce quality first; if still over budget, halve dimensions and retry.
+      // Guarantees a sub-limit WebP except for pathological inputs.
       let blob: Blob | null = null
+      let bound = maxDimension
+      while (bound >= 400) {
+        const { width, height } = scaleTo(bound)
+        canvas.width = width
+        canvas.height = height
+        ctx.drawImage(img, 0, 0, width, height)
 
-      while (quality >= 0.1) {
-        blob = await canvasToBlob(canvas, 'image/webp', quality)
-        if (blob && blob.size <= maxSizeKB * 1024) break
-        quality -= 0.05
+        let quality = 0.85
+        while (quality >= 0.1) {
+          blob = await canvasToBlob(canvas, 'image/webp', quality)
+          if (blob && blob.size <= limit) break
+          quality -= 0.05
+        }
+        if (blob && blob.size <= limit) break
+        bound = Math.floor(bound / 2)
       }
 
       if (!blob) {

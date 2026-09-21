@@ -11,7 +11,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   if (!user) redirect('/login?redirectTo=/admin')
 
-  if (!profile || (profile.role !== 'super_admin' && profile.role !== 'chapter_admin')) {
+  if (!profile || (profile.role !== 'super_admin' && profile.role !== 'chapter_head')) {
     redirect('/unauthorized')
   }
 
@@ -27,7 +27,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     ...(isSuperAdmin ? [
       { href: '/admin/categories', icon: 'Tag' as const, label: 'Categories' },
       { href: '/admin/areas', icon: 'MapPin' as const, label: 'Areas & Chapters' },
-      { href: '/admin/admins', icon: 'Users' as const, label: 'Chapter Admins' },
+      { href: '/admin/chapter-heads', icon: 'Users' as const, label: 'Chapter Heads' },
       { href: '/admin/slides', icon: 'Settings' as const, label: 'Hero Slides' },
       { href: '/admin/contacts', icon: 'MessageSquare' as const, label: 'Contact Inquiries' },
     ] : []),
@@ -41,7 +41,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <div className="text-brand-silver text-sm mt-1">{profile.full_name}</div>
           <div className="text-brand-silver/60 text-xs">{profile.email}</div>
           <span className={`mt-2 inline-block text-xs px-2 py-0.5 rounded-full ${isSuperAdmin ? 'bg-brand-gold/20 text-brand-gold' : 'bg-brand-sapphire/80 text-brand-champagne border border-brand-champagne/30'}`}>
-            {isSuperAdmin ? 'Super Admin' : 'Chapter Admin'}
+            {isSuperAdmin ? 'Super Admin' : 'Chapter Head'}
           </span>
         </div>
         <AdminNav navItems={navItems} />

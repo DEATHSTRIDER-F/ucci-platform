@@ -5,7 +5,7 @@ import type { NextRequest } from 'next/server'
 type CookieToSet = { name: string; value: string; options?: Record<string, unknown> }
 
 // Protected routes that require authentication
-const PROTECTED_PATHS = ['/admin', '/join', '/dashboard']
+const PROTECTED_PATHS = ['/admin', '/dashboard', '/profile']
 
 
 export async function proxy(request: NextRequest) {
@@ -55,5 +55,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/join/:path*', '/dashboard/:path*'],
+  matcher: ['/admin/:path*', '/dashboard/:path*', '/profile', '/profile/:path*'],
 }

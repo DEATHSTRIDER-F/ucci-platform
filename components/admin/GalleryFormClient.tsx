@@ -42,7 +42,7 @@ export function GalleryFormClient({ areas, adminProfile }: GalleryFormClientProp
       const validation = validateImageFile(file)
       if (!validation.valid) { setErrors(er => ({ ...er, images: validation.error! })); continue }
       try {
-        const compressed = await compressImage(file, { maxSizeKB: 500 })
+        const compressed = await compressImage(file, { maxSizeKB: 350 })
         const preview = URL.createObjectURL(compressed)
         setImages(imgs => [...imgs, { file: compressed, preview, alt_text: '' }])
       } catch {
@@ -183,7 +183,7 @@ export function GalleryFormClient({ areas, adminProfile }: GalleryFormClientProp
         </div>
         <div>
           <label htmlFor="gallery_chapter" className="block text-brand-silver text-sm font-medium mb-1">Chapter <span className="text-brand-silver/50">(optional)</span></label>
-          <select id="gallery_chapter" value={chapterId} onChange={e => setChapterId(e.target.value)} className="input-field" disabled={adminProfile.role === 'chapter_admin'}>
+          <select id="gallery_chapter" value={chapterId} onChange={e => setChapterId(e.target.value)} className="input-field" disabled={adminProfile.role === 'chapter_head'}>
             <option value="">All Chapters</option>
             {(selectedArea?.chapters ?? areas.flatMap(a => a.chapters)).map(ch => (
               <option key={ch.id} value={ch.id}>{ch.name}</option>
@@ -195,7 +195,7 @@ export function GalleryFormClient({ areas, adminProfile }: GalleryFormClientProp
       {/* Image Upload (not for videos) */}
       {postType !== 'video' && (
       <div>
-        <label className="block text-brand-silver text-sm font-medium mb-2">Images {postType === 'event' ? '*' : <span className="text-brand-silver/50">(optional for news with YouTube link)</span>} <span className="text-brand-silver/50">(auto-compressed to WebP/500KB)</span></label>
+        <label className="block text-brand-silver text-sm font-medium mb-2">Images {postType === 'event' ? '*' : <span className="text-brand-silver/50">(optional for news with YouTube link)</span>} <span className="text-brand-silver/50">(auto-compressed to WebP/350KB)</span></label>
         <label htmlFor="gallery_images" className="btn-outline text-sm py-2 px-4 cursor-pointer inline-flex items-center gap-2">
           <Plus className="w-4 h-4" /> Add Images
         </label>

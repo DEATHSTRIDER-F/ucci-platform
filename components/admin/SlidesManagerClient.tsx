@@ -91,7 +91,7 @@ function SlideForm({
               className="hidden"
               onChange={onImageSelect}
             />
-            <p className="text-brand-silver/60 text-xs mt-1">Auto-converted to WebP · Max 500KB</p>
+            <p className="text-brand-silver/60 text-xs mt-1">Auto-converted to WebP · Max 350KB</p>
             {imageError && <p className="text-red-400 text-xs mt-1">{imageError}</p>}
             {errors.image && <p className="text-red-400 text-xs mt-1">{errors.image}</p>}
           </div>
@@ -136,7 +136,7 @@ function SlideForm({
               className="hidden"
               onChange={onMobileImageSelect}
             />
-            <p className="text-brand-silver/60 text-xs mt-1">Portrait works best · Auto-converted to WebP · Max 500KB</p>
+            <p className="text-brand-silver/60 text-xs mt-1">Portrait works best · Auto-converted to WebP · Max 350KB</p>
             {mobileImageError && <p className="text-red-400 text-xs mt-1">{mobileImageError}</p>}
           </div>
         </div>
@@ -229,7 +229,7 @@ export function SlidesManagerClient({ slides: initial, adminId }: SlidesManagerC
     if (!validation.valid) { setImageError(validation.error!); return }
     setImageError('')
     try {
-      const compressed = await compressImage(file, { maxSizeKB: 500 })
+      const compressed = await compressImage(file, { maxSizeKB: 350 })
       setImageFile(compressed)
       setImagePreview(URL.createObjectURL(compressed))
     } catch {
@@ -244,7 +244,7 @@ export function SlidesManagerClient({ slides: initial, adminId }: SlidesManagerC
     if (!validation.valid) { setMobileImageError(validation.error!); return }
     setMobileImageError('')
     try {
-      const compressed = await compressImage(file, { maxSizeKB: 500 })
+      const compressed = await compressImage(file, { maxSizeKB: 350 })
       setMobileImageFile(compressed)
       setMobileImagePreview(URL.createObjectURL(compressed))
       setMobileRemoved(false)

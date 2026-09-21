@@ -34,10 +34,10 @@ DROP POLICY IF EXISTS "chapter_head_applications chapter all" ON chapter_head_ap
 CREATE POLICY "chapter_head_applications chapter all"
   ON chapter_head_applications FOR ALL TO authenticated
   USING (
-    get_my_role() = 'chapter_admin'
+    get_my_role() = 'chapter_head'
     AND (chapter_id IS NULL OR chapter_id = get_my_chapter_id())
   )
   WITH CHECK (
-    get_my_role() = 'chapter_admin'
+    get_my_role() = 'chapter_head'
     AND (chapter_id IS NULL OR chapter_id = get_my_chapter_id())
   );
