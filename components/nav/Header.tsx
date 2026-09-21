@@ -559,18 +559,23 @@ export function Header({ profile, featuredCategories, areasWithChapters }: Heade
         </div>
       )}
 
-      {/* Mobile Menu — fixed frosted-glass overlay below the header.
-          Never pushes page content; owns its own scroll; backdrop tap closes. */}
+      {/* Mobile Menu — full-screen frosted panel with its own close button.
+          Covers everything (no bleed-through), never pushes content,
+          owns its scroll; no dim backdrop by design. */}
       {mobileOpen && (
-        <div className="lg:hidden fixed inset-x-0 top-20 bottom-0 z-40 animate-fade-in">
-          <div
-            className="absolute inset-0 bg-brand-navy/70 backdrop-blur-sm"
-            onClick={() => setMobileOpen(false)}
-            aria-hidden
-          />
-          <div className="relative h-full overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch] px-4 pt-3 pb-8">
+        <div className="lg:hidden fixed inset-0 z-[60] animate-fade-in bg-brand-navy/85 backdrop-blur-xl">
+          <div className="h-full overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch] px-4 pt-4 pb-8">
+          <div className="flex justify-end mb-2">
+            <button
+              onClick={() => setMobileOpen(false)}
+              className="p-3 -mr-1 text-brand-silver hover:text-brand-white"
+              aria-label="Close menu"
+            >
+              <X className="w-7 h-7" />
+            </button>
+          </div>
           <nav
-            className="rounded-2xl border border-brand-gold/25 bg-brand-sapphire/80 backdrop-blur-xl shadow-2xl shadow-black/50 px-4 pt-3 pb-5 max-h-full overflow-y-auto overscroll-contain"
+            className="rounded-2xl border border-brand-gold/25 bg-brand-sapphire/80 backdrop-blur-xl shadow-2xl shadow-black/50 px-4 pt-3 pb-5"
             aria-label="Mobile navigation"
           >
             <MobileMenuLink href="/" label="Home" active={pathname === '/'} />
