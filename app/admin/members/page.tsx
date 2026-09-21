@@ -4,7 +4,8 @@ import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { getCurrentProfile } from '@/lib/auth/getCurrentProfile'
 import Link from 'next/link'
-import { Building2, Tag, ChevronRight, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
+import { MembersTable } from '@/components/admin/MembersTable'
 
 export const metadata = {
   title: 'Members | Admin',
@@ -17,7 +18,7 @@ export default async function AdminMembersPage() {
   const supabase = await createServerSupabaseClient()
   const isSuperAdmin = profile.role === 'super_admin'
 
-  // Fetch approved members — paginated to avoid loading thousands at once
+  // Fetch approved members AND heads — heads show with a badge, not hidden
   const page = 1
   const pageSize = 50
   let query = supabase
@@ -27,13 +28,13 @@ export default async function AdminMembersPage() {
       full_name,
       business_name,
       email,
+      role,
       created_at,
       chapter:chapters(id, name, area:areas(name)),
       category:categories(name)
     `, { count: 'exact' })
     .eq('status', 'approved')
     .neq('role', 'super_admin')
-    .neq('role', 'chapter_head')
     .order('created_at', { ascending: false })
     .range((page - 1) * pageSize, page * pageSize - 1)
 
@@ -69,69 +70,28 @@ export default async function AdminMembersPage() {
         </Link>
       </div>
 
-      <div className="glass-card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-brand-navy/50 border-b border-brand-gold/20">
-              <tr>
-                <th className="px-6 py-4 font-medium text-brand-silver">Member / Business</th>
-                <th className="px-6 py-4 font-medium text-brand-silver">Contact</th>
-                <th className="px-6 py-4 font-medium text-brand-silver">Chapter & Category</th>
-                <th className="px-6 py-4 font-medium text-brand-silver">Joined</th>
-                <th className="px-6 py-4 font-medium text-brand-silver text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-brand-gold/10">
-              {members.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-brand-silver/60">
-                    No approved members found.
-                  </td>
-                </tr>
-              ) : (
-                members.map((member: any) => {
-                  const chapterName = Array.isArray(member.chapter) ? member.chapter[0]?.name : member.chapter?.name
-                  const areaName = Array.isArray(member.chapter) ? (Array.isArray(member.chapter[0]?.area) ? member.chapter[0]?.area[0]?.name : member.chapter[0]?.area?.name) : (Array.isArray(member.chapter?.area) ? member.chapter?.area[0]?.name : member.chapter?.area?.name)
-                  const categoryName = Array.isArray(member.category) ? member.category[0]?.name : member.category?.name
-
-                  return (
-                    <tr key={member.id} className="hover:bg-brand-navy/30 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="font-medium text-brand-white">{member.business_name || member.full_name}</div>
-                        {member.business_name && <div className="text-brand-silver/60 text-xs mt-0.5">{member.full_name}</div>}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-brand-silver">{member.email}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-1.5 text-brand-champagne mb-1">
-                          <Building2 className="w-3.5 h-3.5" />
-                          <span>{chapterName} ({areaName})</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-brand-silver/60 text-xs">
-                          <Tag className="w-3.5 h-3.5" />
-                          <span>{categoryName}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-brand-silver">
-                        {new Date(member.created_at).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <Link
-                          href={`/admin/members/${member.id}`}
-                          className="inline-flex items-center gap-1 text-brand-gold hover:text-brand-champagne transition-colors text-sm font-medium"
-                        >
-                          View Profile <ChevronRight className="w-4 h-4" />
-                        </Link>
-                      </td>
-                    </tr>
-                  )
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <MembersTable
+        members={(members ?? []).map((member: Record<string, unknown>) => {
+          const ch = Array.isArray(member.chapter) ? member.chapter[0] : member.chapter
+          const chObj = ch as { name?: string; area?: unknown } | undefined
+          const areaObj = chObj?.area
+          const area = Array.isArray(areaObj) ? areaObj[0] : areaObj
+          const cat = Array.isArray(member.category) ? member.category[0] : member.category
+          return {
+            id: member.id as string,
+            full_name: member.full_name as string,
+            business_name: (member.business_name as string | null) ?? null,
+            email: member.email as string,
+            role: member.role as string,
+            created_at: member.created_at as string,
+            chapterName: (chObj?.name as string | undefined) ?? null,
+            areaName: ((area as { name?: string } | undefined)?.name) ?? null,
+            categoryName: ((cat as { name?: string } | undefined)?.name) ?? null,
+          }
+        })}
+        total={count ?? members.length}
+        pageSize={pageSize}
+      />
     </div>
   )
 }

@@ -64,10 +64,3 @@ export async function deleteCategory(id: string): Promise<{ success: boolean; er
   revalidatePath('/categories'); revalidatePath('/admin/categories')
   return { success: true }
 }
-
-export async function reorderCategories(updates: Array<{ id: string; display_order: number }>): Promise<{ success: boolean; error?: string }> {
-  const supabase = await createAdminClient()
-  await Promise.all(updates.map(u => supabase.from('categories').update({ display_order: u.display_order }).eq('id', u.id)))
-  revalidatePath('/categories'); revalidatePath('/admin/categories'); revalidatePath('/')
-  return { success: true }
-}

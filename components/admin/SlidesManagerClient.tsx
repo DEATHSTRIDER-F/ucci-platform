@@ -6,7 +6,7 @@ import { compressImage, validateImageFile } from '@/lib/utils/imageCompressor'
 import {
   createSlide, updateSlide, deleteSlide, toggleSlideActive, reorderSlides,
 } from '@/app/actions/slides'
-import { Plus, Trash2, Loader2, Upload, Eye, EyeOff, GripVertical, Edit2, X, Check } from 'lucide-react'
+import { Plus, Trash2, Loader2, Upload, Eye, EyeOff, GripVertical, Edit2, X, Check, Search } from 'lucide-react'
 import { useDragSort, dragRowClass } from '@/components/admin/useDragSort'
 import type { HeroSlide } from '@/lib/types/database'
 
@@ -221,6 +221,14 @@ export function SlidesManagerClient({ slides: initial, adminId }: SlidesManagerC
   const [mobileRemoved, setMobileRemoved] = useState(false)
   const [loading, setLoading] = useState<string | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [query, setQuery] = useState('')
+
+  const visibleSlides = query.trim()
+    ? slides.filter(s => {
+        const q = query.trim().toLowerCase()
+        return (s.title ?? '').toLowerCase().includes(q) || s.alt_text.toLowerCase().includes(q)
+      })
+    : slides
 
   const handleImageSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -416,14 +424,25 @@ export function SlidesManagerClient({ slides: initial, adminId }: SlidesManagerC
       )}
 
       {/* Slides List */}
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-silver/50" />
+        <input
+          type="text"
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          placeholder="Search title, alt text..."
+          aria-label="Search slides"
+          className="input-field pl-10 text-sm"
+        />
+      </div>
       <div className="space-y-4">
-        {slides.length === 0 && !showAddForm && (
+        {visibleSlides.length === 0 && !showAddForm && (
           <div className="glass-card p-12 text-center">
-            <p className="text-brand-silver">No slides yet. Add your first slide above.</p>
+            <p className="text-brand-silver">{query ? 'No slides match your search.' : 'No slides yet. Add your first slide above.'}</p>
           </div>
         )}
 
-        {slides.map((slide, idx) => (
+        {visibleSlides.map((slide) => (
           <div key={slide.id}>
             {editingId === slide.id ? (
               <SlideForm
@@ -450,9 +469,9 @@ export function SlidesManagerClient({ slides: initial, adminId }: SlidesManagerC
               />
             ) : (
               <div
-                {...rowProps(idx)}
-                className={`glass-card p-5 flex items-center gap-5 transition-opacity ${dragRowClass(dragIdx === idx, overIdx === idx && dragIdx !== idx)}`}
-                title="Drag to reorder"
+                {...(query.trim() ? {} : rowProps(slides.findIndex(s => s.id === slide.id)))}
+                className={`glass-card p-5 flex items-center gap-5 transition-opacity ${query.trim() ? '' : dragRowClass(dragIdx === slides.findIndex(s => s.id === slide.id), overIdx === slides.findIndex(s => s.id === slide.id) && dragIdx !== slides.findIndex(s => s.id === slide.id))}`}
+                title={query.trim() ? undefined : 'Drag to reorder'}
               >
                 {/* Drag Handle */}
                 <GripVertical className="w-5 h-5 text-brand-silver/30 flex-shrink-0 cursor-grab active:cursor-grabbing" />

@@ -1,10 +1,9 @@
 'use client'
 
-import { useState, useCallback } from 'react'
-import { createCategory, updateCategory, deleteCategory, reorderCategories } from '@/app/actions/categories'
-import { Plus, Trash2, Loader2, Edit2, Star, AlertCircle, CheckCircle, GripVertical } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { createCategory, updateCategory, deleteCategory } from '@/app/actions/categories'
+import { Plus, Trash2, Loader2, Edit2, Star, AlertCircle, CheckCircle, Search } from 'lucide-react'
 import { CategoryIcon } from '@/components/category-icon'
-import { useDragSort, dragRowClass } from '@/components/admin/useDragSort'
 import type { CategoryFormState } from '@/components/admin/CategoryForm'
 import type { Category } from '@/lib/types/database'
 import dynamic from 'next/dynamic'
@@ -38,6 +37,14 @@ export function CategoriesManagerClient({ categories: initial }: CategoriesManag
   const [loading, setLoading] = useState<string | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const [query, setQuery] = useState('')
+
+  // Newest first (created_at desc from server); search filters by name/slug
+  const visible = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return items
+    return items.filter(c => c.name.toLowerCase().includes(q) || c.slug.toLowerCase().includes(q))
+  }, [items, query])
 
   const autoSlug = (name: string) =>
     name.toLowerCase().trim().replace(/[\s_]+/g, '-').replace(/[^\w-]+/g, '').replace(/--+/g, '-').replace(/^-+|-+$/g, '')
@@ -64,7 +71,7 @@ export function CategoriesManagerClient({ categories: initial }: CategoriesManag
     const payload = { ...form, slug: form.slug || autoSlug(form.name) }
     const result = await createCategory(payload)
     if (result.success && result.data) {
-      setItems(i => [...i, { ...result.data!, display_order: i.length }])
+      setItems(i => [result.data!, ...i])
       setShowAdd(false)
       setForm(defaultForm)
       showToast('success', `Category "${result.data.name}" created.`)
@@ -82,7 +89,7 @@ export function CategoriesManagerClient({ categories: initial }: CategoriesManag
     const payload = { ...form, slug: form.slug || autoSlug(form.name) }
     const result = await updateCategory(id, payload)
     if (result.success && result.data) {
-      setItems(i => i.map(c => c.id === id ? { ...result.data!, display_order: c.display_order } : c))
+      setItems(i => i.map(c => c.id === id ? result.data! : c))
       setEditingId(null)
       setForm(defaultForm)
       showToast('success', `Category "${result.data.name}" updated.`)
@@ -128,14 +135,6 @@ export function CategoriesManagerClient({ categories: initial }: CategoriesManag
     setErrors({})
   }
 
-  // Drag-and-drop ordering — persist display_order to match visual order
-  const handleReorder = useCallback(async (next: Category[]) => {
-    const ordered = next.map((c, i) => ({ ...c, display_order: i }))
-    setItems(ordered)
-    await reorderCategories(ordered.map(c => ({ id: c.id, display_order: c.display_order })))
-  }, [])
-  const { rowProps, dragIdx, overIdx } = useDragSort(items, handleReorder)
-
   return (
     <div className="space-y-4 overflow-x-hidden">
       {/* Toast */}
@@ -160,12 +159,24 @@ export function CategoriesManagerClient({ categories: initial }: CategoriesManag
       )}
       {showAdd && <CategoryForm form={form} setForm={setForm} errors={errors} loading={loading} isNew={true} onCreate={handleCreate} onUpdate={handleUpdate} onCancel={cancelForm} />}
 
+      {/* Search */}
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-silver/50" />
+        <input
+          type="text"
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          placeholder="Search categories..."
+          aria-label="Search categories"
+          className="input-field pl-10 text-sm"
+        />
+      </div>
+
       {/* Table wrapper — prevent horizontal overflow, allow scroll on mobile */}
       <div className="overflow-x-auto -mx-1 sm:mx-0 rounded-xl border border-brand-sapphire/50">
         <table className="admin-table w-full min-w-[520px]">
           <thead>
             <tr>
-              <th className="w-10" aria-label="Reorder"></th>
               <th className="whitespace-nowrap">Category</th>
               <th>Slug</th>
               <th>Featured</th>
@@ -173,32 +184,24 @@ export function CategoriesManagerClient({ categories: initial }: CategoriesManag
             </tr>
           </thead>
           <tbody>
-            {items.length === 0 ? (
+            {visible.length === 0 ? (
               <tr>
-                <td colSpan={5} className="text-center py-10 text-brand-silver/60 text-sm">No categories yet. Create your first one.</td>
+                <td colSpan={4} className="text-center py-10 text-brand-silver/60 text-sm">{query ? 'No categories match your search.' : 'No categories yet. Create your first one.'}</td>
               </tr>
             ) : (
-              items.map((cat, idx) => {
+              visible.map(cat => {
                 const iconName = (cat as unknown as { icon_name?: string | null }).icon_name
                 const iconColor = (cat as unknown as { icon_color?: string | null }).icon_color
                 return editingId === cat.id ? (
                   <tr key={cat.id}>
-                    <td colSpan={5} className="p-0">
+                    <td colSpan={4} className="p-0">
                       <div className="p-3 sm:p-0">
                         <CategoryForm form={form} setForm={setForm} errors={errors} loading={loading} isNew={false} id={cat.id} onCreate={handleCreate} onUpdate={handleUpdate} onCancel={cancelForm} />
                       </div>
                     </td>
                   </tr>
                 ) : (
-                  <tr
-                    key={cat.id}
-                    {...rowProps(idx)}
-                    title="Drag to reorder"
-                    className={dragRowClass(dragIdx === idx, overIdx === idx && dragIdx !== idx)}
-                  >
-                    <td className="pl-3">
-                      <GripVertical className="w-4 h-4 text-brand-silver/30 cursor-grab active:cursor-grabbing" />
-                    </td>
+                  <tr key={cat.id}>
                     <td>
                       <div className="flex items-center gap-3 min-w-0">
                         <CategoryIcon name={iconName} color={iconColor} size={18} className="shrink-0" />

@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { addBlockedDate, removeBlockedDate } from '@/app/actions/availability'
-import { Plus, Trash2, Loader2, Calendar } from 'lucide-react'
+import { Plus, Trash2, Loader2, Calendar, Search } from 'lucide-react'
 import type { AdminAvailability } from '@/lib/types/database'
 
 interface AvailabilityManagerProps {
@@ -17,6 +17,16 @@ export function AvailabilityManager({ adminId, blockedDates }: AvailabilityManag
   const [blockReason, setBlockReason] = useState('')
   const [loading, setLoading] = useState<string | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [blockQuery, setBlockQuery] = useState('')
+
+  const visibleBlocked = useMemo(() => {
+    const q = blockQuery.trim().toLowerCase()
+    if (!q) return localBlocked
+    return localBlocked.filter(bd =>
+      bd.blocked_date.toLowerCase().includes(q) ||
+      (bd.reason ?? '').toLowerCase().includes(q)
+    )
+  }, [localBlocked, blockQuery])
 
   const handleAddBlocked = async () => {
     if (!newBlockDate) { setErrors({ block: 'Please select a date.' }); return }
@@ -78,11 +88,24 @@ export function AvailabilityManager({ adminId, blockedDates }: AvailabilityManag
           <h2 className="font-display text-lg font-bold text-brand-white mb-4">
             Blocked Dates <span className="text-brand-silver/60 font-normal text-base">({localBlocked.length})</span>
           </h2>
-          {localBlocked.length === 0 ? (
-            <p className="text-brand-silver/60 text-sm">No blocked dates.</p>
+          {localBlocked.length > 0 && (
+            <div className="relative mb-3">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-silver/50" />
+              <input
+                type="text"
+                value={blockQuery}
+                onChange={e => setBlockQuery(e.target.value)}
+                placeholder="Search date, reason..."
+                aria-label="Search blocked dates"
+                className="input-field pl-10 text-sm"
+              />
+            </div>
+          )}
+          {visibleBlocked.length === 0 ? (
+            <p className="text-brand-silver/60 text-sm">{blockQuery ? 'No blocked dates match your search.' : 'No blocked dates.'}</p>
           ) : (
             <div className="space-y-2 max-h-80 overflow-y-auto">
-              {localBlocked.map(bd => (
+              {visibleBlocked.map(bd => (
                 <div key={bd.id} className="flex items-center justify-between gap-3 py-2 border-b border-brand-sapphire/50 last:border-0">
                   <div>
                     <div className="text-brand-white text-sm">{bd.blocked_date}</div>

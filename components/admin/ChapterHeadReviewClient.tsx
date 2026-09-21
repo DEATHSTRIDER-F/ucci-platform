@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { reviewChapterHeadApplication } from '@/app/actions/chapter-head'
 import { formatDateTime } from '@/lib/utils/utils'
-import { CheckCircle, XCircle, Loader2, Crown, Copy, KeyRound } from 'lucide-react'
+import { CheckCircle, XCircle, Loader2, Crown, Copy, KeyRound, Search } from 'lucide-react'
+import { SearchableSelect } from '@/components/forms/SearchableSelect'
 import type { ChapterHeadApplication } from '@/lib/types/database'
 
 interface Provisioned {
@@ -27,6 +28,18 @@ export function ChapterHeadReviewClient({
   const [chapterPick, setChapterPick] = useState<Record<string, string>>({})
   const [provisioned, setProvisioned] = useState<Provisioned | null>(null)
   const [copied, setCopied] = useState(false)
+  const [query, setQuery] = useState('')
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return localApps
+    return localApps.filter(a =>
+      a.name.toLowerCase().includes(q) ||
+      a.email.toLowerCase().includes(q) ||
+      a.phone.toLowerCase().includes(q) ||
+      (a.message ?? '').toLowerCase().includes(q)
+    )
+  }, [localApps, query])
 
   const handleApprove = async (app: ChapterHeadApplication) => {
     const picked = chapterPick[app.id] || app.chapter_id
@@ -105,7 +118,21 @@ export function ChapterHeadReviewClient({
         </div>
       )}
 
-      {localApps.map(app => (
+      {localApps.length > 0 && (
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-silver/50" />
+          <input
+            type="text"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder="Search name, email, phone..."
+            aria-label="Search chapter head applications"
+            className="input-field pl-10 text-sm"
+          />
+        </div>
+      )}
+
+      {filtered.map(app => (
         <div key={app.id} className="glass-card p-6">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 rounded-xl bg-brand-gold/20 border border-brand-gold/30 flex items-center justify-center flex-shrink-0">
@@ -126,17 +153,15 @@ export function ChapterHeadReviewClient({
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-3 mt-5 pt-5 border-t border-brand-sapphire/50">
-            <select
-              value={chapterPick[app.id] ?? app.chapter_id ?? ''}
-              onChange={e => setChapterPick(p => ({ ...p, [app.id]: e.target.value }))}
-              className="input-field !w-auto text-sm"
-              aria-label={`Chapter for ${app.name}`}
-            >
-              <option value="">-- Assign chapter --</option>
-              {chapters.map(ch => (
-                <option key={ch.id} value={ch.id}>{ch.areaName} - {ch.name}</option>
-              ))}
-            </select>
+            <div className="min-w-52 flex-1 sm:flex-none sm:w-64">
+              <SearchableSelect
+                value={chapterPick[app.id] ?? app.chapter_id ?? ''}
+                onChange={v => setChapterPick(p => ({ ...p, [app.id]: v }))}
+                options={chapters.map(ch => ({ value: ch.id, label: `${ch.areaName} - ${ch.name}` }))}
+                placeholder="-- Assign chapter --"
+                ariaLabel={`Chapter for ${app.name}`}
+              />
+            </div>
             <button
               onClick={() => handleApprove(app)}
               disabled={!!loading[app.id]}

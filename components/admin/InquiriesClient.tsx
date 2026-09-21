@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { approveLeadInquiry, rejectLeadInquiry } from '@/app/actions/inquiries'
 import { formatDateTime } from '@/lib/utils/utils'
-import { CheckCircle, XCircle, Loader2, MessageSquare } from 'lucide-react'
+import { CheckCircle, XCircle, Loader2, MessageSquare, Search } from 'lucide-react'
 import type { MemberInquiry } from '@/lib/types/database'
 
 interface InquiriesClientProps {
@@ -16,8 +16,20 @@ export function InquiriesClient({ inquiries, adminId }: InquiriesClientProps) {
   const [loading, setLoading] = useState<Record<string, string>>({})
 
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending')
+  const [query, setQuery] = useState('')
 
-  const filtered = filter === 'all' ? items : items.filter(i => i.status === filter)
+  const filtered = useMemo(() => {
+    const byStatus = filter === 'all' ? items : items.filter(i => i.status === filter)
+    const q = query.trim().toLowerCase()
+    if (!q) return byStatus
+    return byStatus.filter(i =>
+      i.visitor_name.toLowerCase().includes(q) ||
+      i.visitor_email.toLowerCase().includes(q) ||
+      i.message.toLowerCase().includes(q) ||
+      (i.target_member?.business_name ?? '').toLowerCase().includes(q) ||
+      (i.target_member?.full_name ?? '').toLowerCase().includes(q)
+    )
+  }, [items, filter, query])
 
   const handle = async (id: string, action: 'approve' | 'reject') => {
     setLoading(l => ({ ...l, [id]: action }))
@@ -42,6 +54,18 @@ export function InquiriesClient({ inquiries, adminId }: InquiriesClientProps) {
             {f}
           </button>
         ))}
+      </div>
+
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-silver/50" />
+        <input
+          type="text"
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          placeholder="Search visitor, email, message, member..."
+          aria-label="Search inquiries"
+          className="input-field pl-10 text-sm"
+        />
       </div>
 
       {filtered.length === 0 ? (

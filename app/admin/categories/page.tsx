@@ -12,7 +12,7 @@ export default async function CategoriesPage() {
   const { data: categories } = await supabase
     .from('categories')
     .select('*')
-    .order('display_order')
+    .order('created_at', { ascending: false })
 
   return (
     <div>

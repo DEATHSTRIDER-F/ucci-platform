@@ -7,6 +7,7 @@ import { Plus, Image as ImageIcon, Edit, PlayCircle, Newspaper, CalendarDays } f
 import { formatDate } from '@/lib/utils/utils'
 import { DeleteGalleryPostButton } from '@/components/admin/DeleteGalleryPostButton'
 import { GalleryAdminFilter } from '@/components/admin/GalleryAdminFilter'
+import { GalleryAdminSearch } from '@/components/admin/GalleryAdminSearch'
 import { youTubeThumbnail } from '@/lib/utils/youtube'
 import Image from 'next/image'
 
@@ -21,10 +22,11 @@ const TYPE_META = {
 export default async function ManageGalleryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ type?: string }>
+  searchParams: Promise<{ type?: string; q?: string }>
 }) {
-  const { type: rawType } = await searchParams
+  const { type: rawType, q: rawQ } = await searchParams
   const filter = rawType === 'news' || rawType === 'event' || rawType === 'video' ? rawType : 'all'
+  const search = (rawQ ?? '').trim()
 
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -44,6 +46,10 @@ export default async function ManageGalleryPage({
   if (filter !== 'all') {
     query = query.eq('post_type', filter)
   }
+  if (search) {
+    const esc = search.replace(/[%_,]/g, '')
+    query = query.or(`title.ilike.%${esc}%,content.ilike.%${esc}%`)
+  }
 
   const { data: posts } = await query
 
@@ -59,7 +65,8 @@ export default async function ManageGalleryPage({
         </Link>
       </div>
 
-      <GalleryAdminFilter active={filter} />
+      <GalleryAdminFilter active={filter} search={search} />
+      <GalleryAdminSearch query={search} type={filter} />
 
       {!posts || posts.length === 0 ? (
         <div className="glass-card p-12 text-center">

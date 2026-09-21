@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { approveApplication, rejectApplication, toggleMembershipFee } from '@/app/actions/admin'
 import { formatDateTime } from '@/lib/utils/utils'
-import { CheckCircle, XCircle, DollarSign, User, Loader2 } from 'lucide-react'
+import { CheckCircle, XCircle, DollarSign, User, Loader2, Search } from 'lucide-react'
 import Image from 'next/image'
 
 interface ApplicationItem {
@@ -29,6 +29,19 @@ interface ApplicationReviewClientProps {
 export function ApplicationReviewClient({ applications, adminId }: ApplicationReviewClientProps) {
   const [loading, setLoading] = useState<Record<string, string>>({})
   const [localApps, setLocalApps] = useState(applications)
+  const [query, setQuery] = useState('')
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return localApps
+    return localApps.filter(a =>
+      a.full_name.toLowerCase().includes(q) ||
+      a.email.toLowerCase().includes(q) ||
+      (a.business_name ?? '').toLowerCase().includes(q) ||
+      (a.chapter?.name ?? '').toLowerCase().includes(q) ||
+      (a.category?.name ?? '').toLowerCase().includes(q)
+    )
+  }, [localApps, query])
 
   const handleFeeToggle = async (profileId: string, current: boolean) => {
     setLoading(l => ({ ...l, [profileId]: 'fee' }))
@@ -72,7 +85,23 @@ export function ApplicationReviewClient({ applications, adminId }: ApplicationRe
 
   return (
     <div className="space-y-4">
-      {localApps.map(app => (
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-silver/50" />
+        <input
+          type="text"
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          placeholder="Search name, email, business, chapter..."
+          aria-label="Search applications"
+          className="input-field pl-10 text-sm"
+        />
+      </div>
+      {filtered.length === 0 ? (
+        <div className="glass-card p-12 text-center">
+          <p className="text-brand-silver">No applications match your search.</p>
+        </div>
+      ) : null}
+      {filtered.map(app => (
         <div key={app.id} className="glass-card p-6">
           <div className="flex flex-col md:flex-row gap-6">
             {/* Avatar */}

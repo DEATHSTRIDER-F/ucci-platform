@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import Image from 'next/image'
 import { assignChapterHead, demoteChapterHead } from '@/app/actions/admin'
-import { Loader2, User, X, Pencil, UserMinus, Check } from 'lucide-react'
+import { SearchableSelect } from '@/components/forms/SearchableSelect'
+import { Loader2, User, X, Pencil, UserMinus, Check, Search } from 'lucide-react'
 
 export interface HeadProfile {
   id: string
@@ -50,6 +51,26 @@ export function ChapterHeadsManager({ areas, headsByChapter: initialHeads, membe
   const [assignId, setAssignId] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [query, setQuery] = useState('')
+
+  const visibleAreas = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return areas
+    return areas
+      .map(area => ({
+        ...area,
+        chapters: area.chapters.filter(ch => {
+          const h = heads[ch.id]
+          return (
+            area.name.toLowerCase().includes(q) ||
+            ch.name.toLowerCase().includes(q) ||
+            (h?.full_name ?? '').toLowerCase().includes(q) ||
+            (h?.business_name ?? '').toLowerCase().includes(q)
+          )
+        }),
+      }))
+      .filter(area => area.chapters.length > 0)
+  }, [areas, heads, query])
 
   const openChapter = (area: Area, chapter: Chapter) => {
     setSelected({ area, chapter })
@@ -117,12 +138,28 @@ export function ChapterHeadsManager({ areas, headsByChapter: initialHeads, membe
 
   return (
     <div className="space-y-8">
-      {areas.map(area => (
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-silver/50" />
+        <input
+          type="text"
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          placeholder="Search area, chapter, head, business..."
+          aria-label="Search chapter heads"
+          className="input-field pl-10 text-sm"
+        />
+      </div>
+      {visibleAreas.length === 0 ? (
+        <div className="glass-card p-12 text-center">
+          <p className="text-brand-silver">No chapters match your search.</p>
+        </div>
+      ) : null}
+      {visibleAreas.map(area => (
         <section key={area.id} aria-label={`${area.name} chapters`}>
           <h2 className="font-display text-xl font-bold text-brand-white mb-4">
             {area.name} <span className="text-brand-silver/50 text-sm font-normal">({area.chapters.length} chapters)</span>
           </h2>
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-3">
             {area.chapters.map(chapter => {
               const h = heads[chapter.id]
               const label = `${area.name} ${chapter.name}`
@@ -131,18 +168,18 @@ export function ChapterHeadsManager({ areas, headsByChapter: initialHeads, membe
                   key={chapter.id}
                   type="button"
                   onClick={() => openChapter(area, chapter)}
-                  className="w-full glass-card p-4 flex items-center gap-4 text-left hover:border-brand-gold/50 transition-all"
+                  className="glass-card p-4 flex flex-col items-center gap-2 text-center hover:border-brand-gold/50 transition-all min-h-[220px] justify-center"
                 >
-                  <div className="relative w-14 h-14 rounded-xl overflow-hidden border-2 border-brand-gold/40 flex-shrink-0">
+                  <div className="relative w-16 h-16 rounded-xl overflow-hidden border-2 border-brand-gold/40 flex-shrink-0">
                     {h.logo_url ? (
-                      <Image src={h.logo_url} alt={h.business_name ?? h.full_name} fill className="object-cover" sizes="56px" unoptimized />
+                      <Image src={h.logo_url} alt={h.business_name ?? h.full_name} fill className="object-cover" sizes="64px" unoptimized />
                     ) : (
                       <div className="w-full h-full bg-brand-gold/20 flex items-center justify-center">
-                        <User className="w-6 h-6 text-brand-gold" />
+                        <User className="w-7 h-7 text-brand-gold" />
                       </div>
                     )}
                   </div>
-                  <div className="flex-1 min-w-0">
+                  <div className="min-w-0 w-full">
                     <div className="font-display font-bold text-brand-white truncate">{h.full_name}</div>
                     {h.business_name && <div className="text-brand-silver text-sm truncate">{h.business_name}</div>}
                     <div className="text-brand-champagne/80 text-xs mt-0.5">{label}</div>
@@ -154,13 +191,13 @@ export function ChapterHeadsManager({ areas, headsByChapter: initialHeads, membe
                   key={chapter.id}
                   type="button"
                   onClick={() => openChapter(area, chapter)}
-                  className="w-full rounded-xl border-2 border-dashed border-brand-gold/40 bg-brand-gold/10 hover:bg-brand-gold/20 transition-all px-6 py-5 text-center min-h-[44px]"
+                  className="rounded-xl border-2 border-dashed border-brand-gold/40 bg-brand-gold/10 hover:bg-brand-gold/20 transition-all px-4 py-5 text-center min-h-[220px] flex flex-col items-center justify-center gap-1"
                 >
-                  <span className="font-display font-semibold text-brand-gold">
+                  <span className="font-display font-semibold text-brand-gold text-sm">
                     + Add Chapter Head for {label}
                   </span>
                   {!chapter.is_active && (
-                    <span className="block text-brand-silver/60 text-xs mt-1">Chapter is currently inactive (Coming Soon)</span>
+                    <span className="text-brand-silver/60 text-xs mt-1">Chapter is currently inactive (Coming Soon)</span>
                   )}
                 </button>
               )
@@ -225,17 +262,15 @@ export function ChapterHeadsManager({ areas, headsByChapter: initialHeads, membe
                     <Pencil className="w-4 h-4" /> Replace with another member
                   </label>
                   <div className="flex gap-2">
-                    <select
-                      id="swap_head"
-                      value={assignId}
-                      onChange={e => setAssignId(e.target.value)}
-                      className="input-field text-sm"
-                    >
-                      <option value="">-- Select member --</option>
-                      {candidates.map(m => (
-                        <option key={m.id} value={m.id}>{m.business_name ?? m.full_name} ({m.full_name})</option>
-                      ))}
-                    </select>
+                    <div className="flex-1">
+                      <SearchableSelect
+                        value={assignId}
+                        onChange={setAssignId}
+                        options={candidates.map(m => ({ value: m.id, label: `${m.business_name ?? m.full_name} (${m.full_name})` }))}
+                        placeholder="-- Select member --"
+                        ariaLabel="Replace with member"
+                      />
+                    </div>
                     <button onClick={handleAssign} disabled={loading || !assignId} className="btn-primary text-sm px-5 flex items-center gap-2 disabled:opacity-50">
                       {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />} Save
                     </button>
@@ -263,17 +298,14 @@ export function ChapterHeadsManager({ areas, headsByChapter: initialHeads, membe
                   <>
                     <div>
                       <label htmlFor="assign_head" className="block text-brand-silver text-sm font-medium mb-1">Select member *</label>
-                      <select
+                      <SearchableSelect
                         id="assign_head"
                         value={assignId}
-                        onChange={e => setAssignId(e.target.value)}
-                        className="input-field text-sm"
-                      >
-                        <option value="">-- Select member --</option>
-                        {candidates.map(m => (
-                          <option key={m.id} value={m.id}>{m.business_name ?? m.full_name} ({m.full_name})</option>
-                        ))}
-                      </select>
+                        onChange={setAssignId}
+                        options={candidates.map(m => ({ value: m.id, label: `${m.business_name ?? m.full_name} (${m.full_name})` }))}
+                        placeholder="-- Select member --"
+                        ariaLabel="Select member"
+                      />
                     </div>
                     {error && <p className="text-red-400 text-xs">{error}</p>}
                     <button onClick={handleAssign} disabled={loading || !assignId} className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50">

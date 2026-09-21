@@ -5,6 +5,7 @@ import { notFound, redirect } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { MemberLogoUploader } from '@/components/admin/MemberLogoUploader'
+import { MemberEditForm } from '@/components/admin/MemberEditForm'
 import { Globe, Linkedin, Phone, MapPin, Building2, Tag, Users, User, ArrowLeft } from 'lucide-react'
 import type { Profile } from '@/lib/types/database'
 
@@ -71,6 +72,14 @@ export default async function AdminMemberProfilePage({ params }: Props) {
     category,
   } as Profile & { chapter?: ChapterShape; category?: CategoryShape }
 
+  const isSuperAdmin = adminProfile.role === 'super_admin'
+  const { data: areas } = isSuperAdmin
+    ? await supabase.from('areas').select('id, name, chapters(id, name)').order('display_order').order('display_order', { referencedTable: 'chapters' })
+    : { data: null }
+  const { data: categories } = isSuperAdmin
+    ? await supabase.from('categories').select('id, name').order('name')
+    : { data: null }
+
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       {/* Header & Back Navigation */}
@@ -86,6 +95,28 @@ export default async function AdminMemberProfilePage({ params }: Props) {
           <p className="text-brand-silver text-sm mt-1">Viewing detailed profile information</p>
         </div>
       </div>
+
+      {isSuperAdmin && (
+        <MemberEditForm
+          profileId={p.id}
+          initial={{
+            full_name: p.full_name,
+            business_name: p.business_name,
+            brand_tagline: p.brand_tagline,
+            bio: p.bio,
+            phone: p.phone,
+            website_url: p.website_url,
+            linkedin_url: p.linkedin_url,
+            business_address: p.business_address,
+            ideal_referral_target: p.ideal_referral_target,
+            referral_triggers: p.referral_triggers,
+            chapter_id: p.chapter_id,
+            category_id: p.category_id,
+          }}
+          areas={areas ?? []}
+          categories={categories ?? []}
+        />
+      )}
 
       {/* Main Profile Structure - Reused from /join and /members/[id] layout */}
       <article itemScope itemType="https://schema.org/ProfessionalService">

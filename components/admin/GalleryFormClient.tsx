@@ -6,6 +6,7 @@ import { compressImage, validateImageFile } from '@/lib/utils/imageCompressor'
 import { extractYouTubeId } from '@/lib/utils/youtube'
 import { createGalleryPost } from '@/app/actions/gallery'
 import { GalleryYouTubeField } from '@/components/admin/GalleryYouTubeField'
+import { SearchableSelect } from '@/components/forms/SearchableSelect'
 import type { GalleryPostType } from '@/lib/types/database'
 import { useRouter } from 'next/navigation'
 import { Upload, X, Loader2, CheckCircle, Plus } from 'lucide-react'
@@ -176,19 +177,28 @@ export function GalleryFormClient({ areas, adminProfile }: GalleryFormClientProp
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label htmlFor="gallery_area" className="block text-brand-silver text-sm font-medium mb-1">Area <span className="text-brand-silver/50">(optional)</span></label>
-          <select id="gallery_area" value={areaId} onChange={e => { setAreaId(e.target.value); setChapterId('') }} className="input-field">
-            <option value="">All Areas</option>
-            {areas.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-          </select>
+          <SearchableSelect
+            id="gallery_area"
+            value={areaId}
+            onChange={v => { setAreaId(v); setChapterId('') }}
+            options={areas.map(a => ({ value: a.id, label: a.name }))}
+            placeholder="All Areas"
+            allowClear
+            ariaLabel="Area"
+          />
         </div>
         <div>
           <label htmlFor="gallery_chapter" className="block text-brand-silver text-sm font-medium mb-1">Chapter <span className="text-brand-silver/50">(optional)</span></label>
-          <select id="gallery_chapter" value={chapterId} onChange={e => setChapterId(e.target.value)} className="input-field" disabled={adminProfile.role === 'chapter_head'}>
-            <option value="">All Chapters</option>
-            {(selectedArea?.chapters ?? areas.flatMap(a => a.chapters)).map(ch => (
-              <option key={ch.id} value={ch.id}>{ch.name}</option>
-            ))}
-          </select>
+          <SearchableSelect
+            id="gallery_chapter"
+            value={chapterId}
+            onChange={setChapterId}
+            options={(selectedArea?.chapters ?? areas.flatMap(a => a.chapters)).map(ch => ({ value: ch.id, label: ch.name }))}
+            placeholder="All Chapters"
+            allowClear
+            disabled={adminProfile.role === 'chapter_head'}
+            ariaLabel="Chapter"
+          />
         </div>
       </div>
 

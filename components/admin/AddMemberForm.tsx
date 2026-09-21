@@ -5,15 +5,18 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { compressImage, validateImageFile } from '@/lib/utils/imageCompressor'
 import { createMemberOffline } from '@/app/actions/admin'
+import { SearchableSelect } from '@/components/forms/SearchableSelect'
+import { HotAddCategory } from '@/components/admin/HotAddCategory'
 import { Loader2, CheckCircle, AlertCircle, Eye, EyeOff, Upload, X } from 'lucide-react'
 
 interface AddMemberFormProps {
   areas: Array<{ id: string; name: string; chapters: Array<{ id: string; name: string }> }>
   categories: Array<{ id: string; name: string }>
   adminChapterId: string | null // set when added by a chapter_head (locks chapter)
+  isSuperAdmin?: boolean // gates inline category creation
 }
 
-export function AddMemberForm({ areas, categories, adminChapterId }: AddMemberFormProps) {
+export function AddMemberForm({ areas, categories: initialCats, adminChapterId, isSuperAdmin }: AddMemberFormProps) {
   const router = useRouter()
   const [form, setForm] = useState({
     full_name: '',
@@ -38,6 +41,7 @@ export function AddMemberForm({ areas, categories, adminChapterId }: AddMemberFo
   const [submitError, setSubmitError] = useState('')
   const [pending, setPending] = useState(false)
   const [done, setDone] = useState(false)
+  const [categories, setCategories] = useState(initialCats)
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setForm(f => ({ ...f, [k]: e.target.value }))
@@ -231,26 +235,40 @@ export function AddMemberForm({ areas, categories, adminChapterId }: AddMemberFo
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label htmlFor="m_chapter" className="block text-brand-silver text-sm font-medium mb-1">Chapter *</label>
-          <select id="m_chapter" value={form.chapter_id} onChange={set('chapter_id')} className={input('m_chapter')} disabled={!!adminChapterId}>
-            <option value="">-- Select chapter --</option>
-            {areas.map(area => (
-              <optgroup key={area.id} label={area.name}>
-                {area.chapters.map(ch => (
-                  <option key={ch.id} value={ch.id}>{area.name} - {ch.name}</option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
+          <SearchableSelect
+            id="m_chapter"
+            value={form.chapter_id}
+            onChange={v => setForm(f => ({ ...f, chapter_id: v }))}
+            groups={areas.map(area => ({
+              label: area.name,
+              options: area.chapters.map(ch => ({ value: ch.id, label: `${area.name} - ${ch.name}` })),
+            }))}
+            placeholder="-- Select chapter --"
+            disabled={!!adminChapterId}
+            ariaLabel="Chapter"
+          />
           {errors.chapter_id && <p className="text-red-400 text-xs mt-1">{errors.chapter_id}</p>}
         </div>
         <div>
-          <label htmlFor="m_category" className="block text-brand-silver text-sm font-medium mb-1">Business Category *</label>
-          <select id="m_category" value={form.category_id} onChange={set('category_id')} className={input('m_category')}>
-            <option value="">-- Select category --</option>
-            {categories.map(cat => (
-              <option key={cat.id} value={cat.id}>{cat.name}</option>
-            ))}
-          </select>
+          <div className="flex items-center justify-between mb-1">
+            <label htmlFor="m_category" className="block text-brand-silver text-sm font-medium">Business Category *</label>
+            {isSuperAdmin && (
+              <HotAddCategory
+                onCreated={cat => {
+                  setCategories(c => [...c, cat].sort((a, b) => a.name.localeCompare(b.name)))
+                  setForm(f => ({ ...f, category_id: cat.id }))
+                }}
+              />
+            )}
+          </div>
+          <SearchableSelect
+            id="m_category"
+            value={form.category_id}
+            onChange={v => setForm(f => ({ ...f, category_id: v }))}
+            options={categories.map(cat => ({ value: cat.id, label: cat.name }))}
+            placeholder="-- Select category --"
+            ariaLabel="Business category"
+          />
           {errors.category_id && <p className="text-red-400 text-xs mt-1">{errors.category_id}</p>}
         </div>
       </div>

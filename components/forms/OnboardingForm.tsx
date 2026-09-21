@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { compressImage, validateImageFile } from '@/lib/utils/imageCompressor'
 import { submitOnboarding, signupAndApply } from '@/app/actions/onboarding'
 import { createClient } from '@/lib/supabase/client'
+import { SearchableSelect } from '@/components/forms/SearchableSelect'
 import { AppointmentCalendar } from '@/components/calendar/AppointmentCalendar'
 import { ChevronDown, ChevronUp, Loader2, CheckCircle, AlertCircle, Upload, X, Eye, EyeOff } from 'lucide-react'
 import Image from 'next/image'
@@ -305,28 +306,31 @@ export function OnboardingForm({ areas, categories, initialChapterId, prefilledC
             {prefilledChapterName && (
               <p className="text-brand-champagne text-xs mb-1.5">Pre-filled from {prefilledChapterName} — you can change it below.</p>
             )}
-            <select id="chapter_id" value={form.chapter_id} onChange={e => setForm(f => ({ ...f, chapter_id: e.target.value }))} className="input-field">
-              <option value="">-- Select your preferred chapter --</option>
-              {areas.map(area => (
-                <optgroup key={area.id} label={area.name}>
-                  {area.chapters.map(ch => (
-                    <option key={ch.id} value={ch.id}>{area.name} - {ch.name}</option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
+            <SearchableSelect
+              id="chapter_id"
+              value={form.chapter_id}
+              onChange={v => setForm(f => ({ ...f, chapter_id: v }))}
+              groups={areas.map(area => ({
+                label: area.name,
+                options: area.chapters.map(ch => ({ value: ch.id, label: `${area.name} - ${ch.name}` })),
+              }))}
+              placeholder="-- Select your preferred chapter --"
+              ariaLabel="Select chapter"
+            />
             {errors.chapter_id && <p className="text-red-400 text-xs mt-1">{errors.chapter_id}</p>}
           </div>
 
           {/* Category Selection */}
           <div>
             <label htmlFor="category_id" className="block text-brand-silver text-sm font-medium mb-1">Business Category *</label>
-            <select id="category_id" value={form.category_id} onChange={e => setForm(f => ({ ...f, category_id: e.target.value }))} className="input-field">
-              <option value="">-- Select your business category --</option>
-              {categories.map(cat => (
-                <option key={cat.id} value={cat.id}>{cat.name}</option>
-              ))}
-            </select>
+            <SearchableSelect
+              id="category_id"
+              value={form.category_id}
+              onChange={v => setForm(f => ({ ...f, category_id: v }))}
+              options={categories.map(cat => ({ value: cat.id, label: cat.name }))}
+              placeholder="-- Select your business category --"
+              ariaLabel="Business category"
+            />
             {errors.category_id && <p className="text-red-400 text-xs mt-1">{errors.category_id}</p>}
           </div>
 

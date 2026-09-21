@@ -95,7 +95,7 @@ export default async function JoinPage({
   const { data: categories } = await supabase
     .from('categories')
     .select('id, name, slug')
-    .order('display_order')
+    .order('name')
 
   // Prefilled chapter from chapter page CTA (?chapter=<id>) — validated active
   let prefilledChapterId: string | null = null

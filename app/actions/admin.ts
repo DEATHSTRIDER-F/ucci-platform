@@ -233,6 +233,82 @@ export async function updateMemberLogo(
   return { success: true, data: logoUrl }
 }
 
+// ─── Super-Admin Member Edit (all fields incl. chapter/category) ─────────────
+export async function updateMemberAdmin(
+  profileId: string,
+  data: {
+    full_name: string
+    business_name: string
+    brand_tagline?: string | null
+    bio?: string | null
+    phone: string
+    website_url?: string | null
+    linkedin_url?: string | null
+    business_address: string
+    ideal_referral_target?: string | null
+    referral_triggers?: string | null
+    chapter_id: string
+    category_id: string
+  }
+): Promise<{ success: boolean; error?: string }> {
+  if (!data.full_name?.trim()) return { success: false, error: 'Full name is required.' }
+  if (!data.business_name?.trim()) return { success: false, error: 'Business name is required.' }
+  if (!data.phone?.trim()) return { success: false, error: 'Phone is required.' }
+  if (!data.business_address?.trim()) return { success: false, error: 'Business address is required.' }
+  if (!data.chapter_id) return { success: false, error: 'Chapter is required.' }
+  if (!data.category_id) return { success: false, error: 'Category is required.' }
+
+  const supabase = await createAdminClient()
+
+  // Caller must be super_admin — enforced server-side
+  const { data: { user } } = await supabase.auth.getUser()
+  const { data: caller } = user
+    ? await supabase.from('profiles').select('role').eq('id', user.id).single()
+    : { data: null }
+  if ((caller as { role?: string } | null)?.role !== 'super_admin') {
+    return { success: false, error: 'Only super admins can edit members.' }
+  }
+
+  // Exclusivity: block moves into occupied slots, naming the occupant
+  const { data: occupant } = await supabase
+    .from('profiles')
+    .select('id, business_name, full_name')
+    .eq('chapter_id', data.chapter_id)
+    .eq('category_id', data.category_id)
+    .eq('status', 'approved')
+    .neq('id', profileId)
+    .maybeSingle()
+  if (occupant) {
+    const name = (occupant.business_name as string) ?? (occupant.full_name as string) ?? 'another member'
+    return { success: false, error: `Blocked: this category is already occupied in that chapter by ${name}.` }
+  }
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({
+      full_name: data.full_name.trim(),
+      business_name: data.business_name.trim(),
+      brand_tagline: data.brand_tagline?.trim() || null,
+      bio: data.bio?.trim() || null,
+      phone: data.phone.trim(),
+      website_url: data.website_url?.trim() || null,
+      linkedin_url: data.linkedin_url?.trim() || null,
+      business_address: data.business_address.trim(),
+      ideal_referral_target: data.ideal_referral_target?.trim() || null,
+      referral_triggers: data.referral_triggers?.trim() || null,
+      chapter_id: data.chapter_id,
+      category_id: data.category_id,
+    })
+    .eq('id', profileId)
+  if (error) return { success: false, error: error.message }
+
+  revalidatePath(`/admin/members/${profileId}`)
+  revalidatePath(`/members/${profileId}`)
+  revalidatePath('/')
+  revalidatePath('/categories')
+  return { success: true }
+}
+
 // ─── Assign Chapter Head (promote an approved member of that chapter) ────────
 export async function assignChapterHead(
   chapterId: string,
