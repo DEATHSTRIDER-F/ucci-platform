@@ -159,7 +159,12 @@ export function SearchableSelect({
               />
             </div>
           </div>
-          <div role="listbox" className="max-h-60 overflow-y-auto py-1">
+          <div
+            role="listbox"
+            className="max-h-60 overflow-y-auto py-1 overscroll-contain [-webkit-overflow-scrolling:touch]"
+            onWheel={e => e.stopPropagation()}
+            onTouchMove={e => e.stopPropagation()}
+          >
             {visibleGroups ? (
               visibleGroups.length === 0 ? (
                 <Empty />

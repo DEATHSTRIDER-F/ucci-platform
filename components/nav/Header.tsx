@@ -559,17 +559,21 @@ export function Header({ profile, featuredCategories, areasWithChapters }: Heade
         </div>
       )}
 
-      {/* Mobile Menu — floating card with collapsible sub-menus.
-          The nav is the single scroll container (max-h keeps it inside the
-          viewport; overscroll-contain stops the page behind from scrolling). */}
+      {/* Mobile Menu — fixed frosted-glass overlay below the header.
+          Never pushes page content; owns its own scroll; backdrop tap closes. */}
       {mobileOpen && (
-        <div className="lg:hidden bg-brand-sapphire border-t border-brand-gold/20 animate-fade-in">
+        <div className="lg:hidden fixed inset-x-0 top-20 bottom-0 z-40 animate-fade-in">
+          <div
+            className="absolute inset-0 bg-brand-navy/70 backdrop-blur-sm"
+            onClick={() => setMobileOpen(false)}
+            aria-hidden
+          />
+          <div className="relative h-full overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch] px-4 pt-3 pb-8">
           <nav
-            className="px-4 pt-3 pb-5 max-h-[calc(100dvh-5rem)] overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]"
+            className="rounded-2xl border border-brand-gold/25 bg-brand-sapphire/80 backdrop-blur-xl shadow-2xl shadow-black/50 px-4 pt-3 pb-5 max-h-full overflow-y-auto overscroll-contain"
             aria-label="Mobile navigation"
           >
-            <div className="rounded-2xl border border-brand-gold/20 bg-brand-navy shadow-2xl shadow-black/40 p-2 flex flex-col gap-0.5">
-              <MobileMenuLink href="/" label="Home" active={pathname === '/'} />
+            <MobileMenuLink href="/" label="Home" active={pathname === '/'} />
 
               <MobileMenuGroup
                 label="About UCCI"
@@ -684,8 +688,8 @@ export function Header({ profile, featuredCategories, areasWithChapters }: Heade
                   </Link>
                 )}
               </div>
-            </div>
           </nav>
+          </div>
         </div>
       )}
     </header>
