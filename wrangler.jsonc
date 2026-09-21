@@ -1,0 +1,32 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"main": ".open-next/worker.js",
+	"name": "ucci-platform",
+	"compatibility_date": "2026-09-19",
+	"vars": {
+		"NEXT_PUBLIC_SUPABASE_URL": "https://mbobdhoyokseptgoopow.supabase.co",
+		"NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ib2JkaG95b2tzZXB0Z29vcG93Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI4NTQ5MzYsImV4cCI6MjA5ODQzMDkzNn0.mRe5Ye3Zn-GR_zycILz6kyANReSPq9U3qtxOoxwPvJ4",
+		"NEXT_PUBLIC_SITE_URL": "https://www.ucciindia.org"
+	},
+	"compatibility_flags": [
+		"nodejs_compat",
+		"global_fetch_strictly_public"
+	],
+	"assets": {
+		"directory": ".open-next/assets",
+		"binding": "ASSETS"
+	},
+	"services": [
+		{
+			// Self-reference service binding, the service name must match the worker name
+			// see https://opennext.js.org/cloudflare/caching
+			"binding": "WORKER_SELF_REFERENCE",
+			"service": "ucci-platform"
+		}
+	],
+	"images": {
+		// Enable image optimization
+		// see https://opennext.js.org/cloudflare/howtos/image
+		"binding": "IMAGES"
+	}
+}
