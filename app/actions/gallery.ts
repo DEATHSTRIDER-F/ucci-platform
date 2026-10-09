@@ -1,6 +1,7 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/server'
+import { requireActionAuth, chapterScopeError } from '@/lib/auth/requireActionAuth'
 import { revalidatePath } from 'next/cache'
 import { extractYouTubeId, youTubeWatchUrl } from '@/lib/utils/youtube'
 import type { GalleryPostType } from '@/lib/types/database'
@@ -65,6 +66,18 @@ export async function createGalleryPost(data: {
     if (!data.images?.length) return { success: false, error: 'At least one image is required.' }
   }
 
+  const auth = await requireActionAuth(['super_admin', 'chapter_head'])
+  if (!auth.ok) return { success: false, error: auth.error }
+  const { caller } = auth
+
+  // Chapter heads can only post into their own chapter — never trust the
+  // client-supplied chapter_id / created_by.
+  let chapterId = data.chapter_id
+  if (caller.role === 'chapter_head') {
+    if (!caller.chapter_id) return { success: false, error: 'No chapter assigned to your account.' }
+    chapterId = caller.chapter_id
+  }
+
   const supabase = await createAdminClient()
 
   // Create post
@@ -77,8 +90,8 @@ export async function createGalleryPost(data: {
       youtube_url: youtubeUrl,
       youtube_video_id: youtubeVideoId,
       area_id: data.area_id,
-      chapter_id: data.chapter_id,
-      created_by: data.created_by,
+      chapter_id: chapterId,
+      created_by: caller.id,
     })
     .select()
     .single()
@@ -161,6 +174,26 @@ export async function updateGalleryPost(
 
   const supabase = await createAdminClient()
 
+  // Authorize against the post's current chapter (not client input)
+  const { data: existing } = await supabase
+    .from('gallery_posts')
+    .select('id, chapter_id')
+    .eq('id', postId)
+    .single()
+  if (!existing) return { success: false, error: 'Post not found.' }
+
+  const auth = await requireActionAuth(['super_admin', 'chapter_head'])
+  if (!auth.ok) return { success: false, error: auth.error }
+  const scopeError = chapterScopeError(
+    auth.caller,
+    (existing as { chapter_id?: string | null }).chapter_id
+  )
+  if (scopeError) return { success: false, error: scopeError }
+
+  // Chapter heads cannot move posts out of their chapter
+  const chapterId =
+    auth.caller.role === 'chapter_head' ? (existing as { chapter_id?: string | null }).chapter_id ?? null : data.chapter_id
+
   // Update post fields
   const { error: postError } = await supabase
     .from('gallery_posts')
@@ -171,7 +204,7 @@ export async function updateGalleryPost(
       youtube_url: youtubeUrl,
       youtube_video_id: youtubeVideoId,
       area_id: data.area_id,
-      chapter_id: data.chapter_id,
+      chapter_id: chapterId,
       updated_at: new Date().toISOString()
     })
     .eq('id', postId)
@@ -243,6 +276,21 @@ export async function updateGalleryPost(
 
 export async function deleteGalleryPost(postId: string): Promise<{ success: boolean; error?: string }> {
   const supabase = await createAdminClient()
+
+  const { data: existing } = await supabase
+    .from('gallery_posts')
+    .select('id, chapter_id')
+    .eq('id', postId)
+    .single()
+  if (!existing) return { success: false, error: 'Post not found.' }
+
+  const auth = await requireActionAuth(['super_admin', 'chapter_head'])
+  if (!auth.ok) return { success: false, error: auth.error }
+  const scopeError = chapterScopeError(
+    auth.caller,
+    (existing as { chapter_id?: string | null }).chapter_id
+  )
+  if (scopeError) return { success: false, error: scopeError }
 
   // List and delete all images from storage
   const { data: images } = await supabase.from('gallery_images').select('id').eq('post_id', postId)

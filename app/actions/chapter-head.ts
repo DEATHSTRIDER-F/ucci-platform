@@ -1,6 +1,7 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/server'
+import { requireActionAuth } from '@/lib/auth/requireActionAuth'
 import { revalidatePath } from 'next/cache'
 import type { ChapterHeadApplication } from '@/lib/types/database'
 
@@ -40,10 +41,16 @@ export async function reviewChapterHeadApplication(
 ): Promise<{ success: boolean; error?: string; tempPassword?: string; email?: string }> {
   const supabase = await createAdminClient()
 
+  // The reviewer is the session owner — a client-supplied adminId is never trusted
+  const auth = await requireActionAuth(['super_admin', 'chapter_head'])
+  if (!auth.ok) return { success: false, error: auth.error }
+  if (adminId !== auth.caller.id) return { success: false, error: 'Session mismatch. Please refresh and try again.' }
+  const reviewerId = auth.caller.id
+
   if (status === 'rejected') {
     const { error } = await supabase
       .from('chapter_head_applications')
-      .update({ status, reviewed_by: adminId, reviewed_at: new Date().toISOString() })
+      .update({ status, reviewed_by: reviewerId, reviewed_at: new Date().toISOString() })
       .eq('id', id)
     if (error) return { success: false, error: error.message }
     revalidatePath('/admin/applications')
@@ -59,13 +66,13 @@ export async function reviewChapterHeadApplication(
   if (appError || !app) return { success: false, error: 'Application not found.' }
   if (app.status !== 'pending') return { success: false, error: 'Application already reviewed.' }
 
-  // Reviewer's scope: chapter admins can only appoint into their own chapter
-  const { data: reviewer } = await supabase
-    .from('profiles')
-    .select('role, chapter_id')
-    .eq('id', adminId)
-    .single()
-  const reviewerChapter = (reviewer as { chapter_id?: string | null } | null)?.chapter_id ?? null
+  // Reviewer's scope: chapter heads can only appoint into their own chapter.
+  // The reviewer identity comes from the session, not the client.
+  // (A head with no chapter assigned cannot appoint anyone.)
+  const reviewerChapter = auth.caller.role === 'super_admin' ? null : auth.caller.chapter_id
+  if (auth.caller.role === 'chapter_head' && !reviewerChapter) {
+    return { success: false, error: 'No chapter assigned to your account.' }
+  }
 
   const finalChapter = (chapterId || app.chapter_id) as string | null
   if (!finalChapter) return { success: false, error: 'Pick a chapter first — then approve.' }
@@ -120,7 +127,7 @@ export async function reviewChapterHeadApplication(
 
   const { error: markError } = await supabase
     .from('chapter_head_applications')
-    .update({ status: 'approved', chapter_id: finalChapter, reviewed_by: adminId, reviewed_at: new Date().toISOString() })
+    .update({ status: 'approved', chapter_id: finalChapter, reviewed_by: reviewerId, reviewed_at: new Date().toISOString() })
     .eq('id', id)
   if (markError) return { success: false, error: markError.message }
 

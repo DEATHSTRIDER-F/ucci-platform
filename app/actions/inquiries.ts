@@ -1,6 +1,7 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/server'
+import { requireActionAuth, chapterScopeError } from '@/lib/auth/requireActionAuth'
 import { revalidatePath } from 'next/cache'
 
 // ─── Submit Lead Inquiry (Public) ─────────────────────────────────────────────
@@ -66,11 +67,28 @@ export async function approveLeadInquiry(
 
   const supabase = await createAdminClient()
 
+  const { data: inquiry } = await supabase
+    .from('member_inquiries')
+    .select('id, chapter_id')
+    .eq('id', inquiryId)
+    .single()
+  if (!inquiry) return { success: false, error: 'Inquiry not found.' }
+
+  const auth = await requireActionAuth(['super_admin', 'chapter_head'])
+  if (!auth.ok) return { success: false, error: auth.error }
+  // Caller-supplied adminId is not trusted — the reviewer is the session owner
+  if (adminId !== auth.caller.id) return { success: false, error: 'Session mismatch. Please refresh and try again.' }
+  const scopeError = chapterScopeError(
+    auth.caller,
+    (inquiry as { chapter_id?: string | null }).chapter_id
+  )
+  if (scopeError) return { success: false, error: scopeError }
+
   const { error } = await supabase
     .from('member_inquiries')
     .update({
       status: 'approved',
-      reviewed_by: adminId,
+      reviewed_by: auth.caller.id,
       reviewed_at: new Date().toISOString(),
     })
     .eq('id', inquiryId)
@@ -90,11 +108,27 @@ export async function rejectLeadInquiry(
 
   const supabase = await createAdminClient()
 
+  const { data: inquiry } = await supabase
+    .from('member_inquiries')
+    .select('id, chapter_id')
+    .eq('id', inquiryId)
+    .single()
+  if (!inquiry) return { success: false, error: 'Inquiry not found.' }
+
+  const auth = await requireActionAuth(['super_admin', 'chapter_head'])
+  if (!auth.ok) return { success: false, error: auth.error }
+  if (adminId !== auth.caller.id) return { success: false, error: 'Session mismatch. Please refresh and try again.' }
+  const scopeError = chapterScopeError(
+    auth.caller,
+    (inquiry as { chapter_id?: string | null }).chapter_id
+  )
+  if (scopeError) return { success: false, error: scopeError }
+
   const { error } = await supabase
     .from('member_inquiries')
     .update({
       status: 'rejected',
-      reviewed_by: adminId,
+      reviewed_by: auth.caller.id,
       reviewed_at: new Date().toISOString(),
     })
     .eq('id', inquiryId)

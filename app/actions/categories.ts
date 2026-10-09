@@ -1,6 +1,7 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/server'
+import { requireActionAuth } from '@/lib/auth/requireActionAuth'
 import { revalidatePath } from 'next/cache'
 import { slugify } from '@/lib/utils/slugify'
 import { validateCategoryInput, normalizeCategoryPayload } from '@/lib/validation/category'
@@ -23,6 +24,8 @@ export async function createCategory(data: CategoryPayload): Promise<{ success: 
   if (!validated.success) return { success: false, error: validated.error }
 
   const payload = normalizeCategoryPayload(validated.data)
+  const auth = await requireActionAuth(['super_admin'])
+  if (!auth.ok) return { success: false, error: auth.error }
   const supabase = await createAdminClient()
   const { data: maxRow } = await supabase.from('categories').select('display_order').order('display_order', { ascending: false }).limit(1).maybeSingle()
   const { data: cat, error } = await supabase
@@ -43,6 +46,8 @@ export async function updateCategory(id: string, data: CategoryPayload): Promise
   if (!validated.success) return { success: false, error: validated.error }
 
   const payload = normalizeCategoryPayload(validated.data)
+  const auth = await requireActionAuth(['super_admin'])
+  if (!auth.ok) return { success: false, error: auth.error }
   const supabase = await createAdminClient()
   const { data: cat, error } = await supabase
     .from('categories')
@@ -58,6 +63,8 @@ export async function updateCategory(id: string, data: CategoryPayload): Promise
 }
 
 export async function deleteCategory(id: string): Promise<{ success: boolean; error?: string }> {
+  const auth = await requireActionAuth(['super_admin'])
+  if (!auth.ok) return { success: false, error: auth.error }
   const supabase = await createAdminClient()
   const { error } = await supabase.from('categories').delete().eq('id', id)
   if (error) return { success: false, error: error.code === '23503' ? 'Cannot delete category: members are using it.' : error.message }

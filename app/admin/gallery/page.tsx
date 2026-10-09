@@ -30,7 +30,8 @@ export default async function ManageGalleryPage({
 
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
-  const { data: profile } = await supabase.from('profiles').select('id, role, chapter_id').eq('id', user!.id).single()
+  if (!user) redirect('/login')
+  const { data: profile } = await supabase.from('profiles').select('id, role, chapter_id').eq('id', user.id).single()
 
   if (!profile) redirect('/login')
 

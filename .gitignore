@@ -17,6 +17,9 @@ build/
 .env*.local
 !.env.production.example
 
+# TypeScript build cache — regenerated on every build
+tsconfig.tsbuildinfo
+
 # Editor / OS
 .DS_Store
 .DS_Store?

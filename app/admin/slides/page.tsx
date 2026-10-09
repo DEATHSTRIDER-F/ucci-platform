@@ -10,8 +10,9 @@ export const metadata: Metadata = { title: 'Hero Slides | UCCI Admin' }
 export default async function SlidesPage() {
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
   const { data: adminProfile } = await supabase
-    .from('profiles').select('id, role').eq('id', user!.id).single()
+    .from('profiles').select('id, role').eq('id', user.id).single()
 
   // Only super_admin
   if (adminProfile?.role !== 'super_admin') redirect('/admin')

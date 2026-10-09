@@ -1,6 +1,7 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/server'
+import { requireActionAuth } from '@/lib/auth/requireActionAuth'
 import { revalidatePath } from 'next/cache'
 import type { HeroSlide } from '@/lib/types/database'
 
@@ -45,6 +46,9 @@ export async function createSlide(data: {
   if (!data.alt_text?.trim()) return { success: false, error: 'Alt text is required.' }
   if (!data.image_b64) return { success: false, error: 'Image is required.' }
 
+  const auth = await requireActionAuth(['super_admin'])
+  if (!auth.ok) return { success: false, error: auth.error }
+
   const supabase = await createAdminClient()
 
   // Insert placeholder first to get ID
@@ -59,7 +63,7 @@ export async function createSlide(data: {
       display_order: data.display_order,
       is_active: data.is_active,
       image_url: 'placeholder',
-      created_by: data.created_by,
+      created_by: auth.caller.id,
     })
     .select()
     .single()
@@ -111,6 +115,9 @@ export async function updateSlide(
 ): Promise<{ success: boolean; data?: HeroSlide; error?: string }> {
   if (!data.alt_text?.trim()) return { success: false, error: 'Alt text is required.' }
 
+  const auth = await requireActionAuth(['super_admin'])
+  if (!auth.ok) return { success: false, error: auth.error }
+
   const supabase = await createAdminClient()
 
   const updates: Partial<HeroSlide> = {
@@ -154,6 +161,8 @@ export async function updateSlide(
 
 // ─── Delete Slide ──────────────────────────────────────────────────────────────
 export async function deleteSlide(slideId: string): Promise<{ success: boolean; error?: string }> {
+  const auth = await requireActionAuth(['super_admin'])
+  if (!auth.ok) return { success: false, error: auth.error }
   const supabase = await createAdminClient()
 
   // Delete from storage first (upsert means there's always exactly one file per variant)
@@ -172,6 +181,8 @@ export async function toggleSlideActive(
   slideId: string,
   isActive: boolean
 ): Promise<{ success: boolean; error?: string }> {
+  const auth = await requireActionAuth(['super_admin'])
+  if (!auth.ok) return { success: false, error: auth.error }
   const supabase = await createAdminClient()
   const { error } = await supabase
     .from('hero_slides')
@@ -188,6 +199,8 @@ export async function toggleSlideActive(
 export async function reorderSlides(
   updates: Array<{ id: string; display_order: number }>
 ): Promise<{ success: boolean; error?: string }> {
+  const auth = await requireActionAuth(['super_admin'])
+  if (!auth.ok) return { success: false, error: auth.error }
   const supabase = await createAdminClient()
 
   await Promise.all(

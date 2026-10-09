@@ -1,6 +1,7 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/server'
+import { requireActionAuth, chapterScopeError } from '@/lib/auth/requireActionAuth'
 import { revalidatePath } from 'next/cache'
 import { isChapterCategoryAvailable } from '@/lib/validation/exclusivity'
 
@@ -10,6 +11,22 @@ export async function toggleMembershipFee(
   paid: boolean
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createAdminClient()
+
+  const { data: target } = await supabase
+    .from('profiles')
+    .select('id, chapter_id')
+    .eq('id', profileId)
+    .single()
+  if (!target) return { success: false, error: 'Profile not found.' }
+
+  const auth = await requireActionAuth(['super_admin', 'chapter_head'])
+  if (!auth.ok) return { success: false, error: auth.error }
+  const scopeError = chapterScopeError(
+    auth.caller,
+    (target as { chapter_id?: string | null }).chapter_id
+  )
+  if (scopeError) return { success: false, error: scopeError }
+
   const { error } = await supabase
     .from('profiles')
     .update({ membership_fee_paid: paid })
@@ -33,6 +50,12 @@ export async function approveApplication(
     .single()
 
   if (!profile) return { success: false, error: 'Profile not found.' }
+
+  const auth = await requireActionAuth(['super_admin', 'chapter_head'])
+  if (!auth.ok) return { success: false, error: auth.error }
+  const scopeError = chapterScopeError(auth.caller, profile.chapter_id)
+  if (scopeError) return { success: false, error: scopeError }
+
   if (!profile.membership_fee_paid) {
     return { success: false, error: 'Membership fee must be confirmed before approval.' }
   }
@@ -63,6 +86,21 @@ export async function rejectApplication(
   profileId: string
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createAdminClient()
+
+  const { data: target } = await supabase
+    .from('profiles')
+    .select('id, chapter_id')
+    .eq('id', profileId)
+    .single()
+  if (!target) return { success: false, error: 'Profile not found.' }
+
+  const auth = await requireActionAuth(['super_admin', 'chapter_head'])
+  if (!auth.ok) return { success: false, error: auth.error }
+  const scopeError = chapterScopeError(
+    auth.caller,
+    (target as { chapter_id?: string | null }).chapter_id
+  )
+  if (scopeError) return { success: false, error: scopeError }
 
   // Release the appointment slot
   const { data: slot } = await supabase
@@ -119,15 +157,24 @@ export async function createMemberOffline(data: {
   if (!data.chapter_id) return { success: false, error: 'Chapter is required.' }
   if (!data.category_id) return { success: false, error: 'Category is required.' }
 
-  // Chapter admins can only add to their own chapter
-  if (data.admin_chapter_id && data.chapter_id !== data.admin_chapter_id) {
-    return { success: false, error: 'You can only add members to your own chapter.' }
+  const auth = await requireActionAuth(['super_admin', 'chapter_head'])
+  if (!auth.ok) return { success: false, error: auth.error }
+
+  // Chapter heads can only add to their own chapter — the scope comes from
+  // the session, never from client input (admin_chapter_id is ignored).
+  let chapterId = data.chapter_id
+  if (auth.caller.role === 'chapter_head') {
+    if (!auth.caller.chapter_id) return { success: false, error: 'No chapter assigned to your account.' }
+    if (chapterId !== auth.caller.chapter_id) {
+      return { success: false, error: 'You can only add members to your own chapter.' }
+    }
+    chapterId = auth.caller.chapter_id
   }
 
   const supabase = await createAdminClient()
 
   // Enforce chapter-category exclusivity like the normal flow
-  const available = await isChapterCategoryAvailable(data.chapter_id, data.category_id)
+  const available = await isChapterCategoryAvailable(chapterId, data.category_id)
   if (!available) {
     return { success: false, error: 'This category is already occupied in the selected chapter.' }
   }
@@ -177,7 +224,7 @@ export async function createMemberOffline(data: {
       business_address: data.business_address.trim(),
       website_url: data.website_url?.trim() || null,
       linkedin_url: data.linkedin_url?.trim() || null,
-      chapter_id: data.chapter_id,
+      chapter_id: chapterId,
       category_id: data.category_id,
       membership_fee_paid: data.membership_fee_paid,
       ...(logoUrl ? { logo_url: logoUrl } : {}),
@@ -202,6 +249,21 @@ export async function updateMemberLogo(
   logoFile: string | null
 ): Promise<{ success: boolean; data?: string; error?: string }> {
   const supabase = await createAdminClient()
+
+  const { data: target } = await supabase
+    .from('profiles')
+    .select('id, chapter_id')
+    .eq('id', profileId)
+    .single()
+  if (!target) return { success: false, error: 'Member not found.' }
+
+  const auth = await requireActionAuth(['super_admin', 'chapter_head'])
+  if (!auth.ok) return { success: false, error: auth.error }
+  const scopeError = chapterScopeError(
+    auth.caller,
+    (target as { chapter_id?: string | null }).chapter_id
+  )
+  if (scopeError) return { success: false, error: scopeError }
 
   if (!logoFile) {
     const { error } = await supabase.from('profiles').update({ logo_url: null }).eq('id', profileId)
@@ -315,6 +377,8 @@ export async function assignChapterHead(
   profileId: string
 ): Promise<{ success: boolean; error?: string }> {
   if (!chapterId || !profileId) return { success: false, error: 'Chapter and member are required.' }
+  const auth = await requireActionAuth(['super_admin'])
+  if (!auth.ok) return { success: false, error: auth.error }
   const supabase = await createAdminClient()
 
   const { data: member } = await supabase
@@ -349,6 +413,8 @@ export async function assignChapterHead(
 
 // ─── Remove Chapter Head (demote to member — listing and login kept) ─────────
 export async function demoteChapterHead(profileId: string): Promise<{ success: boolean; error?: string }> {
+  const auth = await requireActionAuth(['super_admin'])
+  if (!auth.ok) return { success: false, error: auth.error }
   const supabase = await createAdminClient()
   const { error } = await supabase
     .from('profiles')

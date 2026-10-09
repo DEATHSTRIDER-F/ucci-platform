@@ -338,10 +338,12 @@ export function MasonryGallery({ posts }: { posts: GalleryPost[] }) {
                       ? 'ring-2 ring-brand-gold ring-offset-2 ring-offset-brand-navy scale-105'
                       : 'opacity-50 hover:opacity-100')}
                   >
-                    <img
+                    <Image
                       src={youTubeThumbnail(selectedPost.youtube_video_id)}
                       alt="Video thumbnail"
-                      className="object-cover w-full h-full"
+                      fill
+                      className="object-cover"
+                      sizes="96px"
                     />
                   </button>
                 )}

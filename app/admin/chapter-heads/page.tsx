@@ -30,7 +30,8 @@ interface MemberOption {
 export default async function ChapterHeadsPage() {
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user!.id).single()
+  if (!user) redirect('/login')
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
   if (profile?.role !== 'super_admin') redirect('/admin')
 
   const { data: areasRaw } = await supabase

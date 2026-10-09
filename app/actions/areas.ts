@@ -1,12 +1,15 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/server'
+import { requireActionAuth } from '@/lib/auth/requireActionAuth'
 import { revalidatePath } from 'next/cache'
 import { slugify } from '@/lib/utils/slugify'
 import type { Area, Chapter } from '@/lib/types/database'
 
 export async function createArea(data: { name: string; slug: string }): Promise<{ success: boolean; data?: Area; error?: string }> {
   if (!data.name?.trim()) return { success: false, error: 'Area name is required.' }
+  const auth = await requireActionAuth(['super_admin'])
+  if (!auth.ok) return { success: false, error: auth.error }
   const supabase = await createAdminClient()
   const { data: maxRow } = await supabase.from('areas').select('display_order').order('display_order', { ascending: false }).limit(1).maybeSingle()
   const { data: area, error } = await supabase
@@ -19,6 +22,8 @@ export async function createArea(data: { name: string; slug: string }): Promise<
 }
 
 export async function updateArea(id: string, data: { name: string; slug: string }): Promise<{ success: boolean; error?: string }> {
+  const auth = await requireActionAuth(['super_admin'])
+  if (!auth.ok) return { success: false, error: auth.error }
   const supabase = await createAdminClient()
   const { error } = await supabase.from('areas').update({ name: data.name, slug: data.slug }).eq('id', id)
   if (error) return { success: false, error: error.message }
@@ -29,6 +34,8 @@ export async function updateArea(id: string, data: { name: string; slug: string 
 export async function createChapter(data: { name: string; slug: string; area_id: string }): Promise<{ success: boolean; data?: Chapter; error?: string }> {
   if (!data.name?.trim()) return { success: false, error: 'Chapter name is required.' }
   if (!data.area_id) return { success: false, error: 'Area is required.' }
+  const auth = await requireActionAuth(['super_admin'])
+  if (!auth.ok) return { success: false, error: auth.error }
   const supabase = await createAdminClient()
   const { data: maxRow } = await supabase.from('chapters').select('display_order').eq('area_id', data.area_id).order('display_order', { ascending: false }).limit(1).maybeSingle()
   const { data: chapter, error } = await supabase
@@ -41,6 +48,8 @@ export async function createChapter(data: { name: string; slug: string; area_id:
 }
 
 export async function deleteChapter(id: string): Promise<{ success: boolean; error?: string }> {
+  const auth = await requireActionAuth(['super_admin'])
+  if (!auth.ok) return { success: false, error: auth.error }
   const supabase = await createAdminClient()
   const { error } = await supabase.from('chapters').delete().eq('id', id)
   if (error) return { success: false, error: error.code === '23503' ? 'Cannot delete chapter: members or admins are assigned to it.' : error.message }
@@ -49,6 +58,8 @@ export async function deleteChapter(id: string): Promise<{ success: boolean; err
 }
 
 export async function reorderAreas(updates: Array<{ id: string; display_order: number }>): Promise<{ success: boolean; error?: string }> {
+  const auth = await requireActionAuth(['super_admin'])
+  if (!auth.ok) return { success: false, error: auth.error }
   const supabase = await createAdminClient()
   await Promise.all(updates.map(u => supabase.from('areas').update({ display_order: u.display_order }).eq('id', u.id)))
   revalidatePath('/'); revalidatePath('/admin/areas')
@@ -56,6 +67,8 @@ export async function reorderAreas(updates: Array<{ id: string; display_order: n
 }
 
 export async function reorderChapters(updates: Array<{ id: string; display_order: number }>): Promise<{ success: boolean; error?: string }> {
+  const auth = await requireActionAuth(['super_admin'])
+  if (!auth.ok) return { success: false, error: auth.error }
   const supabase = await createAdminClient()
   await Promise.all(updates.map(u => supabase.from('chapters').update({ display_order: u.display_order }).eq('id', u.id)))
   revalidatePath('/'); revalidatePath('/admin/areas')
@@ -63,6 +76,8 @@ export async function reorderChapters(updates: Array<{ id: string; display_order
 }
 
 export async function toggleChapterActive(id: string, isActive: boolean): Promise<{ success: boolean; error?: string }> {
+  const auth = await requireActionAuth(['super_admin'])
+  if (!auth.ok) return { success: false, error: auth.error }
   const supabase = await createAdminClient()
   const { error } = await supabase.from('chapters').update({ is_active: isActive }).eq('id', id)
   if (error) return { success: false, error: error.message }
@@ -74,6 +89,8 @@ export async function updateChapterContent(
   id: string,
   data: { info: string | null; highlights: string | null; cover_b64: string | null; remove_cover?: boolean }
 ): Promise<{ success: boolean; data?: Chapter; error?: string }> {
+  const auth = await requireActionAuth(['super_admin'])
+  if (!auth.ok) return { success: false, error: auth.error }
   const supabase = await createAdminClient()
 
   const updates: { info: string | null; highlights: string | null; cover_image_url?: string | null } = {

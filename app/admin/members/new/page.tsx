@@ -10,10 +10,11 @@ export const metadata: Metadata = { title: 'Add Member | UCCI Admin' }
 export default async function NewMemberPage() {
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
   const { data: profile } = await supabase
     .from('profiles')
     .select('id, role, chapter_id')
-    .eq('id', user!.id)
+    .eq('id', user.id)
     .single()
 
   if (!profile || (profile.role !== 'super_admin' && profile.role !== 'chapter_head')) redirect('/unauthorized')

@@ -10,7 +10,8 @@ export const metadata: Metadata = { title: 'Contact Inquiries | UCCI Admin' }
 export default async function ContactsPage() {
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user!.id).single()
+  if (!user) redirect('/login')
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
   if (profile?.role !== 'super_admin') redirect('/admin')
 
   const supabaseAdmin = await import('@/lib/supabase/server').then(m => m.createAdminClient())

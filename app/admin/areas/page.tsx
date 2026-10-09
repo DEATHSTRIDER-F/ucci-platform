@@ -10,7 +10,8 @@ export const metadata: Metadata = { title: 'Areas & Chapters | UCCI Admin' }
 export default async function AreasPage() {
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user!.id).single()
+  if (!user) redirect('/login')
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
   if (profile?.role !== 'super_admin') redirect('/admin')
 
   const { data: areas } = await supabase

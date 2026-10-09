@@ -1,4 +1,5 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 import { InquiriesClient } from '@/components/admin/InquiriesClient'
 import type { Metadata } from 'next'
 
@@ -9,8 +10,9 @@ export const metadata: Metadata = { title: 'Lead Inquiries | UCCI Admin' }
 export default async function InquiriesPage() {
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
   const { data: adminProfile } = await supabase
-    .from('profiles').select('id, role, chapter_id').eq('id', user!.id).single()
+    .from('profiles').select('id, role, chapter_id').eq('id', user.id).single()
 
   const isSuperAdmin = adminProfile?.role === 'super_admin'
 

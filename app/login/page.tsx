@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 import { LoginForm } from '@/components/forms/LoginForm'
+import { Skeleton } from '@/components/ui/skeleton'
 
 export const metadata: Metadata = {
   title: 'Sign In | UCCI',
@@ -7,8 +9,9 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 }
 
-export default function LoginPage({ searchParams }: { searchParams: { redirectTo?: string } }) {
-  const redirectTo = searchParams.redirectTo ? `?redirectTo=${encodeURIComponent(searchParams.redirectTo)}` : ''
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ redirectTo?: string }> }) {
+  const { redirectTo: raw } = await searchParams
+  const redirectTo = raw ? `?redirectTo=${encodeURIComponent(raw)}` : ''
 
   return (
     <div className="min-h-screen bg-brand-navy flex items-center justify-center px-4 py-10 sm:py-16 relative overflow-x-clip">
@@ -31,7 +34,9 @@ export default function LoginPage({ searchParams }: { searchParams: { redirectTo
         </div>
 
         <div className="glass-card p-5 sm:p-8">
-          <LoginForm />
+          <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+            <LoginForm />
+          </Suspense>
         </div>
 
         <p className="text-center text-brand-silver/60 text-sm mt-6">

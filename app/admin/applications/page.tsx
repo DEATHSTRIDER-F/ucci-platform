@@ -1,4 +1,5 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 import { ApplicationReviewClient } from '@/components/admin/ApplicationReviewClient'
 import { ChapterHeadReviewClient } from '@/components/admin/ChapterHeadReviewClient'
 import { ApplicationsTabs } from '@/components/admin/ApplicationsTabs'
@@ -12,10 +13,11 @@ export const metadata: Metadata = { title: 'Applications | UCCI Admin' }
 export default async function ApplicationsPage() {
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
   const { data: adminProfile } = await supabase
     .from('profiles')
     .select('id, role, chapter_id')
-    .eq('id', user!.id)
+    .eq('id', user.id)
     .single()
 
   const isSuperAdmin = adminProfile?.role === 'super_admin'
