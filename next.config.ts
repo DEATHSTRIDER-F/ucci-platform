@@ -3,6 +3,9 @@ import type { NextConfig } from 'next'
 const nextConfig: NextConfig = {
   // cacheComponents: true,
   images: {
+    // NAT64/DNS64 networks resolve Supabase to 64:ff9b::/96 (flagged as
+    // private). This is expected for our own allowlisted hosts below.
+    dangerouslyAllowLocalIP: true,
     remotePatterns: [
       {
         protocol: 'https',

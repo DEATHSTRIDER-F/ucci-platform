@@ -5,6 +5,7 @@ import { MasonryGallery } from '@/components/gallery/MasonryGallery'
 import { GalleryTabs } from '@/components/gallery/GalleryTabs'
 import { parseGalleryTab } from '@/lib/utils/galleryTab'
 import { VideoGrid } from '@/components/gallery/VideoGrid'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Camera, Newspaper, CalendarDays, PlayCircle } from 'lucide-react'
 import type { Metadata } from 'next'
 
@@ -61,7 +62,7 @@ export default async function GalleryPage({
       </div>
 
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12" aria-label="Gallery sections">
-        <Suspense fallback={<div className="text-center text-brand-silver py-6">Loading...</div>}>
+        <Suspense fallback={<Skeleton className="h-10 w-72 max-w-full mx-auto mb-8" />}>
           <GalleryTabs counts={counts} />
         </Suspense>
 

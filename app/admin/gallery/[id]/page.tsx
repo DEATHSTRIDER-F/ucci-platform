@@ -6,17 +6,19 @@ import { EditGalleryFormClient } from '@/components/admin/EditGalleryFormClient'
 
 export const metadata = { title: 'Edit Gallery Post | UCCI Admin' }
 
-export default async function EditGalleryPostPage({ params }: { params: { id: string } }) {
+export default async function EditGalleryPostPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
-  const { data: profile } = await supabase.from('profiles').select('id, role, chapter_id').eq('id', user!.id).single()
+  if (!user) redirect('/login')
+  const { data: profile } = await supabase.from('profiles').select('id, role, chapter_id').eq('id', user.id).single()
   
   if (!profile) redirect('/login')
 
   const { data: post } = await supabase
     .from('gallery_posts')
     .select('*, images:gallery_images(id, image_url, alt_text, display_order)')
-    .eq('id', params.id)
+    .eq('id', id)
     .single()
 
   if (!post) notFound()

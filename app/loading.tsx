@@ -1,9 +1,22 @@
+import { Skeleton } from '@/components/ui/skeleton'
+
 export default function Loading() {
   return (
-    <div className="min-h-[60vh] flex items-center justify-center">
-      <div className="flex flex-col items-center gap-4">
-        <div className="w-12 h-12 rounded-full border-2 border-brand-gold/30 border-t-brand-gold animate-spin" />
-        <p className="text-brand-silver/60 text-sm">Loading...</p>
+    <div className="min-h-[60vh] max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-6" aria-label="Loading page">
+      <div className="text-center space-y-3">
+        <Skeleton className="h-9 w-64 max-w-full mx-auto" />
+        <Skeleton className="h-4 w-96 max-w-full mx-auto opacity-70" />
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="glass-card overflow-hidden">
+            <Skeleton className="aspect-video w-full rounded-none" />
+            <div className="p-5 space-y-2">
+              <Skeleton className="h-5 w-3/4" />
+              <Skeleton className="h-3 w-1/2 opacity-70" />
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   )

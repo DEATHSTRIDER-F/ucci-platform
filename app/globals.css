@@ -98,9 +98,18 @@
     }
   }
 
+  /* Global skeleton glare sweep (see components/ui/skeleton.tsx) */
+  .skeleton-glare {
+    animation: glare-r2l 1.8s linear infinite;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .gold-shimmer {
       animation: none;
+    }
+    .skeleton-glare {
+      animation: none;
+      opacity: 0.5;
     }
   }
 

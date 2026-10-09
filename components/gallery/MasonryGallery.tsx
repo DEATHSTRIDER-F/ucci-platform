@@ -1,9 +1,11 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import Image from 'next/image'
 import { ChevronLeft, ChevronRight, X, LayoutGrid, Play } from 'lucide-react'
 import { formatDate } from '@/lib/utils/utils'
+import { cn } from '@/lib/utils/utils'
+import { ImageSkeleton } from '@/components/ui/skeleton'
 import { youTubeThumbnail, youTubeEmbedUrl } from '@/lib/utils/youtube'
 
 export interface GalleryPost {
@@ -22,6 +24,58 @@ export interface GalleryPost {
   chapter?: { name: string } | null
 }
 
+function sortImages<T extends { display_order: number }>(images: T[]): T[] {
+  return [...images].sort((a, b) => a.display_order - b.display_order)
+}
+
+/** Warm the browser cache for an image URL (used for neighbor preloading). */
+function preloadUrl(url: string) {
+  if (typeof window === 'undefined') return
+  const el = new window.Image()
+  el.src = url
+}
+
+/**
+ * Image that fades in over a shimmer placeholder. Remount (via `key`) to
+ * reset for a new src — the shimmer shows instantly so swaps never look stuck.
+ */
+function FadeImage({
+  src,
+  alt,
+  sizes,
+  priority = false,
+  contain = false,
+  imgClassName,
+}: {
+  src: string
+  alt: string
+  sizes: string
+  priority?: boolean
+  contain?: boolean
+  imgClassName?: string
+}) {
+  const [loaded, setLoaded] = useState(false)
+  return (
+    <div className="absolute inset-0">
+      {!loaded && <ImageSkeleton />}
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        sizes={sizes}
+        priority={priority}
+        onLoad={() => setLoaded(true)}
+        className={cn(
+          'transition-[opacity,transform] duration-300',
+          contain ? 'object-contain' : 'object-cover',
+          loaded ? 'opacity-100' : 'opacity-0',
+          imgClassName
+        )}
+      />
+    </div>
+  )
+}
+
 export function MasonryGallery({ posts }: { posts: GalleryPost[] }) {
   const [selectedPost, setSelectedPost] = useState<GalleryPost | null>(null)
   const [currentImageIdx, setCurrentImageIdx] = useState(0)
@@ -33,6 +87,8 @@ export function MasonryGallery({ posts }: { posts: GalleryPost[] }) {
     setCurrentImageIdx(0)
     setMediaView(post.youtube_video_id ? 'video' : 0)
     document.body.style.overflow = 'hidden'
+    // Warm cache for the first images so the modal paints instantly
+    sortImages(post.images || []).slice(0, 2).forEach(img => preloadUrl(img.image_url))
   }
 
   const closeModal = () => {
@@ -47,23 +103,34 @@ export function MasonryGallery({ posts }: { posts: GalleryPost[] }) {
     setMediaView(idx)
   }, [])
 
+  const selectedImages = useMemo(
+    () => (selectedPost ? sortImages(selectedPost.images || []) : []),
+    [selectedPost]
+  )
+
+  // Preload neighbors so prev/next swaps are instant (cache-warm)
+  useEffect(() => {
+    if (selectedImages.length < 2) return
+    const at = (i: number) => selectedImages[(i + selectedImages.length) % selectedImages.length]
+    preloadUrl(at(currentImageIdx + 1).image_url)
+    preloadUrl(at(currentImageIdx - 1).image_url)
+  }, [selectedImages, currentImageIdx])
+
   const nextImage = useCallback((e?: React.MouseEvent) => {
     e?.stopPropagation()
-    if (!selectedPost) return
-    const images = [...(selectedPost.images || [])].sort((a, b) => a.display_order - b.display_order)
-    const next = (currentImageIdx + 1) % images.length
+    if (selectedImages.length === 0) return
+    const next = (currentImageIdx + 1) % selectedImages.length
     setCurrentImageIdx(next)
     setMediaView(next)
-  }, [selectedPost, currentImageIdx])
+  }, [selectedImages, currentImageIdx])
 
   const prevImage = useCallback((e?: React.MouseEvent) => {
     e?.stopPropagation()
-    if (!selectedPost) return
-    const images = [...(selectedPost.images || [])].sort((a, b) => a.display_order - b.display_order)
-    const prev = (currentImageIdx - 1 + images.length) % images.length
+    if (selectedImages.length === 0) return
+    const prev = (currentImageIdx - 1 + selectedImages.length) % selectedImages.length
     setCurrentImageIdx(prev)
     setMediaView(prev)
-  }, [selectedPost, currentImageIdx])
+  }, [selectedImages, currentImageIdx])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -121,12 +188,11 @@ export function MasonryGallery({ posts }: { posts: GalleryPost[] }) {
             >
               {hasVideo ? (
                 <div className="relative aspect-video w-full overflow-hidden bg-black">
-                  <Image
+                  <FadeImage
                     src={youTubeThumbnail(post.youtube_video_id!)}
                     alt={post.title}
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    imgClassName="group-hover:scale-105"
                   />
                   <span className="absolute inset-0 flex items-center justify-center">
                     <span className="w-12 h-12 rounded-full bg-brand-gold flex items-center justify-center shadow-lg shadow-black/40 group-hover:scale-110 transition-transform">
@@ -142,12 +208,11 @@ export function MasonryGallery({ posts }: { posts: GalleryPost[] }) {
                 </div>
               ) : primaryImage ? (
                 <div className="relative aspect-video w-full overflow-hidden bg-brand-navy/50">
-                  <Image
+                  <FadeImage
                     src={primaryImage.image_url}
                     alt={primaryImage.alt_text || post.title}
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    imgClassName="group-hover:scale-105"
                   />
                   {images.length > 1 && (
                     <div className="absolute top-3 right-3 bg-brand-navy/80 backdrop-blur-sm text-brand-gold px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1">
@@ -210,7 +275,6 @@ export function MasonryGallery({ posts }: { posts: GalleryPost[] }) {
               onTouchEnd={onTouchEnd}
             >
               {(() => {
-                const images = [...(selectedPost.images || [])].sort((a, b) => a.display_order - b.display_order)
                 if (mediaView === 'video' && selectedPost.youtube_video_id) {
                   return (
                     <div className="relative w-full max-w-5xl aspect-video">
@@ -224,17 +288,20 @@ export function MasonryGallery({ posts }: { posts: GalleryPost[] }) {
                     </div>
                   )
                 }
-                if (images.length === 0) return null
-                const currentImg = images[currentImageIdx]
+                if (selectedImages.length === 0) return null
+                const currentImg = selectedImages[currentImageIdx]
 
                 return (
                   <div className="relative w-full h-full max-h-[80vh] flex items-center justify-center">
-                    <Image
+                    {/* key remounts per image: old photo unmounts instantly,
+                        shimmer shows until the new one has loaded */}
+                    <FadeImage
+                      key={currentImg.id}
                       src={currentImg.image_url}
                       alt={currentImg.alt_text || selectedPost.title}
-                      fill
-                      className="object-contain transition-opacity duration-300"
                       sizes="100vw"
+                      priority
+                      contain
                     />
                   </div>
                 )
@@ -278,9 +345,7 @@ export function MasonryGallery({ posts }: { posts: GalleryPost[] }) {
                     />
                   </button>
                 )}
-                {(() => {
-                  const images = [...selectedPost.images].sort((a, b) => a.display_order - b.display_order)
-                  return images.map((img, idx) => (
+                {selectedImages.map((img, idx) => (
                     <button
                       key={img.id}
                       onClick={() => goToImage(idx)}
@@ -298,8 +363,7 @@ export function MasonryGallery({ posts }: { posts: GalleryPost[] }) {
                         sizes="96px"
                       />
                     </button>
-                  ))
-                })()}
+                  ))}
               </div>
             )}
           </div>
